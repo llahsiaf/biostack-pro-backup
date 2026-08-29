@@ -57,26 +57,27 @@ jobs:
             exit 1
           }
 
-          test -f package-lock.json || {
-            echo "::error::package-lock.json not found"
-            exit 1
-          }
-
           test -f app.json || {
             echo "::error::app.json not found"
             exit 1
           }
 
           echo ""
-          echo "✓ package.json"
-          echo "✓ package-lock.json"
-          echo "✓ app.json"
+          echo "✓ package.json found"
+          echo "✓ app.json found"
+
+          if [[ -f package-lock.json ]]; then
+            echo "✓ package-lock.json found"
+          else
+            echo "ℹ package-lock.json not found"
+            echo "ℹ Using npm install instead of npm ci"
+          fi
 
       # ==========================================
       # INSTALL DEPENDENCIES
       # ==========================================
       - name: Install Dependencies
-        run: npm ci
+        run: npm install
 
       # ==========================================
       # VERIFY SOURCE
@@ -133,9 +134,14 @@ jobs:
           if [[ ! -d "$WORKSPACE" ]]; then
             echo "::error::Expected workspace not found:"
             echo "$WORKSPACE"
+
             echo ""
             echo "Available workspaces:"
-            find ios -maxdepth 2 -type d -name "*.xcworkspace" -print
+            find ios -maxdepth 2 \
+              -type d \
+              -name "*.xcworkspace" \
+              -print
+
             exit 1
           fi
 
@@ -145,7 +151,9 @@ jobs:
 
           echo ""
           echo "Xcode project information:"
-          xcodebuild -list \
+
+          xcodebuild \
+            -list \
             -workspace "$WORKSPACE"
 
       # ==========================================
@@ -169,10 +177,13 @@ jobs:
 
           echo ""
           echo "Available schemes:"
-          xcodebuild -list \
+
+          xcodebuild \
+            -list \
             -workspace "$WORKSPACE"
 
-          if ! xcodebuild -list \
+          if ! xcodebuild \
+            -list \
             -workspace "$WORKSPACE" |
             grep -Fq "$SCHEME"; then
 
@@ -227,6 +238,13 @@ jobs:
           if [[ ! -d "$APP_DIR" ]]; then
             echo "::error::Release product directory not found:"
             echo "$APP_DIR"
+
+            echo ""
+            echo "Available build products:"
+            find ios/build/Build/Products \
+              -maxdepth 4 \
+              -print || true
+
             exit 1
           fi
 
@@ -325,7 +343,7 @@ jobs:
           echo "✓ IPA artifact looks valid"
 
       # ==========================================
-      # UPLOAD ARTIFACT
+      # UPLOAD IPA
       # ==========================================
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
@@ -338,7 +356,7 @@ jobs:
           retention-days: 7
 
       # ==========================================
-      # UPLOAD LOG WHEN BUILD FAILS
+      # UPLOAD BUILD LOG ON FAILURE
       # ==========================================
       - name: Upload Build Log on Failure
         if: failure()
