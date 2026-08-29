@@ -20,22 +20,24 @@ jobs:
       # ==========================================
       # SETUP NODE
       # ==========================================
-      # Tidak menggunakan cache npm agar setup-node
-      # tidak gagal mencari lockfile sebelum npm ci.
-      # ==========================================
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
       # ==========================================
-      # VERIFY PROJECT FILES
+      # VERIFY PROJECT
       # ==========================================
       - name: Verify Project Files
         shell: bash
         run: |
           set -euo pipefail
 
+          echo "=========================================="
+          echo "BIOSTACK PRO - PROJECT CHECK"
+          echo "=========================================="
+
+          echo ""
           echo "Working directory:"
           pwd
 
@@ -47,6 +49,9 @@ jobs:
           echo "Project files:"
           ls -la
 
+          echo ""
+          echo "Checking required files..."
+
           test -f package.json || {
             echo "::error::package.json not found"
             exit 1
@@ -57,9 +62,15 @@ jobs:
             exit 1
           }
 
+          test -f app.json || {
+            echo "::error::app.json not found"
+            exit 1
+          }
+
           echo ""
-          echo "✓ package.json found"
-          echo "✓ package-lock.json found"
+          echo "✓ package.json"
+          echo "✓ package-lock.json"
+          echo "✓ app.json"
 
       # ==========================================
       # INSTALL DEPENDENCIES
@@ -71,13 +82,23 @@ jobs:
       # VERIFY SOURCE
       # ==========================================
       - name: Verify Source
+        shell: bash
         run: |
+          set -euo pipefail
+
+          echo "=========================================="
+          echo "SOURCE VERIFICATION"
+          echo "=========================================="
+
           npm run audit-syntax
           npm run verify-phase10
           npm run verify-phase10-1
 
+          echo ""
+          echo "✓ Source verification passed"
+
       # ==========================================
-      # GENERATE NATIVE IOS PROJECT
+      # GENERATE IOS NATIVE PROJECT
       # ==========================================
       - name: Generate iOS Native Project
         run: |
@@ -94,13 +115,27 @@ jobs:
         run: |
           set -euo pipefail
 
+          echo "=========================================="
+          echo "IOS PROJECT VERIFICATION"
+          echo "=========================================="
+
+          if [[ ! -d "ios" ]]; then
+            echo "::error::ios directory was not generated"
+            exit 1
+          fi
+
+          echo ""
           echo "Contents of ios/:"
           ls -la ios
 
-          WORKSPACE="$(find ios -maxdepth 1 -type d -name '*.xcworkspace' -print -quit)"
+          WORKSPACE="ios/BioStackPRO.xcworkspace"
 
-          if [[ -z "$WORKSPACE" ]]; then
-            echo "::error::No .xcworkspace was generated under ios/"
+          if [[ ! -d "$WORKSPACE" ]]; then
+            echo "::error::Expected workspace not found:"
+            echo "$WORKSPACE"
+            echo ""
+            echo "Available workspaces:"
+            find ios -maxdepth 2 -type d -name "*.xcworkspace" -print
             exit 1
           fi
 
@@ -109,77 +144,63 @@ jobs:
           echo "$WORKSPACE"
 
           echo ""
-          echo "Available Xcode configuration:"
-          xcodebuild -list -workspace "$WORKSPACE"
+          echo "Xcode project information:"
+          xcodebuild -list \
+            -workspace "$WORKSPACE"
 
       # ==========================================
-      # RESOLVE XCODE SCHEME
+      # VERIFY XCODE SCHEME
       # ==========================================
-      - name: Resolve Xcode Scheme
-        id: xcode
+      - name: Verify Xcode Scheme
         shell: bash
         run: |
           set -euo pipefail
 
-          WORKSPACE="$(find ios -maxdepth 1 -type d -name '*.xcworkspace' -print -quit)"
+          WORKSPACE="ios/BioStackPRO.xcworkspace"
+          SCHEME="BioStackPRO"
 
-          if [[ -z "$WORKSPACE" ]]; then
-            echo "::error::No Xcode workspace found."
-            exit 1
-          fi
-
-          SCHEME="$(
-            xcodebuild -list -json -workspace "$WORKSPACE" |
-            python3 -c '
-import json
-import sys
-
-data = json.load(sys.stdin)
-schemes = data.get("workspace", {}).get("schemes", [])
-
-preferred = [
-    s for s in schemes
-    if s.lower() == "biostackpro"
-]
-
-if preferred:
-    print(preferred[0])
-elif schemes:
-    print(schemes[0])
-else:
-    print("")
-'
-          )"
-
-          if [[ -z "$SCHEME" ]]; then
-            echo "::error::No Xcode scheme was found."
-            exit 1
-          fi
-
-          echo "workspace=$WORKSPACE" >> "$GITHUB_OUTPUT"
-          echo "scheme=$SCHEME" >> "$GITHUB_OUTPUT"
+          echo "=========================================="
+          echo "XCODE SCHEME CHECK"
+          echo "=========================================="
 
           echo ""
-          echo "✓ Workspace: $WORKSPACE"
-          echo "✓ Scheme: $SCHEME"
+          echo "Expected scheme:"
+          echo "$SCHEME"
+
+          echo ""
+          echo "Available schemes:"
+          xcodebuild -list \
+            -workspace "$WORKSPACE"
+
+          if ! xcodebuild -list \
+            -workspace "$WORKSPACE" |
+            grep -Fq "$SCHEME"; then
+
+            echo ""
+            echo "::error::Scheme '$SCHEME' was not found."
+            exit 1
+          fi
+
+          echo ""
+          echo "✓ Scheme '$SCHEME' found"
 
       # ==========================================
-      # BUILD UNSIGNED IOS APP
+      # COMPILE UNSIGNED IOS APP
       # ==========================================
       - name: Compile Unsigned iOS App
         shell: bash
         run: |
           set -o pipefail
 
+          echo "=========================================="
+          echo "BUILDING UNSIGNED IOS APP"
+          echo "=========================================="
+
           mkdir -p dist
 
-          echo "=========================================="
-          echo "Building unsigned iOS application"
-          echo "=========================================="
-
           xcodebuild \
-            -workspace "${{ steps.xcode.outputs.workspace }}" \
-            -scheme "${{ steps.xcode.outputs.scheme }}" \
+            -workspace ios/BioStackPRO.xcworkspace \
+            -scheme BioStackPRO \
             -configuration Release \
             -sdk iphoneos \
             -destination 'generic/platform=iOS' \
@@ -190,34 +211,60 @@ else:
             build 2>&1 | tee dist/xcodebuild.log
 
       # ==========================================
-      # PACKAGE APP -> IPA
+      # FIND GENERATED APP
       # ==========================================
-      - name: Package Unsigned IPA
+      - name: Locate Built App
         shell: bash
         run: |
           set -euo pipefail
 
           APP_DIR="ios/build/Build/Products/Release-iphoneos"
 
+          echo "=========================================="
+          echo "SEARCHING FOR BUILT APP"
+          echo "=========================================="
+
+          if [[ ! -d "$APP_DIR" ]]; then
+            echo "::error::Release product directory not found:"
+            echo "$APP_DIR"
+            exit 1
+          fi
+
+          echo ""
+          echo "Release directory:"
+          ls -la "$APP_DIR"
+
           APP_PATH="$(
             find "$APP_DIR" \
               -maxdepth 1 \
               -type d \
-              -name '*.app' \
+              -name "*.app" \
               -print \
               -quit
           )"
 
           if [[ -z "$APP_PATH" ]]; then
-            echo "::error::No Release .app was produced."
-            echo ""
-            echo "Available files:"
-            find ios/build/Build/Products -maxdepth 4 -print || true
+            echo "::error::No .app file was produced"
             exit 1
           fi
 
-          echo "✓ App found:"
+          echo ""
+          echo "✓ Built app found:"
           echo "$APP_PATH"
+
+          echo "APP_PATH=$APP_PATH" >> "$GITHUB_ENV"
+
+      # ==========================================
+      # PACKAGE IPA
+      # ==========================================
+      - name: Package Unsigned IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "=========================================="
+          echo "PACKAGING IPA"
+          echo "=========================================="
 
           rm -rf dist/Payload
           mkdir -p dist/Payload
@@ -232,10 +279,7 @@ else:
           rm -rf dist/Payload
 
           echo ""
-          echo "=========================================="
-          echo "IPA CREATED"
-          echo "=========================================="
-
+          echo "✓ IPA created:"
           ls -lh dist/BioStack_PRO_iOS_unsigned.ipa
 
       # ==========================================
@@ -246,24 +290,42 @@ else:
         run: |
           set -euo pipefail
 
-          test -f dist/BioStack_PRO_iOS_unsigned.ipa || {
-            echo "::error::IPA file was not created"
-            exit 1
-          }
+          echo "=========================================="
+          echo "IPA VERIFICATION"
+          echo "=========================================="
 
-          IPA_SIZE="$(stat -f%z dist/BioStack_PRO_iOS_unsigned.ipa)"
+          IPA="dist/BioStack_PRO_iOS_unsigned.ipa"
 
-          echo "IPA size: ${IPA_SIZE} bytes"
-
-          if [[ "$IPA_SIZE" -lt 100000 ]]; then
-            echo "::error::IPA appears unexpectedly small"
+          if [[ ! -f "$IPA" ]]; then
+            echo "::error::IPA file does not exist"
             exit 1
           fi
 
+          IPA_SIZE="$(stat -f%z "$IPA")"
+
+          echo ""
+          echo "IPA file:"
+          echo "$IPA"
+
+          echo ""
+          echo "IPA size:"
+          echo "$IPA_SIZE bytes"
+
+          if [[ "$IPA_SIZE" -lt 100000 ]]; then
+            echo "::error::IPA is unexpectedly small"
+            exit 1
+          fi
+
+          echo ""
+          echo "Checking IPA archive..."
+
+          unzip -l "$IPA" | head -40
+
+          echo ""
           echo "✓ IPA artifact looks valid"
 
       # ==========================================
-      # UPLOAD IPA
+      # UPLOAD ARTIFACT
       # ==========================================
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
@@ -272,10 +334,11 @@ else:
           path: |
             dist/BioStack_PRO_iOS_unsigned.ipa
             dist/xcodebuild.log
+          if-no-files-found: error
           retention-days: 7
 
       # ==========================================
-      # UPLOAD BUILD LOG ON FAILURE
+      # UPLOAD LOG WHEN BUILD FAILS
       # ==========================================
       - name: Upload Build Log on Failure
         if: failure()
@@ -288,7 +351,7 @@ else:
           retention-days: 7
 
       # ==========================================
-      # BUILD SUMMARY
+      # SUCCESS SUMMARY
       # ==========================================
       - name: Build Summary
         if: success()
@@ -296,16 +359,17 @@ else:
         run: |
           echo ""
           echo "=========================================="
-          echo "BIOSTACK PRO BUILD SELESAI"
+          echo "BIOSTACK PRO BUILD SUCCESS"
           echo "=========================================="
           echo ""
           echo "IPA:"
-          echo "  dist/BioStack_PRO_iOS_unsigned.ipa"
+          echo "dist/BioStack_PRO_iOS_unsigned.ipa"
           echo ""
-          echo "Build type:"
-          echo "  UNSIGNED"
+          echo "BUILD TYPE:"
+          echo "Unsigned iOS IPA"
           echo ""
-          echo "Next:"
-          echo "  Download artifact dari GitHub Actions"
-          echo "  lalu masukkan IPA ke Sideloadly."
+          echo "NEXT STEP:"
+          echo "Download the artifact and import the IPA"
+          echo "into Sideloadly."
+          echo ""
           echo "=========================================="
