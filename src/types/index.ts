@@ -1,4 +1,13 @@
 export type PeptideUnit = 'mg' | 'mcg' | 'mL';
+export type DoseUnit = 'mg' | 'mcg' | 'mL';
+export type FrequencyKey = 'daily' | 'weekly' | '2x_week' | '3x_week' | string;
+export type VialLifecycleStatus = 'active' | 'empty' | 'archived';
+
+export interface DosePresets {
+  low: number;
+  standard: number;
+  high: number;
+}
 
 export interface PeptideDefinition {
   id: string;
@@ -8,7 +17,7 @@ export interface PeptideDefinition {
   unit: PeptideUnit;
   defaultBacWaterMl: number;
   doseRange: { min: number; max: number; step: number };
-  presetDoses: { low: number; standard: number; high: number };
+  presetDoses: DosePresets;
   halfLifeHours: number;
   defaultSchedule: string;
   defaultDays: string[];
@@ -27,7 +36,7 @@ export interface ActiveInventoryItem {
   injectionDays: string[];
   bacWaterMl: number;
   selectedDose: number;
-  presetDoses: { low: number; standard: number; high: number };
+  presetDoses: DosePresets;
   penClicksPerMl: number;
   reconstitutedAt: string;
   maxShelfLifeDays: number;
@@ -40,6 +49,59 @@ export interface ActiveInventoryItem {
   cycleStartDate: string;
 }
 
+export interface InventoryItem {
+  id: string;
+  name: string;
+  category: string;
+  vialSize: number;
+  unit: PeptideUnit;
+  bacWater: number;
+  targetDose: number;
+  doseUnit: DoseUnit;
+  volumeMl?: string;
+  frequency: FrequencyKey;
+  frequencyLabel: string;
+  halfLifeDays: number;
+  maxFridgeDays: number;
+  activeDays: string[];
+  injectionTime: string;
+  reconstitutedDate?: string;
+  estimatedDaysLeft?: number;
+  isCycleActive?: boolean;
+  isReminderActive?: boolean;
+  currentVolumeMl?: number;
+  initialVolumeMl?: number;
+  notificationIds?: string[];
+  freezerId?: string;
+  createdAt?: string;
+  lifecycleStatus?: VialLifecycleStatus;
+  activatedAt?: string;
+  emptiedAt?: string;
+  archivedAt?: string;
+  lastInjectedAt?: string;
+  scheduleStartDate?: string;
+  scheduleEndDate?: string;
+  schedulePaused?: boolean;
+}
+
+export interface FreezerItem {
+  id: string;
+  name: string;
+  category: string;
+  vialSize: number;
+  unit: PeptideUnit;
+  quantity: number;
+  defaultBacWater: number;
+  targetDose: number;
+  frequency: FrequencyKey;
+  frequencyLabel: string;
+  halfLifeDays: number;
+  maxFridgeDays: number;
+  activeDays: string[];
+  injectionTime: string;
+  createdAt?: string;
+}
+
 export interface FreezerStockItem {
   id: string;
   name: string;
@@ -49,7 +111,7 @@ export interface FreezerStockItem {
   freezerStock: number;
   bacWaterMl: number;
   defaultDose: number;
-  presetDoses: { low: number; standard: number; high: number };
+  presetDoses: DosePresets;
   schedule: string;
   injectionDays: string[];
   penClicksPerMl: number;
@@ -58,18 +120,21 @@ export interface FreezerStockItem {
 
 export interface InjectionLog {
   id: string;
-  peptideId: string;
   peptideName: string;
   dose: number;
-  unit: PeptideUnit;
-  volMl: number;
-  u100Units: number;
-  clicks: number;
-  locationId: string;
-  locationName: string;
-  dateStr: string;
-  timeStr: string;
+  unit: string;
+  volumeMl: string;
+  siteId: string;
   timestamp: string;
+  inventoryId?: string;
+  peptideId?: string;
+  u100Units?: number;
+  clicks?: number;
+  locationName?: string;
+  dateStr?: string;
+  timeStr?: string;
+  recordedAtLocal?: string;
+  notes?: string;
 }
 
 export interface InjectionSite {

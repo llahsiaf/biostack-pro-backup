@@ -12,10 +12,8 @@ interface DoseDetailModalProps {
 }
 
 export const DoseDetailModal: React.FC<DoseDetailModalProps> = ({ visible, item, onClose, onSave }) => {
-  if (!item) return null;
-
-  const [dose, setDose] = useState<number>(item.selectedDose);
-  const [bacWater, setBacWater] = useState<number>(item.bacWaterMl || 2.0);
+  const [dose, setDose] = useState<number>(item?.selectedDose ?? 0);
+  const [bacWater, setBacWater] = useState<number>(item?.bacWaterMl || 2.0);
 
   useEffect(() => {
     if (item) {
@@ -23,6 +21,8 @@ export const DoseDetailModal: React.FC<DoseDetailModalProps> = ({ visible, item,
       setBacWater(item.bacWaterMl || 2.0);
     }
   }, [item]);
+
+  if (!item) return null;
 
   const vialSize = item.vialSizeMg || 1;
   const isLiquidMl = item.unit === 'mL';

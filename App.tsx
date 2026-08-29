@@ -12,11 +12,15 @@ import {
 } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import {
+  Activity,
   FlaskConical,
   RotateCw,
   History,
   Snowflake,
+  TrendingUp,
   Bell,
+  Settings,
+  ShieldCheck,
 } from 'lucide-react-native';
 
 import { InventoryScreen } from './src/screens/InventoryScreen';
@@ -24,6 +28,12 @@ import { RotationScreen } from './src/screens/RotationScreen';
 import { HistoryScreen } from './src/screens/HistoryScreen';
 import { FreezerScreen } from './src/screens/FreezerScreen';
 import { FloatingAIChat } from './src/components/FloatingAIChat';
+import { TodayScreen } from './src/screens/TodayScreen';
+import { SettingsScreen } from './src/screens/SettingsScreen';
+import { AnalyticsScreen } from './src/screens/AnalyticsScreen';
+import { COLORS, RADIUS, SHADOWS } from './src/theme';
+import { useBioStackStore } from './src/store/useBioStackStore';
+import { getNotificationPermission, rebuildScheduleReminders } from './src/utils/notificationUtils';
 
 // Konfigurasi handler notifikasi lokal internal
 Notifications.setNotificationHandler({
@@ -35,15 +45,17 @@ Notifications.setNotificationHandler({
 });
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'inventory' | 'rotation' | 'history' | 'freezer'>('inventory');
+  const [activeTab, setActiveTab] = useState<'today' | 'inventory' | 'rotation' | 'history' | 'freezer' | 'analytics' | 'settings'>('today');
 
   // Mendaftarkan Izin Notifikasi ke Sistem iOS secara otomatis saat startup
   useEffect(() => {
-    async function requestNotificationPermissions() {
+    async function initializeLocalNotifications() {
       try {
         const { status: existingStatus } = await Notifications.getPermissionsAsync();
+        let status = existingStatus;
+
         if (existingStatus !== 'granted') {
-          await Notifications.requestPermissionsAsync({
+          const requested = await Notifications.requestPermissionsAsync({
             ios: {
               allowAlert: true,
               allowBadge: true,
@@ -51,13 +63,29 @@ export default function App() {
               provideAppNotificationSettings: true,
             },
           });
+          status = requested.status;
+        }
+
+        if (status === 'granted') {
+          const inventory = useBioStackStore.getState().inventory || [];
+          const idsByInventory = await rebuildScheduleReminders(inventory, 30);
+          for (const [inventoryId, ids] of idsByInventory.entries()) {
+            useBioStackStore.getState().setNotificationIds(inventoryId, ids);
+          }
         }
       } catch (error) {
-        // Fallback aman untuk simulator
+        // Notification is an optional convenience; tracker remains fully usable without it.
       }
     }
 
-    requestNotificationPermissions();
+    void initializeLocalNotifications();
+  }, []);
+
+  useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener(() => {
+      setActiveTab('today');
+    });
+    return () => subscription.remove();
   }, []);
 
   // Fungsi Pemicu Izin Manual (Tombol Lonceng)
@@ -113,69 +141,82 @@ export default function App() {
                   <Text style={styles.proBadgeText}>PRO</Text>
                 </View>
               </View>
-              <Text style={styles.appSubtitle}>Peptide Protocol & Pharmacokinetics</Text>
+              <Text style={styles.appSubtitle}>Personal Tracker</Text>
             </View>
           </View>
 
+          <View style={styles.headerStatus}>
+            <ShieldCheck size={13} color="#34d399" />
+            <Text style={styles.headerStatusText}>LOCAL</Text>
+          </View>
+
           {/* Tombol Pemicu Izin Notifikasi Manual */}
-          <TouchableOpacity 
-            onPress={handleManualNotificationRequest} 
-            style={styles.notificationBtn}
-          >
-            <Bell size={18} color="#94a3b8" />
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity 
+              onPress={handleManualNotificationRequest} 
+              style={styles.notificationBtn}
+              accessibilityLabel="Status notifikasi"
+            >
+              <Bell size={18} color="#94a3b8" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => setActiveTab('analytics')}
+              style={styles.notificationBtn}
+              accessibilityLabel="Buka analytics"
+            >
+              <TrendingUp size={18} color={activeTab === 'analytics' ? '#10b981' : '#94a3b8'} />
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              onPress={() => setActiveTab('settings')} 
+              style={styles.notificationBtn}
+              accessibilityLabel="Buka pengaturan"
+            >
+              <Settings size={18} color={activeTab === 'settings' ? '#10b981' : '#94a3b8'} />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
-      {/* Navigasi Tab Utama */}
+      {/* Navigasi Utama — bottom tab bar */}
       <View style={styles.navBar}>
-        <TouchableOpacity
-          style={[styles.navTab, activeTab === 'inventory' && styles.navTabActive]}
-          onPress={() => setActiveTab('inventory')}
-        >
-          <FlaskConical size={16} color={activeTab === 'inventory' ? '#10b981' : '#64748b'} />
-          <Text style={[styles.navTabText, activeTab === 'inventory' && styles.navTabTextActive]}>
-            Inventory
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.navTab, activeTab === 'rotation' && styles.navTabActive]}
-          onPress={() => setActiveTab('rotation')}
-        >
-          <RotateCw size={16} color={activeTab === 'rotation' ? '#10b981' : '#64748b'} />
-          <Text style={[styles.navTabText, activeTab === 'rotation' && styles.navTabTextActive]}>
-            Rotasi
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.navTab, activeTab === 'history' && styles.navTabActive]}
-          onPress={() => setActiveTab('history')}
-        >
-          <History size={16} color={activeTab === 'history' ? '#10b981' : '#64748b'} />
-          <Text style={[styles.navTabText, activeTab === 'history' && styles.navTabTextActive]}>
-            Riwayat
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.navTab, activeTab === 'freezer' && styles.navTabActive]}
-          onPress={() => setActiveTab('freezer')}
-        >
-          <Snowflake size={16} color={activeTab === 'freezer' ? '#10b981' : '#64748b'} />
-          <Text style={[styles.navTabText, activeTab === 'freezer' && styles.navTabTextActive]}>
-            Freezer
-          </Text>
-        </TouchableOpacity>
+        {([
+          ['today', 'Today', Activity],
+          ['inventory', 'Inventory', FlaskConical],
+          ['rotation', 'Rotasi', RotateCw],
+          ['history', 'Riwayat', History],
+          ['freezer', 'Freezer', Snowflake],
+        ] as const).map(([tab, label, Icon]) => {
+          const active = activeTab === tab;
+          return (
+            <TouchableOpacity
+              key={tab}
+              style={styles.navTab}
+              onPress={() => setActiveTab(tab)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: active }}
+              accessibilityLabel={label}
+            >
+              <View style={[styles.navIconWrap, active && styles.navIconWrapActive]}>
+                <Icon size={16} color={active ? COLORS.accent : COLORS.muted} />
+              </View>
+              <Text style={[styles.navTabText, active && styles.navTabTextActive]}>{label}</Text>
+              {active && <View style={styles.navActiveDot} />}
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       {/* Tampilan Konten Layar Aktif */}
       <View style={styles.mainContent}>
+        {activeTab === 'today' && <TodayScreen onOpenInventory={() => setActiveTab('inventory')} />}
         {activeTab === 'inventory' && <InventoryScreen />}
         {activeTab === 'rotation' && <RotationScreen />}
         {activeTab === 'history' && <HistoryScreen />}
+        {activeTab === 'analytics' && <AnalyticsScreen />}
         {activeTab === 'freezer' && <FreezerScreen />}
+        {activeTab === 'settings' && <SettingsScreen onDone={() => setActiveTab('today')} />}
       </View>
 
       {/* Tombol AI Chat Assistant Melayang */}
@@ -191,10 +232,11 @@ const styles = StyleSheet.create({
   },
   topHeader: {
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'android' ? 16 : 8,
-    paddingBottom: 12,
+    paddingTop: Platform.OS === 'android' ? 12 : 6,
+    paddingBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#111827',
+    borderBottomColor: COLORS.border,
+    backgroundColor: COLORS.bg,
   },
   headerContent: {
     flexDirection: 'row',
@@ -204,15 +246,16 @@ const styles = StyleSheet.create({
   brandingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
+    flex: 1,
   },
   brandIconBox: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
+    width: 36,
+    height: 36,
+    borderRadius: RADIUS.md,
     borderWidth: 1,
     borderColor: 'rgba(16, 185, 129, 0.3)',
-    backgroundColor: '#090d16',
+    backgroundColor: COLORS.card,
     overflow: 'hidden',
   },
   brandIconImage: {
@@ -226,8 +269,8 @@ const styles = StyleSheet.create({
   },
   appTitle: {
     fontSize: 16,
-    fontWeight: '800',
-    color: '#ffffff',
+    fontWeight: '900',
+    color: COLORS.text,
     letterSpacing: 0.5,
   },
   proBadge: {
@@ -242,9 +285,32 @@ const styles = StyleSheet.create({
     color: '#10b981',
   },
   appSubtitle: {
-    fontSize: 10,
-    color: '#64748b',
+    fontSize: 9,
+    color: COLORS.muted,
     marginTop: 2,
+  },
+  headerStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 5,
+    borderRadius: 8,
+    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.2)',
+    marginRight: 6,
+  },
+  headerStatusText: {
+    fontSize: 8,
+    fontWeight: '900',
+    letterSpacing: 0.8,
+    color: '#34d399',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   notificationBtn: {
     padding: 8,
@@ -255,36 +321,55 @@ const styles = StyleSheet.create({
   },
   navBar: {
     flexDirection: 'row',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    gap: 8,
-    backgroundColor: '#030712',
-    borderBottomWidth: 1,
-    borderBottomColor: '#111827',
+    paddingHorizontal: 10,
+    paddingTop: 7,
+    paddingBottom: 8,
+    gap: 4,
+    backgroundColor: COLORS.card,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    elevation: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.22,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: -8 },
+    zIndex: 20,
   },
   navTab: {
     flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    borderRadius: 10,
-    backgroundColor: '#090d16',
-    borderWidth: 1,
-    borderColor: '#1e293b',
+    gap: 2,
+    paddingVertical: 3,
+    borderRadius: RADIUS.md,
+    minHeight: 52,
+    position: 'relative',
   },
-  navTabActive: {
-    backgroundColor: 'rgba(16, 185, 129, 0.12)',
-    borderColor: '#10b981',
+  navIconWrap: {
+    width: 30,
+    height: 28,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  navIconWrapActive: {
+    backgroundColor: 'rgba(16, 185, 129, 0.10)',
   },
   navTabText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#64748b',
+    fontSize: 9,
+    fontWeight: '800',
+    color: COLORS.muted,
   },
   navTabTextActive: {
-    color: '#10b981',
+    color: COLORS.accent,
+  },
+  navActiveDot: {
+    position: 'absolute',
+    bottom: 0,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: COLORS.accent,
   },
   mainContent: {
     flex: 1,

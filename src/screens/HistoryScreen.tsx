@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -16,8 +16,11 @@ import {
   Syringe,
   MapPin,
   Activity,
+  TrendingUp,
+  FlaskConical,
 } from 'lucide-react-native';
 import { useBioStackStore } from '../store/useBioStackStore';
+import { getVialJourneys, getPeptideUsageStats } from '../utils/analyticsUtils';
 
 // Pemetaan Nama Titik Anatomi Indonesia
 const SITE_LABEL_MAP: Record<string, string> = {
@@ -60,6 +63,16 @@ export const HistoryScreen: React.FC = () => {
     ? safeHistory
     : safeHistory.filter((item) => item?.peptideName === filterPeptide);
 
+  const { inventory, freezerStock } = useBioStackStore();
+  const vialJourneys = useMemo(
+    () => getVialJourneys(Array.isArray(inventory) ? inventory : [], safeHistory),
+    [inventory, safeHistory],
+  );
+  const usageStats = useMemo(() => getPeptideUsageStats(safeHistory), [safeHistory]);
+  const mostUsed = usageStats[0];
+  const totalVolumeLogged = usageStats.reduce((sum, item) => sum + item.totalVolumeMl, 0);
+  const activeJourneyCount = vialJourneys.filter((vial) => vial.lifecycleStatus === 'active').length;
+
   const handleExportCSV = async () => {
     if (safeHistory.length === 0) {
       Alert.alert('Info', 'Belum ada data riwayat untuk diekspor.');
@@ -67,11 +80,11 @@ export const HistoryScreen: React.FC = () => {
     }
 
     try {
-      const header = 'ID,Peptida,Dosis,Satuan,Volume(mL),Titik_Injeksi,Waktu\n';
+      const header = 'ID,Peptida,Dosis,Satuan,Volume(mL),Titik_Injeksi,Waktu,Catatan\n';
       const rows = safeHistory
         .map(
           (h) =>
-            `"${h?.id || ''}","${h?.peptideName || ''}","${h?.dose || 0}","${h?.unit || ''}","${h?.volumeMl || ''}","${h?.siteId || ''}","${h?.timestamp || ''}"`
+`"${h?.id || ''}","${h?.peptideName || ''}","${h?.dose || 0}","${h?.unit || ''}","${h?.volumeMl || ''}","${h?.siteId || ''}","${h?.timestamp || ''}","${(h?.notes || '').replace(/"/g, '""')}"`
         )
         .join('\n');
 
@@ -129,6 +142,70 @@ export const HistoryScreen: React.FC = () => {
             <Trash2 size={16} color="#ef4444" />
           </TouchableOpacity>
         </View>
+      </View>
+
+      <View style={styles.insightCard}>
+        <View style={styles.insightHeader}>
+          <View style={styles.sectionTitleWithIcon}>
+            <TrendingUp size={14} color="#38bdf8" />
+            <Text style={styles.insightTitle}>Ringkasan Penggunaan</Text>
+          </View>
+          <Text style={styles.insightMeta}>{activeJourneyCount} vial aktif</Text>
+        </View>
+        <View style={styles.insightGrid}>
+          <View style={styles.insightMetric}>
+            <Text style={styles.insightValue}>{safeHistory.length}</Text>
+            <Text style={styles.insightLabel}>Total log</Text>
+          </View>
+          <View style={styles.insightMetric}>
+            <Text style={styles.insightValue}>{totalVolumeLogged.toFixed(2)}</Text>
+            <Text style={styles.insightLabel}>mL tercatat</Text>
+          </View>
+          <View style={styles.insightMetric}>
+            <Text style={styles.insightValue}>{vialJourneys.length}</Text>
+            <Text style={styles.insightLabel}>Vial tercatat</Text>
+          </View>
+        </View>
+        {mostUsed ? (
+          <View style={styles.mostUsedRow}>
+            <FlaskConical size={12} color="#10b981" />
+            <Text style={styles.mostUsedText}>Paling sering: <Text style={styles.mostUsedStrong}>{mostUsed.name}</Text> · {mostUsed.count} log</Text>
+          </View>
+        ) : null}
+      </View>
+
+      <View style={styles.vialSection}>
+        <View style={styles.insightHeader}>
+          <View style={styles.sectionTitleWithIcon}>
+            <FlaskConical size={14} color="#10b981" />
+            <Text style={styles.insightTitle}>Perjalanan Vial</Text>
+          </View>
+          <Text style={styles.insightMeta}>usage tracker</Text>
+        </View>
+        {vialJourneys.length === 0 ? (
+          <Text style={styles.vialEmpty}>Belum ada vial yang tercatat.</Text>
+        ) : (
+          vialJourneys.slice(0, 6).map((vial) => (
+            <View key={vial.id} style={styles.vialJourneyCard}>
+              <View style={styles.vialJourneyTop}>
+                <View style={styles.vialJourneyNameWrap}>
+                  <Text style={styles.vialJourneyName}>{vial.name}</Text>
+                  <Text style={styles.vialJourneyMeta}>{vial.injectionCount} log · {vial.notesCount} catatan</Text>
+                </View>
+                <Text style={styles.vialJourneyPercent}>{vial.usagePercent}%</Text>
+              </View>
+              <View style={styles.progressTrack}>
+                <View style={[styles.progressFill, { width: `${vial.usagePercent}%` }]} />
+              </View>
+              <View style={styles.vialJourneyBottom}>
+                <Text style={styles.vialJourneyMeta}>{vial.usedVolumeMl.toFixed(2)} / {vial.initialVolumeMl.toFixed(2)} mL tercatat</Text>
+                <Text style={styles.vialJourneyMeta}>
+                  {vial.nextScheduledDate ? `Next ${vial.nextScheduledDate} ${vial.nextScheduledTime || ''}` : 'Tidak ada jadwal'}
+                </Text>
+              </View>
+            </View>
+          ))
+        )}
       </View>
 
       {/* Filter Peptida */}
@@ -217,8 +294,14 @@ export const HistoryScreen: React.FC = () => {
 
               <View style={styles.logFooter}>
                 <Calendar size={11} color="#64748b" />
-                <Text style={styles.timestampText}>{item.timestamp || '-'}</Text>
+                <Text style={styles.timestampText}>{item.recordedAtLocal || item.timestamp || '-'}</Text>
               </View>
+              {item.notes ? (
+                <View style={styles.notesRow}>
+                  <Text style={styles.notesLabel}>Catatan:</Text>
+                  <Text style={styles.notesText}>{item.notes}</Text>
+                </View>
+              ) : null}
             </View>
           );
         }}
@@ -278,6 +361,132 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#1e293b',
   },
+
+  insightCard: {
+    backgroundColor: '#090d16',
+    borderWidth: 1,
+    borderColor: '#1e293b',
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 10,
+    gap: 10,
+  },
+  insightHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  insightTitle: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#ffffff',
+  },
+  insightMeta: {
+    fontSize: 8,
+    color: '#64748b',
+    fontWeight: '700',
+  },
+  sectionTitleWithIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  insightGrid: {
+    flexDirection: 'row',
+    gap: 7,
+  },
+  insightMetric: {
+    flex: 1,
+    backgroundColor: '#030712',
+    borderRadius: 10,
+    padding: 9,
+    borderWidth: 1,
+    borderColor: '#111827',
+  },
+  insightValue: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#ffffff',
+  },
+  insightLabel: {
+    marginTop: 2,
+    fontSize: 8,
+    color: '#64748b',
+  },
+  mostUsedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingTop: 3,
+  },
+  mostUsedText: {
+    fontSize: 8,
+    color: '#94a3b8',
+  },
+  mostUsedStrong: {
+    color: '#ffffff',
+    fontWeight: '800',
+  },
+  vialSection: {
+    backgroundColor: '#090d16',
+    borderWidth: 1,
+    borderColor: '#1e293b',
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 10,
+    gap: 9,
+  },
+  vialEmpty: {
+    color: '#64748b',
+    fontSize: 9,
+  },
+  vialJourneyCard: {
+    backgroundColor: '#030712',
+    borderRadius: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#111827',
+    gap: 7,
+  },
+  vialJourneyTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  vialJourneyNameWrap: {
+    flex: 1,
+    paddingRight: 10,
+  },
+  vialJourneyName: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  vialJourneyMeta: {
+    color: '#64748b',
+    fontSize: 7,
+  },
+  vialJourneyPercent: {
+    color: '#10b981',
+    fontSize: 10,
+    fontWeight: '900',
+  },
+  progressTrack: {
+    height: 6,
+    backgroundColor: '#111827',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#10b981',
+    borderRadius: 4,
+  },
+  vialJourneyBottom: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
   filterScroll: {
     flexDirection: 'row',
     gap: 6,
@@ -305,7 +514,7 @@ const styles = StyleSheet.create({
     color: '#10b981',
   },
   listContainer: {
-    paddingBottom: 80,
+    paddingBottom: 104,
     gap: 8,
   },
   emptyCard: {
@@ -416,4 +625,7 @@ const styles = StyleSheet.create({
     color: '#64748b',
     fontWeight: '600',
   },
+  notesRow: { flexDirection: 'row', gap: 5, paddingTop: 5, borderTopWidth: 1, borderTopColor: '#111827' },
+  notesLabel: { color: '#64748b', fontSize: 8, fontWeight: '800' },
+  notesText: { flex: 1, color: '#94a3b8', fontSize: 8, lineHeight: 12 },
 });

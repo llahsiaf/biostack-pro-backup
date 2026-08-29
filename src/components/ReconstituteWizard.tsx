@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Modal, View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from 'react-native';
 import { X, FlaskConical, ChevronRight, Check, Info, ShieldAlert } from 'lucide-react-native';
 import { FreezerStockItem, ActiveInventoryItem } from '../types';
-import { MASTER_PEPTIDE_DATABASE } from '../database/defaultPeptides';
+import { DEFAULT_PEPTIDES } from '../database/defaultPeptides';
 
 interface ReconstituteWizardProps {
   visible: boolean;
@@ -17,15 +17,30 @@ export const ReconstituteWizard: React.FC<ReconstituteWizardProps> = ({
   onClose,
   onComplete,
 }) => {
-  if (!freezerItem) return null;
-
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const def = MASTER_PEPTIDE_DATABASE.find((p) => p.name.toLowerCase() === freezerItem.name.toLowerCase());
+  const [bacWater, setBacWater] = useState(2.0);
+  const [selectedDose, setSelectedDose] = useState(1.0);
+  const [schedule, setSchedule] = useState('Mingguan (Weekly)');
+  const [injectionTime, setInjectionTime] = useState('08:00');
 
-  const [bacWater, setBacWater] = useState<number>(freezerItem.bacWaterMl || def?.defaultBacWaterMl || 2.0);
-  const [selectedDose, setSelectedDose] = useState<number>(freezerItem.defaultDose || 1.0);
-  const [schedule, setSchedule] = useState<string>(freezerItem.schedule || 'Mingguan (Weekly)');
-  const [injectionTime, setInjectionTime] = useState<string>('08:00');
+  useEffect(() => {
+    if (!freezerItem) {
+      setStep(1);
+      return;
+    }
+
+    const def = DEFAULT_PEPTIDES.find(
+      (p) => p.name.toLowerCase() === freezerItem.name.toLowerCase()
+    );
+
+    setStep(1);
+    setBacWater(freezerItem.bacWaterMl || def?.defaultBacWater || 2.0);
+    setSelectedDose(freezerItem.defaultDose || def?.targetDose || 1.0);
+    setSchedule(freezerItem.schedule || def?.frequencyLabel || 'Mingguan (Weekly)');
+    setInjectionTime(def?.injectionTime || '08:00');
+  }, [freezerItem]);
+
+  if (!freezerItem) return null;
 
   const handleFinish = () => {
     const today = new Date().toISOString().split('T')[0];

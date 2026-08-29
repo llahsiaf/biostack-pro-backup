@@ -514,7 +514,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   listContainer: {
-    paddingBottom: 80,
+    paddingBottom: 104,
     gap: 10,
   },
   emptyCard: {

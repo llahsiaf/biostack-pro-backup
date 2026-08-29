@@ -382,7 +382,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 14,
     paddingTop: 12,
-    paddingBottom: 80,
+    paddingBottom: 104,
     gap: 12,
   },
   bannerCard: {

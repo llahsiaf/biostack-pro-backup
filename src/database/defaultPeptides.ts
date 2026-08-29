@@ -211,3 +211,17 @@ export const DEFAULT_PEPTIDES: PeptideTemplate[] = [
     injectionTime: '08:00',
   },
 ];
+
+
+// Shared body-map data used by the rotation component. Keeping this here avoids
+// duplicate site definitions and gives the SVG map a single source of truth.
+export const INJECTION_SITES = [
+  { id: 'KA', code: 'KA', name: 'Kanan Atas', desc: 'Perut kanan atas', side: 'right', cx: 124, cy: 92 },
+  { id: 'KiA', code: 'KiA', name: 'Kiri Atas', desc: 'Perut kiri atas', side: 'left', cx: 196, cy: 92 },
+  { id: 'KB', code: 'KB', name: 'Kanan Bawah', desc: 'Perut kanan bawah', side: 'right', cx: 124, cy: 188 },
+  { id: 'KiB', code: 'KiB', name: 'Kiri Bawah', desc: 'Perut kiri bawah', side: 'left', cx: 196, cy: 188 },
+];
+
+// Backward-compatible export for older components. New code should prefer
+// DEFAULT_PEPTIDES and map the fields it needs explicitly.
+export const MASTER_PEPTIDE_DATABASE = DEFAULT_PEPTIDES;

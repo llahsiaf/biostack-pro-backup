@@ -26,9 +26,15 @@ import {
   X,
   Snowflake,
   Activity,
+  Archive,
+  PauseCircle,
+  PlayCircle,
 } from 'lucide-react-native';
 import { useBioStackStore, InventoryItem, FreezerItem } from '../store/useBioStackStore';
 import { exportToAppleCalendar } from '../utils/calendarHelper';
+import { calculateInjectionMetrics, getLiquidStatus } from '../utils/injectionCalculations';
+import { getOccurrenceForDate, getNextScheduledOccurrence, getScheduleSummary } from '../utils/scheduleUtils';
+import { getTrackerSuggestedSite } from '../utils/rotationUtils';
 
 const DAYS_OF_WEEK = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 
@@ -44,12 +50,17 @@ export const InventoryScreen: React.FC = () => {
     inventory,
     freezerStock,
     currentSite,
-    logInjection,
+    recordInjection,
     removeInventoryItem,
     updateInventoryItem,
     reconstituteToFridge,
     transferLiquidToFridge,
+    archiveInventoryItem,
+    setSchedulePaused,
+    restoreInventoryItem,
   } = useBioStackStore();
+
+  const injectionHistory = useBioStackStore((state) => state.injectionHistory || []);
 
   const [isTakeFreezerModalOpen, setIsTakeFreezerModalOpen] = useState(false);
   const [selectedFreezerItem, setSelectedFreezerItem] = useState<FreezerItem | null>(null);
@@ -61,6 +72,7 @@ export const InventoryScreen: React.FC = () => {
   const [editBacWater, setEditBacWater] = useState('');
 
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [lifecycleFilter, setLifecycleFilter] = useState<'active' | 'empty' | 'archived'>('active');
   const [scheduleItem, setScheduleItem] = useState<InventoryItem | null>(null);
   const [activeDays, setActiveDays] = useState<string[]>([]);
   const [injectionTime, setInjectionTime] = useState('08:00');
@@ -69,9 +81,14 @@ export const InventoryScreen: React.FC = () => {
   const [isCycleActive, setIsCycleActive] = useState(false);
   const [isReminderActive, setIsReminderActive] = useState(true);
 
-  const inventoryList = inventory || [];
+  const allInventory = inventory || [];
+  const activeInventoryCount = allInventory.filter((item) => (item.lifecycleStatus || 'active') === 'active').length;
+  const emptyInventoryCount = allInventory.filter((item) => item.lifecycleStatus === 'empty').length;
+  const archivedInventoryCount = allInventory.filter((item) => item.lifecycleStatus === 'archived').length;
+  const inventoryList = allInventory.filter((item) => (item.lifecycleStatus || 'active') === lifecycleFilter);
   const freezerList = freezerStock || [];
   const totalFreezerVials = freezerList.reduce((acc, curr) => acc + (curr.quantity || 0), 0);
+  const scheduleSummary = getScheduleSummary(inventoryList, injectionHistory, new Date());
 
   const isInjectToday = (itemDays: string[]) => {
     const todayIndex = new Date().getDay();
@@ -79,47 +96,12 @@ export const InventoryScreen: React.FC = () => {
     return itemDays?.includes(dayMap[todayIndex]);
   };
 
-  const calculateMetrics = (item: InventoryItem, overrideDose?: string, overrideBac?: string) => {
-    const dose = overrideDose !== undefined ? parseFloat(overrideDose) || 0 : item.targetDose;
-    const bac = overrideBac !== undefined ? parseFloat(overrideBac) || 0 : item.bacWater;
-
-    if (item.unit === 'mL') {
-      const iu = Math.round(dose * 100);
-      return { volumeMl: dose.toFixed(3), iu, dialClicks: Math.round(dose * 100) };
-    }
-
-    const safeBac = bac > 0 ? bac : 2.0;
-    const concentration = item.vialSize / safeBac;
-    const vol = concentration > 0 ? dose / concentration : 0;
-    const iu = Math.round(vol * 100);
-    return { volumeMl: vol.toFixed(3), iu, dialClicks: iu };
-  };
-
-  const getLiquidStatus = (item: InventoryItem) => {
-    const initialVol = item.unit === 'mL' ? item.vialSize : (item.bacWater > 0 ? item.bacWater : 2.0);
-    const currentVol = item.currentVolumeMl !== undefined ? item.currentVolumeMl : initialVol;
-    const progressPercent = Math.max(0, Math.min(100, (currentVol / initialVol) * 100));
-
-    const metrics = calculateMetrics(item);
-    const injectVol = parseFloat(metrics.volumeMl);
-    const dosesLeft = injectVol > 0 ? Math.floor(currentVol / injectVol) : 0;
-    
-    let daysMultiplier = 7;
-    if(item.frequency === 'daily') daysMultiplier = 1;
-    if(item.frequency === '2x_week') daysMultiplier = 3.5;
-    if(item.frequency === '3x_week') daysMultiplier = 2.33;
-    
-    const daysLeft = Math.round(dosesLeft * daysMultiplier);
-
-    return { currentVol, initialVol, progressPercent, daysLeft };
-  };
-
   const handleDirectSyncCalendar = async (item: InventoryItem) => {
-    const metrics = calculateMetrics(item);
+    const metrics = calculateInjectionMetrics(item);
     await exportToAppleCalendar({
       peptideName: item.name,
       targetDose: item.targetDose,
-      unit: item.unit,
+      unit: item.doseUnit,
       activeDays: item.activeDays || ['Sen'],
       injectionTime: item.injectionTime || '08:00',
       frequencyLabel: item.frequencyLabel || 'Mingguan (Weekly)',
@@ -129,9 +111,14 @@ export const InventoryScreen: React.FC = () => {
   };
 
   const handleInjectNow = (item: InventoryItem) => {
-    const metrics = calculateMetrics(item);
-    const injectVol = parseFloat(metrics.volumeMl);
+    const metrics = calculateInjectionMetrics(item);
+    const injectVol = metrics.volumeMlNumber;
     const liquid = getLiquidStatus(item);
+
+    if (!metrics.valid || injectVol <= 0) {
+      Alert.alert('Kalkulasi Tidak Valid', 'Periksa satuan dosis, ukuran vial, dan volume pelarut pada item ini.');
+      return;
+    }
 
     if (liquid.currentVol < injectVol) {
       Alert.alert('Cairan Tidak Cukup', `Sisa cairan (${liquid.currentVol.toFixed(2)} mL) kurang dari dosis yang ditarik (${injectVol} mL). Siapkan vial baru.`);
@@ -139,20 +126,28 @@ export const InventoryScreen: React.FC = () => {
     }
 
     const now = new Date();
-    logInjection({
-      id: `log-${Date.now()}`,
-      peptideName: item.name,
-      dose: item.targetDose,
-      unit: item.unit,
-      volumeMl: metrics.volumeMl,
-      siteId: currentSite,
-      timestamp: now.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-    });
+    const trackerSite = getTrackerSuggestedSite(injectionHistory, item.id) || currentSite;
+    const recorded = recordInjection(
+      item.id,
+      {
+        id: `log-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        peptideName: item.name,
+        dose: item.targetDose,
+        unit: item.doseUnit,
+        volumeMl: metrics.volumeMl,
+        siteId: trackerSite,
+        timestamp: now.toISOString(),
+        recordedAtLocal: now.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+      },
+      injectVol,
+    );
 
-    const newVolume = Math.max(0, liquid.currentVol - injectVol);
-    updateInventoryItem(item.id, { currentVolumeMl: newVolume });
+    if (!recorded) {
+      Alert.alert('Gagal Mencatat', 'Data inventaris berubah sebelum pencatatan selesai. Coba lagi.');
+      return;
+    }
 
-    Alert.alert('Injeksi Berhasil', `${item.name} telah disuntikkan. Sisa cairan di kulkas diperbarui otomatis.`);
+    Alert.alert('Injeksi Berhasil', `${item.name} telah dicatat. Sisa cairan diperbarui otomatis.`);
   };
 
   const openEditDoseModal = (item: InventoryItem) => {
@@ -212,7 +207,8 @@ export const InventoryScreen: React.FC = () => {
           <Droplets size={18} color="#10b981" />
           <View>
             <Text style={styles.statLabel}>Aktif di Kulkas</Text>
-            <Text style={styles.statValue}>{inventoryList.length} <Text style={styles.statSub}>Vial Cair</Text></Text>
+            <Text style={styles.statValue}>{activeInventoryCount} <Text style={styles.statSub}>Vial Aktif</Text></Text>
+          <Text style={styles.statMini}>{emptyInventoryCount} kosong • {archivedInventoryCount} arsip</Text>
           </View>
         </View>
 
@@ -223,6 +219,29 @@ export const InventoryScreen: React.FC = () => {
             <Text style={styles.statValue}>{totalFreezerVials} <Text style={styles.statSub}>Vial Beku</Text></Text>
           </View>
         </View>
+        <View style={styles.scheduleStatCard}>
+          <Clock size={18} color="#f59e0b" />
+          <View>
+            <Text style={styles.statLabel}>Jadwal Hari Ini</Text>
+            <Text style={styles.statValue}>{scheduleSummary.completed}/{scheduleSummary.total}</Text>
+            <Text style={styles.statMini}>{scheduleSummary.missed} terlewat • {scheduleSummary.due} perlu dicatat</Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.lifecycleFilterRow}>
+        {(['active', 'empty', 'archived'] as const).map((filter) => {
+          const label = filter === 'active' ? `Aktif (${activeInventoryCount})` : filter === 'empty' ? `Kosong (${emptyInventoryCount})` : `Arsip (${archivedInventoryCount})`;
+          return (
+            <TouchableOpacity
+              key={filter}
+              onPress={() => setLifecycleFilter(filter)}
+              style={[styles.lifecycleFilterChip, lifecycleFilter === filter && styles.lifecycleFilterChipActive]}
+            >
+              <Text style={[styles.lifecycleFilterText, lifecycleFilter === filter && styles.lifecycleFilterTextActive]}>{label}</Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       <View style={styles.sectionHeaderRow}>
@@ -259,8 +278,13 @@ export const InventoryScreen: React.FC = () => {
         }
         renderItem={({ item }) => {
           const isToday = isInjectToday(item.activeDays);
-          const metrics = calculateMetrics(item);
+          const metrics = calculateInjectionMetrics(item);
           const liquid = getLiquidStatus(item);
+          const now = new Date();
+          const todayOccurrence = getOccurrenceForDate(item, now, now, injectionHistory);
+          const occurrence = todayOccurrence || getNextScheduledOccurrence(item, now, injectionHistory, 30);
+          const lifecycleStatus = item.lifecycleStatus || (liquid.currentVol <= 0 ? 'empty' : 'active');
+          const lifecycleLabel = lifecycleStatus === 'empty' ? 'Vial Kosong' : lifecycleStatus === 'archived' ? 'Diarsipkan' : 'Vial Aktif';
 
           return (
             <View style={styles.peptideCard}>
@@ -273,6 +297,10 @@ export const InventoryScreen: React.FC = () => {
                 </TouchableOpacity>
 
                 <View style={styles.headerActionRow}>
+                  <View style={[styles.lifecycleBadge, (lifecycleStatus === 'empty' || lifecycleStatus === 'archived') && styles.lifecycleBadgeEmpty]}>
+                    <Text style={[styles.lifecycleBadgeText, (lifecycleStatus === 'empty' || lifecycleStatus === 'archived') && styles.lifecycleBadgeTextEmpty]}>{lifecycleLabel}</Text>
+                  </View>
+
                   {isToday ? (
                     <View style={styles.badgeToday}><Text style={styles.badgeTodayText}>Injeksi Hari Ini</Text></View>
                   ) : (
@@ -287,15 +315,44 @@ export const InventoryScreen: React.FC = () => {
                     <Clock size={14} color="#94a3b8" />
                   </TouchableOpacity>
 
-                  <TouchableOpacity
-                    onPress={() => Alert.alert('Hapus Senyawa', `Keluarkan ${item.name}?`, [
-                      { text: 'Batal', style: 'cancel' },
-                      { text: 'Hapus', style: 'destructive', onPress: () => removeInventoryItem(item.id) },
-                    ])}
-                    style={styles.iconBtn}
-                  >
-                    <Trash2 size={14} color="#64748b" />
-                  </TouchableOpacity>
+                  {lifecycleStatus === 'archived' ? (
+                    <TouchableOpacity
+                      onPress={() => restoreInventoryItem(item.id)}
+                      style={styles.iconBtn}
+                      accessibilityLabel="Pulihkan vial"
+                    >
+                      <PlayCircle size={14} color="#38bdf8" />
+                    </TouchableOpacity>
+                  ) : (
+                    <>
+                      <TouchableOpacity
+                        onPress={() => {
+                          const paused = Boolean(item.schedulePaused);
+                          Alert.alert(
+                            paused ? 'Lanjutkan Jadwal' : 'Jeda Jadwal',
+                            paused ? `Lanjutkan jadwal ${item.name}?` : `Jeda sementara jadwal ${item.name}?`,
+                            [
+                              { text: 'Batal', style: 'cancel' },
+                              { text: paused ? 'Lanjutkan' : 'Jeda', onPress: () => setSchedulePaused(item.id, !paused) },
+                            ]
+                          );
+                        }}
+                        style={styles.iconBtn}
+                      >
+                        {item.schedulePaused ? <PlayCircle size={14} color="#38bdf8" /> : <PauseCircle size={14} color="#f59e0b" />}
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        onPress={() => Alert.alert('Arsipkan Vial', `Arsipkan ${item.name}? Riwayat tetap disimpan.`, [
+                          { text: 'Batal', style: 'cancel' },
+                          { text: 'Arsipkan', onPress: () => archiveInventoryItem(item.id) },
+                        ])}
+                        style={styles.iconBtn}
+                      >
+                        <Archive size={14} color="#64748b" />
+                      </TouchableOpacity>
+                    </>
+                  )}
                 </View>
               </View>
 
@@ -303,7 +360,7 @@ export const InventoryScreen: React.FC = () => {
                 <Text style={styles.categorySubText}>{item.category} • {item.frequencyLabel.replace(/_+/g, ' ')}</Text>
 
                 <View style={styles.doseMetricsGrid}>
-                  <View style={styles.metricChipDose}><Text style={styles.metricChipDoseText}>Dosis: {item.targetDose} {item.unit}</Text></View>
+                  <View style={styles.metricChipDose}><Text style={styles.metricChipDoseText}>Dosis: {item.targetDose} {item.doseUnit}</Text></View>
                   <View style={styles.metricChipSpuit}><Text style={styles.metricChipSpuitText}>Spuit: {metrics.iu} IU ({metrics.volumeMl} mL)</Text></View>
                   <View style={styles.metricChipDial}><Text style={styles.metricChipDialText}>Dial: {metrics.dialClicks} Klik</Text></View>
                 </View>
@@ -326,6 +383,19 @@ export const InventoryScreen: React.FC = () => {
                   </View>
                 </View>
 
+                {occurrence && (
+                  <View style={styles.scheduleStatusRow}>
+                    <Clock size={11} color={occurrence.status === 'missed' ? '#ef4444' : occurrence.status === 'completed' ? '#10b981' : '#f59e0b'} />
+                    <Text style={[styles.scheduleStatusText, occurrence.status === 'missed' && styles.scheduleStatusMissed]}>
+                      {occurrence.status === 'completed'
+                        ? `Hari ini selesai • ${occurrence.time}`
+                        : occurrence.status === 'missed'
+                          ? `Terlewat • jadwal ${occurrence.time}`
+                          : `Jadwal berikutnya • ${occurrence.date} ${occurrence.time}`}
+                    </Text>
+                  </View>
+                )}
+
                 <View style={styles.progressContainer}>
                   <View style={styles.progressTextRow}>
                     <View style={styles.progressTitleRow}>
@@ -344,9 +414,15 @@ export const InventoryScreen: React.FC = () => {
                 </View>
               </TouchableOpacity>
 
-              <TouchableOpacity onPress={() => handleInjectNow(item)} style={styles.injectMainBtn}>
-                <Syringe size={15} color="#022c22" />
-                <Text style={styles.injectMainBtnText}>Suntik Sekarang ({currentSite})</Text>
+              <TouchableOpacity
+                onPress={() => handleInjectNow(item)}
+                disabled={lifecycleStatus !== 'active' || Boolean(item.schedulePaused)}
+                style={[styles.injectMainBtn, (lifecycleStatus !== 'active' || item.schedulePaused) && styles.injectMainBtnDisabled]}
+              >
+                <Syringe size={15} color={(lifecycleStatus === 'empty' || item.schedulePaused) ? '#64748b' : '#022c22'} />
+                <Text style={[styles.injectMainBtnText, (lifecycleStatus !== 'active' || item.schedulePaused) && styles.injectMainBtnTextDisabled]}>
+                  {lifecycleStatus === 'empty' ? 'Vial Kosong' : lifecycleStatus === 'archived' ? 'Vial Diarsipkan' : item.schedulePaused ? 'Jadwal Dijeda' : `Suntik Sekarang (${currentSite})`}
+                </Text>
               </TouchableOpacity>
             </View>
           );
@@ -358,7 +434,7 @@ export const InventoryScreen: React.FC = () => {
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.doseModalOverlay}>
           <View style={styles.doseModalBox}>
             {editingItem && (() => {
-              const liveMetrics = calculateMetrics(editingItem, editTargetDose, editBacWater);
+              const liveMetrics = calculateInjectionMetrics(editingItem, editTargetDose, editBacWater);
               const iuPercent = Math.min(100, Math.max(0, liveMetrics.iu));
               const svgWidth = 280;
               const fillWidth = (iuPercent / 100) * 180;
@@ -650,13 +726,20 @@ const styles = StyleSheet.create({
   statLabel: { fontSize: 9, color: '#64748b', fontWeight: '700' },
   statValue: { fontSize: 14, fontWeight: '800', color: '#ffffff' },
   statSub: { fontSize: 10, fontWeight: '400', color: '#94a3b8' },
+  statMini: { fontSize: 8, color: '#64748b', marginTop: 2 },
+  scheduleStatCard: { flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: '#090d16', borderWidth: 1, borderColor: '#1e293b', borderRadius: 12, padding: 10, gap: 10 },
   sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   sectionTitleWithIcon: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   sectionTitle: { fontSize: 13, fontWeight: '800', color: '#ffffff' },
   sectionSub: { fontSize: 9, color: '#64748b' },
+  lifecycleFilterRow: { flexDirection: 'row', gap: 6, marginBottom: 8 },
+  lifecycleFilterChip: { paddingHorizontal: 9, paddingVertical: 5, borderRadius: 8, backgroundColor: '#090d16', borderWidth: 1, borderColor: '#1e293b' },
+  lifecycleFilterChipActive: { backgroundColor: 'rgba(16, 185, 129, 0.12)', borderColor: '#10b981' },
+  lifecycleFilterText: { fontSize: 9, fontWeight: '800', color: '#64748b' },
+  lifecycleFilterTextActive: { color: '#10b981' },
   takeFreezerBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#10b981', paddingHorizontal: 8, paddingVertical: 5, borderRadius: 8 },
   takeFreezerBtnText: { fontSize: 10, fontWeight: '800', color: '#022c22' },
-  listContainer: { paddingBottom: 80, gap: 12 },
+  listContainer: { paddingBottom: 104, gap: 12 },
   emptyCard: { backgroundColor: '#090d16', borderWidth: 1, borderColor: '#1e293b', borderRadius: 14, padding: 24, alignItems: 'center', gap: 8, marginTop: 20 },
   emptyTitle: { fontSize: 13, fontWeight: '800', color: '#ffffff' },
   emptySub: { fontSize: 10, color: '#64748b', textAlign: 'center' },
@@ -666,6 +749,10 @@ const styles = StyleSheet.create({
   peptideName: { fontSize: 14, fontWeight: '800', color: '#ffffff' },
   vialBadge: { backgroundColor: '#1e293b', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
   vialBadgeText: { fontSize: 9, fontWeight: '700', color: '#94a3b8' },
+  lifecycleBadge: { backgroundColor: 'rgba(16, 185, 129, 0.10)', borderWidth: 1, borderColor: 'rgba(16, 185, 129, 0.35)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
+  lifecycleBadgeEmpty: { backgroundColor: 'rgba(100, 116, 139, 0.12)', borderColor: '#334155' },
+  lifecycleBadgeText: { fontSize: 8, fontWeight: '800', color: '#10b981' },
+  lifecycleBadgeTextEmpty: { color: '#94a3b8' },
   headerActionRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   badgeToday: { backgroundColor: 'rgba(16, 185, 129, 0.15)', borderWidth: 1, borderColor: '#10b981', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
   badgeTodayText: { fontSize: 9, fontWeight: '800', color: '#10b981' },
@@ -689,6 +776,9 @@ const styles = StyleSheet.create({
   dayDotTextActive: { color: '#022c22' },
   timeTag: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   timeTagText: { fontSize: 10, fontWeight: '800', color: '#ffffff' },
+  scheduleStatusRow: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#030712', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 6 },
+  scheduleStatusText: { fontSize: 9, color: '#f59e0b', fontWeight: '700' },
+  scheduleStatusMissed: { color: '#ef4444' },
   progressContainer: { backgroundColor: '#030712', borderRadius: 8, borderWidth: 1, borderColor: '#1e293b', padding: 8, gap: 4, marginVertical: 4 },
   progressTextRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   progressTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
@@ -699,12 +789,14 @@ const styles = StyleSheet.create({
   progressFooterRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 },
   progressFooterText: { fontSize: 8, color: '#64748b' },
   injectMainBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: '#10b981', paddingVertical: 10, borderRadius: 10, marginTop: 4 },
+  injectMainBtnDisabled: { backgroundColor: '#111827', borderColor: '#334155' },
+  injectMainBtnTextDisabled: { color: '#64748b' },
   injectMainBtnText: { fontSize: 12, fontWeight: '800', color: '#022c22' },
 
   // STYLES MODAL DOSIS PRESISI
   doseModalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.85)', justifyContent: 'flex-end' },
   doseModalBox: { backgroundColor: '#0f172a', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 18, height: '85%' },
-  doseModalScroll: { paddingBottom: 40, gap: 14 },
+  doseModalScroll: { paddingBottom: 104, gap: 14 },
   doseModalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   doseModalTitle: { fontSize: 18, fontWeight: '900', color: '#ffffff' },
   doseModalSub: { fontSize: 11, color: '#94a3b8', marginTop: 2 },

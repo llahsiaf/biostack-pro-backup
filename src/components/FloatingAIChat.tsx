@@ -40,13 +40,13 @@ export const FloatingAIChat: React.FC = () => {
   const [apiKey, setApiKey] = useState('');
   const [aiProvider, setAiProvider] = useState<'gemini' | 'openai'>('gemini');
 
-  const { inventory } = useBioStackStore();
+  const { inventory, settings, updateSettings } = useBioStackStore();
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome',
       sender: 'ai',
-      text: 'Halo. Saya BioStack AI Assistant. Tanyakan informasi seputar dosis peptida, kalkulasi pelarutan BAC water, waktu paruh, atau protokol rotasi injeksi Anda.',
+      text: 'Halo. Saya BioStack AI Assistant. Saya dapat membantu membaca jadwal, inventory, riwayat, dan statistik tracker Anda. Untuk privasi, mode online tetap OFF sampai Anda mengaktifkannya.',
       time: '00:00',
     },
   ]);
@@ -63,6 +63,7 @@ export const FloatingAIChat: React.FC = () => {
   const saveSettings = async () => {
     await AsyncStorage.setItem('@biostack_api_key', apiKey.trim());
     await AsyncStorage.setItem('@biostack_ai_provider', aiProvider);
+    updateSettings({ aiProvider });
     setActiveView('chat');
     Alert.alert('Sukses', 'Pengaturan API Key berhasil disimpan.');
   };
@@ -88,6 +89,18 @@ export const FloatingAIChat: React.FC = () => {
       let replyText = '';
 
       if (apiKey.trim()) {
+        if (!settings?.allowAiNetwork) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `ai-private-${Date.now()}`,
+              sender: 'ai',
+              text: 'Mode AI online sedang OFF untuk menjaga privasi. Aktifkan “Izinkan koneksi AI online” di Pengaturan BioStack bila Anda ingin mengirim pertanyaan ke provider AI.',
+              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            },
+          ]);
+          return;
+        }
         if (aiProvider === 'gemini') {
           const response = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.trim()}`,
@@ -196,8 +209,12 @@ export const FloatingAIChat: React.FC = () => {
                     </View>
                     <View>
                       <Text style={styles.headerTitle}>BioStack AI Expert</Text>
-                      <Text style={styles.headerSubtitle}>
-                        {apiKey ? `Connected (${aiProvider.toUpperCase()})` : 'Offline Knowledge Mode'}
+                                      <Text style={styles.headerSubtitle}>
+                        {apiKey && settings?.allowAiNetwork
+                          ? `Connected (${aiProvider.toUpperCase()})`
+                          : settings?.allowAiNetwork
+                            ? 'Offline Knowledge Mode'
+                            : 'Privacy Mode • Online AI OFF'}
                       </Text>
                     </View>
                   </View>
@@ -333,6 +350,12 @@ export const FloatingAIChat: React.FC = () => {
                     secureTextEntry
                   />
 
+                  <View style={styles.settingsPrivacyNote}>
+                    <Text style={styles.settingsPrivacyText}>
+                      Koneksi AI online hanya digunakan saat izin privasi di Pengaturan BioStack diaktifkan. API key tidak masuk ke backup data BioStack.
+                    </Text>
+                  </View>
+
                   <TouchableOpacity onPress={saveSettings} style={styles.saveKeyBtn}>
                     <Check size={16} color="#022c22" />
                     <Text style={styles.saveKeyBtnText}>Simpan Pengaturan</Text>
@@ -354,8 +377,8 @@ export const FloatingAIChat: React.FC = () => {
 const styles = StyleSheet.create({
   floatingButton: {
     position: 'absolute',
-    bottom: 24,
-    right: 20,
+    bottom: 92,
+    right: 18,
     width: 52,
     height: 52,
     borderRadius: 26,
@@ -572,6 +595,19 @@ const styles = StyleSheet.create({
     padding: 12,
     color: '#ffffff',
     fontSize: 12,
+  },
+  settingsPrivacyNote: {
+    marginTop: 12,
+    padding: 10,
+    borderRadius: 10,
+    backgroundColor: 'rgba(56,189,248,.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(56,189,248,.18)',
+  },
+  settingsPrivacyText: {
+    fontSize: 9,
+    lineHeight: 14,
+    color: '#94a3b8',
   },
   saveKeyBtn: {
     flexDirection: 'row',
