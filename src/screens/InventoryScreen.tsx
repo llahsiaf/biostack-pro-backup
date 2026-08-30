@@ -2337,68 +2337,76 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#030712',
     paddingHorizontal: 14,
-    paddingTop: 8,
+    paddingTop: 10,
   },
 
   statsRow: {
     flexDirection: 'row',
-    gap: 10,
-    marginBottom: 10,
+    gap: 8,
+    marginBottom: 12,
   },
 
   statCard: {
     flex: 1,
+    minHeight: 72,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#090d16',
+    backgroundColor: '#080d17',
     borderWidth: 1,
-    borderColor: '#1e293b',
-    borderRadius: 12,
-    padding: 10,
-    gap: 10,
+    borderColor: '#172235',
+    borderRadius: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 9,
+    gap: 8,
   },
 
   statLabel: {
-    fontSize: 9,
-    color: '#64748b',
-    fontWeight: '700',
+    fontSize: 8,
+    color: '#71819a',
+    fontWeight: '800',
+    letterSpacing: 0.25,
   },
 
   statValue: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#ffffff',
+    fontSize: 16,
+    lineHeight: 18,
+    fontWeight: '900',
+    color: '#f8fafc',
   },
 
   statSub: {
-    fontSize: 10,
-    fontWeight: '400',
-    color: '#94a3b8',
+    fontSize: 9,
+    fontWeight: '500',
+    color: '#8b9ab1',
   },
 
   statMini: {
     fontSize: 8,
-    color: '#64748b',
-    marginTop: 2,
+    lineHeight: 11,
+    color: '#617089',
+    marginTop: 3,
   },
 
   scheduleStatCard: {
     flex: 1,
+    minHeight: 72,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#090d16',
+    backgroundColor: '#080d17',
     borderWidth: 1,
-    borderColor: '#1e293b',
-    borderRadius: 12,
-    padding: 10,
-    gap: 10,
+    borderColor: '#172235',
+    borderRadius: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 9,
+    gap: 8,
   },
 
   sectionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginTop: 2,
+    marginBottom: 10,
   },
 
   sectionTitleWithIcon: {
@@ -2408,41 +2416,42 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '900',
+    color: '#f8fafc',
+    letterSpacing: -0.2,
   },
 
   sectionSub: {
-    fontSize: 9,
-    color: '#64748b',
+    fontSize: 10,
+    color: '#687991',
+    marginTop: 2,
   },
 
   lifecycleFilterRow: {
     flexDirection: 'row',
-    gap: 6,
-    marginBottom: 8,
+    gap: 8,
+    marginBottom: 12,
   },
 
   lifecycleFilterChip: {
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-    borderRadius: 8,
-    backgroundColor: '#090d16',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 10,
+    backgroundColor: '#080d17',
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#1c2a3f',
   },
 
   lifecycleFilterChipActive: {
-    backgroundColor:
-      'rgba(16, 185, 129, 0.12)',
+    backgroundColor: 'rgba(16, 185, 129, 0.12)',
     borderColor: '#10b981',
   },
 
   lifecycleFilterText: {
-    fontSize: 9,
-    fontWeight: '800',
-    color: '#64748b',
+    fontSize: 10,
+    fontWeight: '900',
+    color: '#687991',
   },
 
   lifecycleFilterTextActive: {
@@ -2452,22 +2461,22 @@ const styles = StyleSheet.create({
   takeFreezerBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
     backgroundColor: '#10b981',
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    borderRadius: 8,
+    paddingHorizontal: 13,
+    paddingVertical: 9,
+    borderRadius: 11,
   },
 
   takeFreezerBtnText: {
     fontSize: 10,
-    fontWeight: '800',
+    fontWeight: '900',
     color: '#022c22',
   },
 
   listContainer: {
-    paddingBottom: 104,
-    gap: 12,
+    paddingBottom: 110,
+    gap: 14,
   },
 
   emptyCard: {
@@ -2494,31 +2503,39 @@ const styles = StyleSheet.create({
   },
 
   peptideCard: {
-    backgroundColor: '#090d16',
-    borderRadius: 14,
+    backgroundColor: '#080d17',
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#1e293b',
-    padding: 14,
-    gap: 9,
+    borderColor: '#1a2940',
+    padding: 15,
+    gap: 11,
+    shadowColor: '#000000',
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 3,
   },
 
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    gap: 8,
   },
 
   cardTitleBlock: {
     flex: 1,
     minWidth: 0,
-    gap: 3,
+    gap: 4,
+    paddingTop: 1,
   },
 
   titleLine: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 7,
     minWidth: 0,
+    paddingRight: 2,
   },
 
   statusRow: {
@@ -2551,33 +2568,37 @@ const styles = StyleSheet.create({
   },
 
   peptideName: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#ffffff',
+    flexShrink: 1,
+    fontSize: 17,
+    lineHeight: 20,
+    fontWeight: '900',
+    color: '#f8fafc',
+    letterSpacing: -0.2,
   },
 
   vialBadge: {
-    backgroundColor: '#1e293b',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
+    backgroundColor: '#111c2d',
+    borderWidth: 1,
+    borderColor: '#23334b',
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+    borderRadius: 8,
+    flexShrink: 0,
   },
 
   vialBadgeText: {
     fontSize: 9,
-    fontWeight: '700',
-    color: '#94a3b8',
+    fontWeight: '800',
+    color: '#91a1b8',
   },
 
   lifecycleBadge: {
-    backgroundColor:
-      'rgba(16, 185, 129, 0.10)',
+    backgroundColor: 'rgba(16, 185, 129, 0.10)',
     borderWidth: 1,
-    borderColor:
-      'rgba(16, 185, 129, 0.35)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
+    borderColor: 'rgba(16, 185, 129, 0.35)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
 
   lifecycleBadgeEmpty: {
@@ -2587,8 +2608,8 @@ const styles = StyleSheet.create({
   },
 
   lifecycleBadgeText: {
-    fontSize: 8,
-    fontWeight: '800',
+    fontSize: 9,
+    fontWeight: '900',
     color: '#10b981',
   },
 
@@ -2599,110 +2620,130 @@ const styles = StyleSheet.create({
   headerActionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
-    marginLeft: 6,
+    gap: 4,
+    marginLeft: 2,
+    paddingLeft: 2,
   },
 
   badgeToday: {
-    backgroundColor:
-      'rgba(16, 185, 129, 0.15)',
+    backgroundColor: 'rgba(16, 185, 129, 0.12)',
     borderWidth: 1,
-    borderColor: '#10b981',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
+    borderColor: 'rgba(16, 185, 129, 0.55)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
 
   badgeTodayText: {
     fontSize: 9,
-    fontWeight: '800',
+    fontWeight: '900',
     color: '#10b981',
   },
 
   badgeRest: {
-    backgroundColor: '#1e293b',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
+    backgroundColor: '#111c2d',
+    borderWidth: 1,
+    borderColor: '#23334b',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
 
   badgeRestText: {
     fontSize: 9,
-    fontWeight: '700',
-    color: '#64748b',
+    fontWeight: '800',
+    color: '#71819a',
   },
 
   iconBtn: {
-    padding: 4,
+    width: 30,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 9,
+    backgroundColor: '#0c1422',
+    borderWidth: 1,
+    borderColor: '#1b2a40',
   },
 
   categorySubText: {
     fontSize: 10,
-    color: '#64748b',
+    color: '#71819a',
+    fontWeight: '600',
   },
 
   doseMetricsGrid: {
     flexDirection: 'row',
-    gap: 6,
+    gap: 7,
     marginVertical: 4,
   },
 
   metricChipDose: {
-    backgroundColor:
-      'rgba(245, 158, 11, 0.1)',
+    flex: 1,
+    minHeight: 44,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(245, 158, 11, 0.08)',
     borderWidth: 1,
-    borderColor:
-      'rgba(245, 158, 11, 0.3)',
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 6,
+    borderColor: 'rgba(245, 158, 11, 0.25)',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 10,
   },
 
   metricChipDoseText: {
     fontSize: 10,
-    fontWeight: '800',
+    lineHeight: 13,
+    fontWeight: '900',
     color: '#f59e0b',
+    textAlign: 'center',
   },
 
   metricChipSpuit: {
-    backgroundColor:
-      'rgba(6, 182, 212, 0.1)',
+    flex: 1,
+    minHeight: 44,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(6, 182, 212, 0.08)',
     borderWidth: 1,
-    borderColor:
-      'rgba(6, 182, 212, 0.3)',
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 6,
+    borderColor: 'rgba(6, 182, 212, 0.25)',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 10,
   },
 
   metricChipSpuitText: {
     fontSize: 10,
-    fontWeight: '800',
+    lineHeight: 13,
+    fontWeight: '900',
     color: '#06b6d4',
+    textAlign: 'center',
   },
 
   metricChipDial: {
-    backgroundColor:
-      'rgba(56, 189, 248, 0.1)',
+    flex: 1,
+    minHeight: 44,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(56, 189, 248, 0.08)',
     borderWidth: 1,
-    borderColor:
-      'rgba(56, 189, 248, 0.3)',
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 6,
+    borderColor: 'rgba(56, 189, 248, 0.25)',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 10,
   },
 
   metricChipDialText: {
     fontSize: 10,
-    fontWeight: '800',
+    lineHeight: 13,
+    fontWeight: '900',
     color: '#38bdf8',
+    textAlign: 'center',
   },
 
   daysRowContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginVertical: 4,
+    gap: 7,
+    marginVertical: 3,
+    paddingHorizontal: 1,
   },
 
   daysRowLabel: {
@@ -2719,22 +2760,22 @@ const styles = StyleSheet.create({
 
   dayDot: {
     paddingHorizontal: 5,
-    paddingVertical: 2,
-    borderRadius: 4,
+    paddingVertical: 3,
+    borderRadius: 6,
     backgroundColor: '#030712',
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#1b2a3f',
   },
 
   dayDotActive: {
-    backgroundColor: '#10b981',
+    backgroundColor: 'rgba(16, 185, 129, 0.92)',
     borderColor: '#10b981',
   },
 
   dayDotText: {
     fontSize: 8,
-    color: '#64748b',
-    fontWeight: '700',
+    color: '#65758d',
+    fontWeight: '800',
   },
 
   dayDotTextActive: {
@@ -2744,29 +2785,39 @@ const styles = StyleSheet.create({
   timeTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
+    gap: 4,
+    backgroundColor: '#0c1422',
+    borderWidth: 1,
+    borderColor: '#1b2a40',
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+    borderRadius: 7,
   },
 
   timeTagText: {
     fontSize: 10,
-    fontWeight: '800',
-    color: '#ffffff',
+    fontWeight: '900',
+    color: '#f8fafc',
   },
 
   scheduleStatusRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    backgroundColor: '#030712',
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
+    gap: 6,
+    backgroundColor: '#050a12',
+    borderWidth: 1,
+    borderColor: '#111d2e',
+    borderRadius: 9,
+    paddingHorizontal: 9,
+    paddingVertical: 7,
   },
 
   scheduleStatusText: {
+    flex: 1,
     fontSize: 9,
+    lineHeight: 13,
     color: '#f59e0b',
-    fontWeight: '700',
+    fontWeight: '800',
   },
 
   scheduleStatusMissed: {
@@ -2774,13 +2825,13 @@ const styles = StyleSheet.create({
   },
 
   progressContainer: {
-    backgroundColor: '#030712',
-    borderRadius: 8,
+    backgroundColor: '#050a12',
+    borderRadius: 11,
     borderWidth: 1,
-    borderColor: '#1e293b',
-    padding: 8,
-    gap: 4,
-    marginVertical: 4,
+    borderColor: '#18263a',
+    padding: 10,
+    gap: 6,
+    marginVertical: 3,
   },
 
   progressTextRow: {
@@ -2797,20 +2848,20 @@ const styles = StyleSheet.create({
 
   progressTitle: {
     fontSize: 10,
-    fontWeight: '800',
+    fontWeight: '900',
     color: '#38bdf8',
   },
 
   progressPercentText: {
     fontSize: 9,
-    fontWeight: '700',
+    fontWeight: '900',
     color: '#38bdf8',
   },
 
   progressBarBg: {
-    height: 4,
-    backgroundColor: '#1e293b',
-    borderRadius: 2,
+    height: 6,
+    backgroundColor: '#18263a',
+    borderRadius: 3,
     overflow: 'hidden',
   },
 
@@ -2828,17 +2879,18 @@ const styles = StyleSheet.create({
 
   progressFooterText: {
     fontSize: 8,
-    color: '#64748b',
+    color: '#687991',
+    fontWeight: '600',
   },
 
   injectMainBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: 7,
     backgroundColor: '#10b981',
-    paddingVertical: 9,
-    borderRadius: 10,
+    paddingVertical: 12,
+    borderRadius: 12,
     marginTop: 3,
   },
 
@@ -2853,7 +2905,7 @@ const styles = StyleSheet.create({
 
   injectMainBtnText: {
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '900',
     color: '#022c22',
   },
 
