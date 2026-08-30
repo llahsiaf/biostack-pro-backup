@@ -377,7 +377,7 @@ export const FloatingAIChat: React.FC = () => {
 const styles = StyleSheet.create({
   floatingButton: {
     position: 'absolute',
-    bottom: 92,
+    bottom: 126,
     right: 18,
     width: 52,
     height: 52,
