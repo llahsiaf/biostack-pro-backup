@@ -46,6 +46,15 @@ Notifications.setNotificationHandler({
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'today' | 'inventory' | 'rotation' | 'history' | 'freezer' | 'analytics' | 'settings'>('today');
+  const [notificationTarget, setNotificationTarget] = useState<{ inventoryId?: string; date?: string } | null>(null);
+  const injectionHistory = useBioStackStore((state) => state.injectionHistory || []);
+  const inventory = useBioStackStore((state) => state.inventory || []);
+  const notificationInventoryKey = inventory
+    .map(({ notificationIds, ...item }) => JSON.stringify(item))
+    .join('|');
+  const notificationLogKey = injectionHistory
+    .map((log) => `${log.id}:${log.timestamp}`)
+    .join('|');
 
   // Mendaftarkan Izin Notifikasi ke Sistem iOS secara otomatis saat startup
   useEffect(() => {
@@ -67,8 +76,10 @@ export default function App() {
         }
 
         if (status === 'granted') {
-          const inventory = useBioStackStore.getState().inventory || [];
-          const idsByInventory = await rebuildScheduleReminders(inventory, 30);
+          const currentState = useBioStackStore.getState();
+          const currentInventory = currentState.inventory || [];
+          const currentLogs = currentState.injectionHistory || [];
+          const idsByInventory = await rebuildScheduleReminders(currentInventory, 30, currentLogs);
           for (const [inventoryId, ids] of idsByInventory.entries()) {
             useBioStackStore.getState().setNotificationIds(inventoryId, ids);
           }
@@ -82,11 +93,67 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const subscription = Notifications.addNotificationResponseReceivedListener(() => {
+    const handleResponse = (response: Notifications.NotificationResponse) => {
+      const data = response.notification.request.content.data as
+        | { kind?: string; inventoryId?: string; date?: string }
+        | undefined;
+
+      if (data?.kind === 'schedule') {
+        setNotificationTarget({
+          inventoryId: data.inventoryId,
+          date: data.date,
+        });
+      } else {
+        setNotificationTarget(null);
+      }
+
       setActiveTab('today');
+    };
+
+    const subscription = Notifications.addNotificationResponseReceivedListener(handleResponse);
+
+    void Notifications.getLastNotificationResponseAsync().then((response) => {
+      if (response) handleResponse(response);
     });
+
     return () => subscription.remove();
   }, []);
+
+  /**
+   * Sinkronisasi reminder setelah log atau konfigurasi inventory berubah.
+   * Ini memastikan reminder 5 menit sebelumnya tidak tetap tersisa
+   * setelah aktivitas sudah dicatat.
+   */
+  useEffect(() => {
+    let cancelled = false;
+
+    const syncReminders = async () => {
+      try {
+        const permission = await getNotificationPermission();
+        if (permission.status !== 'granted') return;
+
+        const idsByInventory = await rebuildScheduleReminders(
+          inventory,
+          30,
+          injectionHistory,
+        );
+
+        if (cancelled) return;
+
+        for (const [inventoryId, ids] of idsByInventory.entries()) {
+          useBioStackStore.getState().setNotificationIds(inventoryId, ids);
+        }
+      } catch (error) {
+        // Reminder adalah fitur opsional; jangan mengganggu tracker jika gagal.
+      }
+    };
+
+    void syncReminders();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [notificationInventoryKey, notificationLogKey]);
 
   // Fungsi Pemicu Izin Manual (Tombol Lonceng)
   const handleManualNotificationRequest = async () => {
@@ -210,7 +277,12 @@ export default function App() {
 
       {/* Tampilan Konten Layar Aktif */}
       <View style={styles.mainContent}>
-        {activeTab === 'today' && <TodayScreen onOpenInventory={() => setActiveTab('inventory')} />}
+        {activeTab === 'today' && (
+          <TodayScreen
+            onOpenInventory={() => setActiveTab('inventory')}
+            notificationTarget={notificationTarget}
+          />
+        )}
         {activeTab === 'inventory' && <InventoryScreen />}
         {activeTab === 'rotation' && <RotationScreen />}
         {activeTab === 'history' && <HistoryScreen />}
