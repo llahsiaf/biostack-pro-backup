@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -54,7 +54,10 @@ const formatDayNumber = (date: Date) => String(date.getDate()).padStart(2, '0');
 
 const formatTime = (value: string) => value || '08:00';
 
-export const TodayScreen: React.FC<{ onOpenInventory?: () => void }> = ({ onOpenInventory }) => {
+export const TodayScreen: React.FC<{
+  onOpenInventory?: () => void;
+  notificationTarget?: { inventoryId?: string; date?: string } | null;
+}> = ({ onOpenInventory, notificationTarget }) => {
   const { inventory, freezerStock, injectionHistory, currentSite, recordInjection } = useBioStackStore();
   const now = new Date();
   const [selectedDate, setSelectedDate] = useState<Date>(now);
@@ -64,7 +67,27 @@ export const TodayScreen: React.FC<{ onOpenInventory?: () => void }> = ({ onOpen
   const [quickLogDose, setQuickLogDose] = useState('');
   const [quickLogSite, setQuickLogSite] = useState(currentSite);
   const [quickLogNotes, setQuickLogNotes] = useState('');
+  const [highlightedInventoryId, setHighlightedInventoryId] = useState<string | null>(null);
+  const scrollRef = useRef<ScrollView>(null);
 
+  useEffect(() => {
+    if (!notificationTarget?.inventoryId) return;
+
+    setHighlightedInventoryId(notificationTarget.inventoryId);
+
+    if (notificationTarget.date) {
+      const [year, month, day] = notificationTarget.date.split('-').map(Number);
+      if (year && month && day) {
+        setSelectedDate(new Date(year, month - 1, day));
+      }
+    }
+
+    const timer = setTimeout(() => {
+      setHighlightedInventoryId(null);
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [notificationTarget?.inventoryId, notificationTarget?.date]);
 
   const safeInventory = Array.isArray(inventory) ? inventory : [];
   const safeLogs = Array.isArray(injectionHistory) ? injectionHistory : [];
@@ -165,6 +188,69 @@ export const TodayScreen: React.FC<{ onOpenInventory?: () => void }> = ({ onOpen
     setIsQuickLogOpen(false);
   };
 
+  const handleScheduledLog = (occurrence: ScheduledOccurrence) => {
+    const item = safeInventory.find((entry) => entry.id === occurrence.inventoryId);
+
+    if (!item) {
+      Alert.alert('Peptide tidak ditemukan', 'Data peptide ini sudah tidak tersedia di Inventory.');
+      return;
+    }
+
+    const metrics = calculateInjectionMetrics(item);
+
+    if (!metrics.valid || metrics.volumeMlNumber <= 0) {
+      Alert.alert('Data belum valid', 'Periksa konfigurasi dosis dan dial peptide di Inventory.');
+      return;
+    }
+
+    const currentVolume = item.currentVolumeMl ?? metrics.volumeMlNumber;
+
+    if (currentVolume < metrics.volumeMlNumber) {
+      Alert.alert('Cairan tidak cukup', 'Sisa cairan pada vial tidak mencukupi untuk pencatatan ini.');
+      return;
+    }
+
+    const suggestedSite = getTrackerSuggestedSite(safeLogs, item.id) || currentSite;
+
+    Alert.alert(
+      occurrence.status === 'missed' ? 'Catat aktivitas terlewat' : 'Konfirmasi pencatatan',
+      `${item.name}\nJadwal ${occurrence.time}\nDial ${metrics.dialClicks} klik`,
+      [
+        { text: 'Batal', style: 'cancel' },
+        {
+          text: 'Konfirmasi',
+          onPress: () => {
+            const actual = new Date();
+            const recorded = recordInjection(
+              item.id,
+              {
+                id: `log-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+                peptideName: item.name,
+                dose: item.targetDose,
+                unit: item.doseUnit,
+                volumeMl: metrics.volumeMl,
+                siteId: suggestedSite,
+                timestamp: actual.toISOString(),
+                inventoryId: item.id,
+                recordedAtLocal: actual.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+                dateStr: formatLocalDate(actual),
+                timeStr: actual.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+              },
+              metrics.volumeMlNumber,
+            );
+
+            if (!recorded) {
+              Alert.alert('Gagal mencatat', 'Data vial berubah atau volume tidak mencukupi. Coba ulangi.');
+              return;
+            }
+
+            Alert.alert('Tercatat', `${item.name} berhasil dicatat pada ${actual.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}.`);
+          },
+        },
+      ],
+    );
+  };
+
   const selectDate = (date: Date) => setSelectedDate(new Date(date));
   const isToday = formatLocalDate(selectedDate) === formatLocalDate(now);
   const statusIcon = (status: ScheduledOccurrence['status']) => {
@@ -175,7 +261,7 @@ export const TodayScreen: React.FC<{ onOpenInventory?: () => void }> = ({ onOpen
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+    <ScrollView ref={scrollRef} style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <View style={styles.heroCard}>
         <View style={styles.heroTopRow}>
           <View style={styles.heroIconBox}><Activity size={19} color="#10b981" /></View>
@@ -244,28 +330,67 @@ export const TodayScreen: React.FC<{ onOpenInventory?: () => void }> = ({ onOpen
           <EmptyState text="Tidak ada jadwal atau log pada tanggal ini." />
         ) : (
           <View style={styles.activityList}>
-            {selectedOccurrences.map((occurrence) => (
-              <View key={`${occurrence.inventoryId}-${occurrence.date}`} style={styles.activityRow}>
-                <View style={styles.statusIcon}>{statusIcon(occurrence.status)}</View>
-                <View style={styles.activityMain}>
-                  <Text style={styles.activityTitle}>{occurrence.peptideName}</Text>
-                  <Text style={styles.activitySub}>{occurrence.time} • {getOccurrenceStatusLabel(occurrence)}</Text>
+            {selectedOccurrences.map((occurrence) => {
+              const occurrenceLog = selectedLogs
+                .filter((log) => log.inventoryId === occurrence.inventoryId)
+                .sort((a, b) => String(a.timestamp).localeCompare(String(b.timestamp)))[0];
+              const statusLabel = getOccurrenceStatusLabel(occurrence);
+              const canLog = isToday && (occurrence.status === 'due' || occurrence.status === 'missed');
+
+              return (
+                <View
+                  key={`${occurrence.inventoryId}-${occurrence.date}`}
+                  style={[
+                    styles.activityRow,
+                    occurrence.status === 'due' && styles.activityRowDue,
+                    occurrence.status === 'missed' && styles.activityRowMissed,
+                    occurrence.status === 'completed' && styles.activityRowCompleted,
+                    highlightedInventoryId === occurrence.inventoryId && styles.activityRowHighlighted,
+                  ]}
+                >
+                  <View style={styles.statusIcon}>{statusIcon(occurrence.status)}</View>
+                  <View style={styles.activityMain}>
+                    <Text style={[styles.activityTitle, occurrence.status === 'completed' && styles.activityTitleCompleted, occurrence.status === 'missed' && styles.activityTitleMissed]}>
+                      {occurrence.peptideName}
+                    </Text>
+                    <Text style={styles.activitySub}>
+                      {occurrenceLog ? `${occurrenceLog.timeStr || occurrence.time} • Dicatat` : `${occurrence.time} • ${statusLabel}`}
+                    </Text>
+                  </View>
+
+                  {canLog ? (
+                    <TouchableOpacity
+                      onPress={() => handleScheduledLog(occurrence)}
+                      style={[styles.activityActionBtn, occurrence.status === 'missed' && styles.activityActionBtnMissed]}
+                    >
+                      <Syringe size={12} color="#022c22" />
+                      <Text style={styles.activityActionText}>
+                        {occurrence.status === 'missed' ? 'Catat' : 'Suntik Sekarang'}
+                      </Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <View style={[styles.statusBadge, occurrence.status === 'completed' && styles.statusBadgeDone, occurrence.status === 'missed' && styles.statusBadgeMissed]}>
+                      <Text style={[styles.statusBadgeText, occurrence.status === 'missed' && styles.statusBadgeTextMissed]}>
+                        {statusLabel}
+                      </Text>
+                    </View>
+                  )}
                 </View>
-                <View style={[styles.statusBadge, occurrence.status === 'completed' && styles.statusBadgeDone, occurrence.status === 'missed' && styles.statusBadgeMissed]}>
-                  <Text style={styles.statusBadgeText}>{getOccurrenceStatusLabel(occurrence)}</Text>
+              );
+            })}
+
+            {selectedLogs
+              .filter((log) => !selectedOccurrences.some((occurrence) => occurrence.inventoryId === log.inventoryId))
+              .map((log) => (
+                <View key={`log-${log.id}`} style={styles.activityRow}>
+                  <View style={styles.statusIcon}><Syringe size={15} color="#10b981" /></View>
+                  <View style={styles.activityMain}>
+                    <Text style={styles.activityTitle}>{log.peptideName || 'Log injeksi'}</Text>
+                    <Text style={styles.activitySub}>{formatTime(log.timeStr || '')} • {log.dose || 0} {log.unit || ''} • {log.siteId || '-'}</Text>
+                  </View>
+                  <View style={styles.loggedBadge}><Text style={styles.loggedBadgeText}>LOG</Text></View>
                 </View>
-              </View>
-            ))}
-            {selectedLogs.map((log) => (
-              <View key={`log-${log.id}`} style={styles.activityRow}>
-                <View style={styles.statusIcon}><Syringe size={15} color="#10b981" /></View>
-                <View style={styles.activityMain}>
-                  <Text style={styles.activityTitle}>{log.peptideName || 'Log injeksi'}</Text>
-                  <Text style={styles.activitySub}>{formatTime(log.timeStr || '')} • {log.dose || 0} {log.unit || ''} • {log.siteId || '-'}</Text>
-                </View>
-                <View style={styles.loggedBadge}><Text style={styles.loggedBadgeText}>LOG</Text></View>
-              </View>
-            ))}
+              ))}
           </View>
         )}
       </View>
@@ -444,7 +569,7 @@ const styles = StyleSheet.create({
   dayLabel: { fontSize: 9, color: '#64748b', fontWeight: '900' }, dayLabelActive: { color: '#10b981' }, dayNumber: { fontSize: 17, color: '#fff', fontWeight: '900', marginTop: 2 }, dayNumberActive: { color: '#10b981' },
   dotRow: { flexDirection: 'row', alignItems: 'center', gap: 3, height: 8, marginTop: 4 }, dot: { width: 5, height: 5, borderRadius: 3 }, dotSchedule: { backgroundColor: '#38bdf8' }, dotLog: { backgroundColor: '#10b981' }, todayRing: { width: 5, height: 5, borderRadius: 3, borderWidth: 1, borderColor: '#f59e0b' },
   legendRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 9 }, legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 }, legendText: { color: '#64748b', fontSize: 8 }, currentDateText: { color: '#94a3b8', fontSize: 9, marginLeft: 'auto', fontWeight: '700' },
-  activityList: { gap: 7 }, activityRow: { flexDirection: 'row', alignItems: 'center', gap: 9, paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: '#111827' }, statusIcon: { width: 28, height: 28, borderRadius: 8, backgroundColor: '#030712', alignItems: 'center', justifyContent: 'center' }, activityMain: { flex: 1 }, activityTitle: { color: '#fff', fontSize: 11, fontWeight: '800' }, activitySub: { color: '#64748b', fontSize: 9, marginTop: 2 }, statusBadge: { borderWidth: 1, borderColor: '#334155', borderRadius: 7, paddingHorizontal: 6, paddingVertical: 4 }, statusBadgeDone: { borderColor: 'rgba(16,185,129,0.35)', backgroundColor: 'rgba(16,185,129,0.08)' }, statusBadgeMissed: { borderColor: 'rgba(239,68,68,0.35)', backgroundColor: 'rgba(239,68,68,0.08)' }, statusBadgeText: { color: '#94a3b8', fontSize: 8, fontWeight: '900' }, loggedBadge: { borderWidth: 1, borderColor: 'rgba(56,189,248,0.35)', backgroundColor: 'rgba(56,189,248,0.08)', borderRadius: 7, paddingHorizontal: 6, paddingVertical: 4 }, loggedBadgeText: { color: '#38bdf8', fontSize: 8, fontWeight: '900' },
+  activityList: { gap: 5 }, activityRow: { flexDirection: 'row', alignItems: 'center', gap: 9, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#111827', borderRadius: 9 }, activityRowDue: { backgroundColor: 'rgba(245,158,11,0.07)', borderColor: 'rgba(245,158,11,0.22)', borderWidth: 1, paddingHorizontal: 7 }, activityRowMissed: { backgroundColor: 'rgba(239,68,68,0.08)', borderColor: 'rgba(239,68,68,0.28)', borderWidth: 1, paddingHorizontal: 7 }, activityRowCompleted: { opacity: 0.62 }, activityRowHighlighted: { borderColor: '#38bdf8', borderWidth: 1, paddingHorizontal: 7 }, statusIcon: { width: 28, height: 28, borderRadius: 8, backgroundColor: '#030712', alignItems: 'center', justifyContent: 'center' }, activityMain: { flex: 1 }, activityTitle: { color: '#fff', fontSize: 12, fontWeight: '900' }, activityTitleCompleted: { color: '#cbd5e1' }, activityTitleMissed: { color: '#fecaca' }, activitySub: { color: '#64748b', fontSize: 9, marginTop: 2 }, statusBadge: { borderWidth: 1, borderColor: '#334155', borderRadius: 7, paddingHorizontal: 6, paddingVertical: 4 }, statusBadgeDone: { borderColor: 'rgba(16,185,129,0.35)', backgroundColor: 'rgba(16,185,129,0.08)' }, statusBadgeMissed: { borderColor: 'rgba(239,68,68,0.35)', backgroundColor: 'rgba(239,68,68,0.08)' }, statusBadgeText: { color: '#94a3b8', fontSize: 8, fontWeight: '900' }, statusBadgeTextMissed: { color: '#fca5a5' }, activityActionBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#10b981', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 7 }, activityActionBtnMissed: { backgroundColor: '#f59e0b' }, activityActionText: { color: '#022c22', fontSize: 8, fontWeight: '900' }, loggedBadge: { borderWidth: 1, borderColor: 'rgba(56,189,248,0.35)', backgroundColor: 'rgba(56,189,248,0.08)', borderRadius: 7, paddingHorizontal: 6, paddingVertical: 4 }, loggedBadgeText: { color: '#38bdf8', fontSize: 8, fontWeight: '900' },
   upcomingRow: { flexDirection: 'row', alignItems: 'center', gap: 9, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#111827' }, dateBlock: { width: 34, alignItems: 'center' }, dateBlockDay: { color: '#fff', fontSize: 13, fontWeight: '900' }, dateBlockMonth: { color: '#64748b', fontSize: 8, marginTop: 1 }, upcomingStatus: { color: '#38bdf8', fontSize: 8, fontWeight: '900' }, upcomingDone: { color: '#10b981' },
   gridRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 }, summaryTile: { width: '48.8%', backgroundColor: '#090d16', borderWidth: 1, borderColor: '#1e293b', borderRadius: 12, padding: 10 }, summaryTileIcon: { marginBottom: 5 }, summaryTileValue: { color: '#fff', fontSize: 18, fontWeight: '900' }, summaryTileLabel: { color: '#64748b', fontSize: 9, marginTop: 2 },
   analyticsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 }, analyticsMetric: { width: '48.8%', borderRadius: 10, borderWidth: 1, borderColor: '#1e293b', padding: 9, backgroundColor: '#030712' }, analyticsMetricValue: { color: '#fff', fontSize: 18, fontWeight: '900' }, analyticsMetricLabel: { color: '#64748b', fontSize: 8, marginTop: 2 }, analyticsDivider: { height: 1, backgroundColor: '#1e293b', marginVertical: 10 }, analyticsCaption: { color: '#94a3b8', fontSize: 9, fontWeight: '800', marginBottom: 6 }, analyticsEmpty: { color: '#64748b', fontSize: 9 }, rankRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#111827' }, rankName: { color: '#fff', fontSize: 9, fontWeight: '700' }, rankCount: { color: '#64748b', fontSize: 9 },
