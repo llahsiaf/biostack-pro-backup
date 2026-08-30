@@ -26,7 +26,6 @@ import {
   X,
   Snowflake,
   Activity,
-  Archive,
   PauseCircle,
   PlayCircle,
 } from 'lucide-react-native';
@@ -55,10 +54,8 @@ export const InventoryScreen: React.FC = () => {
     updateInventoryItem,
     reconstituteToFridge,
     transferLiquidToFridge,
-    archiveInventoryItem,
     setSchedulePaused,
-    restoreInventoryItem,
-  } = useBioStackStore();
+    } = useBioStackStore();
 
   const injectionHistory = useBioStackStore((state) => state.injectionHistory || []);
 
@@ -72,7 +69,7 @@ export const InventoryScreen: React.FC = () => {
   const [editBacWater, setEditBacWater] = useState('');
 
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
-  const [lifecycleFilter, setLifecycleFilter] = useState<'active' | 'empty' | 'archived'>('active');
+  const [lifecycleFilter, setLifecycleFilter] = useState<'active' | 'empty'>('active');
   const [scheduleItem, setScheduleItem] = useState<InventoryItem | null>(null);
   const [activeDays, setActiveDays] = useState<string[]>([]);
   const [injectionTime, setInjectionTime] = useState('08:00');
@@ -82,10 +79,14 @@ export const InventoryScreen: React.FC = () => {
   const [isReminderActive, setIsReminderActive] = useState(true);
 
   const allInventory = inventory || [];
-  const activeInventoryCount = allInventory.filter((item) => (item.lifecycleStatus || 'active') === 'active').length;
-  const emptyInventoryCount = allInventory.filter((item) => item.lifecycleStatus === 'empty').length;
-  const archivedInventoryCount = allInventory.filter((item) => item.lifecycleStatus === 'archived').length;
-  const inventoryList = allInventory.filter((item) => (item.lifecycleStatus || 'active') === lifecycleFilter);
+  const getVisibleLifecycle = (item: InventoryItem): 'active' | 'empty' =>
+    item.lifecycleStatus === 'empty' || (item.currentVolumeMl !== undefined && item.currentVolumeMl <= 0)
+      ? 'empty'
+      : 'active';
+
+  const activeInventoryCount = allInventory.filter((item) => getVisibleLifecycle(item) === 'active').length;
+  const emptyInventoryCount = allInventory.filter((item) => getVisibleLifecycle(item) === 'empty').length;
+  const inventoryList = allInventory.filter((item) => getVisibleLifecycle(item) === lifecycleFilter);
   const freezerList = freezerStock || [];
   const totalFreezerVials = freezerList.reduce((acc, curr) => acc + (curr.quantity || 0), 0);
   const scheduleSummary = getScheduleSummary(inventoryList, injectionHistory, new Date());
@@ -208,7 +209,7 @@ export const InventoryScreen: React.FC = () => {
           <View>
             <Text style={styles.statLabel}>Aktif di Kulkas</Text>
             <Text style={styles.statValue}>{activeInventoryCount} <Text style={styles.statSub}>Vial Aktif</Text></Text>
-          <Text style={styles.statMini}>{emptyInventoryCount} kosong • {archivedInventoryCount} arsip</Text>
+          <Text style={styles.statMini}>{emptyInventoryCount} kosong</Text>
           </View>
         </View>
 
@@ -230,8 +231,8 @@ export const InventoryScreen: React.FC = () => {
       </View>
 
       <View style={styles.lifecycleFilterRow}>
-        {(['active', 'empty', 'archived'] as const).map((filter) => {
-          const label = filter === 'active' ? `Aktif (${activeInventoryCount})` : filter === 'empty' ? `Kosong (${emptyInventoryCount})` : `Arsip (${archivedInventoryCount})`;
+        {(['active', 'empty'] as const).map((filter) => {
+          const label = filter === 'active' ? `Aktif (${activeInventoryCount})` : `Kosong (${emptyInventoryCount})`;
           return (
             <TouchableOpacity
               key={filter}
@@ -260,7 +261,7 @@ export const InventoryScreen: React.FC = () => {
           style={styles.takeFreezerBtn}
         >
           <Plus size={12} color="#022c22" />
-          <Text style={styles.takeFreezerBtnText}>Ambil Freezer</Text>
+          <Text style={styles.takeFreezerBtnText}>Ambil Vial</Text>
         </TouchableOpacity>
       </View>
 
@@ -273,7 +274,7 @@ export const InventoryScreen: React.FC = () => {
           <View style={styles.emptyCard}>
             <FlaskConical size={32} color="#64748b" />
             <Text style={styles.emptyTitle}>Kulkas Masih Kosong</Text>
-            <Text style={styles.emptySub}>Tekan tombol Ambil Freezer di atas.</Text>
+            <Text style={styles.emptySub}>Tekan tombol Ambil Vial di atas.</Text>
           </View>
         }
         renderItem={({ item }) => {
@@ -284,76 +285,163 @@ export const InventoryScreen: React.FC = () => {
           const todayOccurrence = getOccurrenceForDate(item, now, now, injectionHistory);
           const occurrence = todayOccurrence || getNextScheduledOccurrence(item, now, injectionHistory, 30);
           const lifecycleStatus = item.lifecycleStatus || (liquid.currentVol <= 0 ? 'empty' : 'active');
-          const lifecycleLabel = lifecycleStatus === 'empty' ? 'Vial Kosong' : lifecycleStatus === 'archived' ? 'Diarsipkan' : 'Vial Aktif';
+          const lifecycleLabel = lifecycleStatus === 'empty' ? 'Vial Kosong' : 'Vial Aktif';
 
           return (
             <View style={styles.peptideCard}>
               <View style={styles.cardHeader}>
-                <TouchableOpacity style={styles.cardHeaderLeft} onPress={() => openEditDoseModal(item)}>
-                  <Text style={styles.peptideName}>{item.name}</Text>
-                  <View style={styles.vialBadge}>
-                    <Text style={styles.vialBadgeText}>{item.vialSize}{item.unit} Vial</Text>
+                <TouchableOpacity style={styles.cardTitleBlock} onPress={() => openEditDoseModal(item)}>
+                  <View style={styles.titleLine}>
+                    <Text style={styles.peptideName} numberOfLines={1}>{item.name}</Text>
+                    <View style={styles.vialBadge}>
+                      <Text style={styles.vialBadgeText}>{item.vialSize}{item.unit} Vial</Text>
+                    </View>
                   </View>
+                  <Text style={styles.categorySubText} numberOfLines={1}>
+                    {item.category}
+                  </Text>
                 </TouchableOpacity>
 
                 <View style={styles.headerActionRow}>
-                  <View style={[styles.lifecycleBadge, (lifecycleStatus === 'empty' || lifecycleStatus === 'archived') && styles.lifecycleBadgeEmpty]}>
-                    <Text style={[styles.lifecycleBadgeText, (lifecycleStatus === 'empty' || lifecycleStatus === 'archived') && styles.lifecycleBadgeTextEmpty]}>{lifecycleLabel}</Text>
-                  </View>
-
-                  {isToday ? (
-                    <View style={styles.badgeToday}><Text style={styles.badgeTodayText}>Injeksi Hari Ini</Text></View>
-                  ) : (
-                    <View style={styles.badgeRest}><Text style={styles.badgeRestText}>Hari Rest</Text></View>
-                  )}
-
-                  <TouchableOpacity onPress={() => handleDirectSyncCalendar(item)} style={styles.iconBtn}>
-                    <Calendar size={14} color="#94a3b8" />
+                  <TouchableOpacity onPress={() => handleDirectSyncCalendar(item)} style={styles.iconBtn} accessibilityLabel="Tambah ke kalender">
+                    <Calendar size={15} color="#94a3b8" />
                   </TouchableOpacity>
 
-                  <TouchableOpacity onPress={() => openScheduleModal(item)} style={styles.iconBtn}>
-                    <Clock size={14} color="#94a3b8" />
+                  <TouchableOpacity onPress={() => openScheduleModal(item)} style={styles.iconBtn} accessibilityLabel="Atur jadwal">
+                    <Clock size={15} color="#94a3b8" />
                   </TouchableOpacity>
 
-                  {lifecycleStatus === 'archived' ? (
-                    <TouchableOpacity
-                      onPress={() => restoreInventoryItem(item.id)}
-                      style={styles.iconBtn}
-                      accessibilityLabel="Pulihkan vial"
-                    >
-                      <PlayCircle size={14} color="#38bdf8" />
-                    </TouchableOpacity>
-                  ) : (
-                    <>
-                      <TouchableOpacity
-                        onPress={() => {
-                          const paused = Boolean(item.schedulePaused);
-                          Alert.alert(
-                            paused ? 'Lanjutkan Jadwal' : 'Jeda Jadwal',
-                            paused ? `Lanjutkan jadwal ${item.name}?` : `Jeda sementara jadwal ${item.name}?`,
-                            [
-                              { text: 'Batal', style: 'cancel' },
-                              { text: paused ? 'Lanjutkan' : 'Jeda', onPress: () => setSchedulePaused(item.id, !paused) },
-                            ]
-                          );
-                        }}
-                        style={styles.iconBtn}
-                      >
-                        {item.schedulePaused ? <PlayCircle size={14} color="#38bdf8" /> : <PauseCircle size={14} color="#f59e0b" />}
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        onPress={() => Alert.alert('Arsipkan Vial', `Arsipkan ${item.name}? Riwayat tetap disimpan.`, [
+                  <TouchableOpacity
+                    onPress={() => {
+                      if (lifecycleStatus === 'empty') return;
+                      const paused = Boolean(item.schedulePaused);
+                      Alert.alert(
+                        paused ? 'Lanjutkan Jadwal' : 'Jeda Jadwal',
+                        paused ? `Lanjutkan jadwal ${item.name}?` : `Jeda sementara jadwal ${item.name}?`,
+                        [
                           { text: 'Batal', style: 'cancel' },
-                          { text: 'Arsipkan', onPress: () => archiveInventoryItem(item.id) },
-                        ])}
-                        style={styles.iconBtn}
-                      >
-                        <Archive size={14} color="#64748b" />
-                      </TouchableOpacity>
-                    </>
-                  )}
+                          { text: paused ? 'Lanjutkan' : 'Jeda', onPress: () => setSchedulePaused(item.id, !paused) },
+                        ]
+                      );
+                    }}
+                    style={[styles.iconBtn, lifecycleStatus === 'empty' && styles.iconBtnDisabled]}
+                    disabled={lifecycleStatus === 'empty'}
+                    accessibilityLabel={item.schedulePaused ? 'Lanjutkan jadwal' : 'Jeda jadwal'}
+                  >
+                    {item.schedulePaused ? <PlayCircle size={15} color="#38bdf8" /> : <PauseCircle size={15} color="#f59e0b" />}
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() => {
+                      Alert.alert(
+                        'Hapus Vial',
+                        `Hapus ${item.name} dari Inventory? Riwayat pencatatan tetap disimpan.`,
+                        [
+                          { text: 'Batal', style: 'cancel' },
+                          { text: 'Hapus', style: 'destructive', onPress: () => removeInventoryItem(item.id) },
+                        ]
+                      );
+                    }}
+                    style={styles.iconBtn}
+                    accessibilityLabel="Hapus vial"
+                  >
+                    <Trash2 size={16} color="#ef4444" />
+                  </TouchableOpacity>
                 </View>
+              </View>
+
+              <View style={styles.statusRow}>
+                <View style={[styles.lifecycleBadge, lifecycleStatus === 'empty' && styles.lifecycleBadgeEmpty]}>
+                  <Text style={[styles.lifecycleBadgeText, lifecycleStatus === 'empty' && styles.lifecycleBadgeTextEmpty]}>
+                    {lifecycleLabel}
+                  </Text>
+                </View>
+
+                {isToday ? (
+                  <View style={styles.badgeToday}><Text style={styles.badgeTodayText}>Injeksi Hari Ini</Text></View>
+                ) : (
+                  <View style={styles.badgeRest}><Text style={styles.badgeRestText}>Hari Rest</Text></View>
+                )}
+
+                {item.schedulePaused && lifecycleStatus !== 'empty' && (
+                  <View style={styles.badgePaused}>
+                    <Text style={styles.badgePausedText}>Jadwal Dijeda</Text>
+                  </View>
+                )}
+              </View>
+
+              <TouchableOpacity onPress={() => openEditDoseModal(item)}>
+                <View style={styles.doseMetricsGrid}>
+                  <View style={styles.metricChipDose}><Text style={styles.metricChipDoseText}>Dosis: {item.targetDose} {item.doseUnit}</Text></View>
+                  <View style={styles.metricChipSpuit}><Text style={styles.metricChipSpuitText}>Spuit: {metrics.iu} IU ({metrics.volumeMl} mL)</Text></View>
+                  <View style={styles.metricChipDial}><Text style={styles.metricChipDialText}>Dial: {metrics.dialClicks} Klik</Text></View>
+                </View>
+
+                <View style={styles.daysRowContainer}>
+                  <Text style={styles.daysRowLabel}>Hari:</Text>
+                  <View style={styles.daysChipsList}>
+                    {DAYS_OF_WEEK.map((day) => {
+                      const isActive = item.activeDays?.includes(day);
+                      return (
+                        <View key={day} style={[styles.dayDot, isActive && styles.dayDotActive]}>
+                          <Text style={[styles.dayDotText, isActive && styles.dayDotTextActive]}>{day}</Text>
+                        </View>
+                      );
+                    })}
+                  </View>
+                  <View style={styles.timeTag}>
+                    <Clock size={10} color="#38bdf8" />
+                    <Text style={styles.timeTagText}>{item.injectionTime || '08:00'}</Text>
+                  </View>
+                </View>
+
+                {occurrence && (
+                  <View style={styles.scheduleStatusRow}>
+                    <Clock size={11} color={occurrence.status === 'missed' ? '#ef4444' : occurrence.status === 'completed' ? '#10b981' : '#f59e0b'} />
+                    <Text style={[styles.scheduleStatusText, occurrence.status === 'missed' && styles.scheduleStatusMissed]}>
+                      {occurrence.status === 'completed'
+                        ? `Hari ini selesai • ${occurrence.time}`
+                        : occurrence.status === 'missed'
+                          ? `Terlewat • jadwal ${occurrence.time}`
+                          : `Jadwal berikutnya • ${occurrence.date} ${occurrence.time}`}
+                    </Text>
+                  </View>
+                )}
+
+                <View style={styles.progressContainer}>
+                  <View style={styles.progressTextRow}>
+                    <View style={styles.progressTitleRow}>
+                      <Droplets size={11} color="#38bdf8" />
+                      <Text style={styles.progressTitle}>Sisa Cairan</Text>
+                    </View>
+                    <Text style={styles.progressPercentText}>{Math.round(liquid.progressPercent)}%</Text>
+                  </View>
+                  <View style={styles.progressBarBg}>
+                    <View style={[styles.progressBarFill, { width: `${liquid.progressPercent}%` }]} />
+                  </View>
+                  <View style={styles.progressFooterRow}>
+                    <Text style={styles.progressFooterText}>{liquid.currentVol.toFixed(2)} / {liquid.initialVol.toFixed(2)} mL</Text>
+                    <Text style={styles.progressFooterText}>~{liquid.daysLeft} hari tersisa</Text>
+                  </View>
+                  <View style={styles.progressFooterRow}>
+                    <Text style={styles.progressFooterText}>Dilarutkan: {item.reconstitutedDate || '-'}</Text>
+                    <Text style={styles.progressFooterText}>Exp kulkas: {item.maxFridgeDays || 28} hari</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => handleInjectNow(item)}
+                disabled={lifecycleStatus !== 'active' || Boolean(item.schedulePaused)}
+                style={[styles.injectMainBtn, (lifecycleStatus !== 'active' || item.schedulePaused) && styles.injectMainBtnDisabled]}
+              >
+                <Syringe size={15} color={(lifecycleStatus === 'empty' || item.schedulePaused) ? '#64748b' : '#022c22'} />
+                <Text style={[styles.injectMainBtnText, (lifecycleStatus !== 'active' || item.schedulePaused) && styles.injectMainBtnTextDisabled]}>
+                  {lifecycleStatus === 'empty' ? 'Vial Kosong' : item.schedulePaused ? 'Jadwal Dijeda' : `Suntik Sekarang (${currentSite})`}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          );
               </View>
 
               <TouchableOpacity onPress={() => openEditDoseModal(item)}>
@@ -421,7 +509,7 @@ export const InventoryScreen: React.FC = () => {
               >
                 <Syringe size={15} color={(lifecycleStatus === 'empty' || item.schedulePaused) ? '#64748b' : '#022c22'} />
                 <Text style={[styles.injectMainBtnText, (lifecycleStatus !== 'active' || item.schedulePaused) && styles.injectMainBtnTextDisabled]}>
-                  {lifecycleStatus === 'empty' ? 'Vial Kosong' : lifecycleStatus === 'archived' ? 'Vial Diarsipkan' : item.schedulePaused ? 'Jadwal Dijeda' : `Suntik Sekarang (${currentSite})`}
+                  {lifecycleStatus === 'empty' ? 'Vial Kosong' : item.schedulePaused ? 'Jadwal Dijeda' : `Suntik Sekarang (${currentSite})`}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -743,9 +831,14 @@ const styles = StyleSheet.create({
   emptyCard: { backgroundColor: '#090d16', borderWidth: 1, borderColor: '#1e293b', borderRadius: 14, padding: 24, alignItems: 'center', gap: 8, marginTop: 20 },
   emptyTitle: { fontSize: 13, fontWeight: '800', color: '#ffffff' },
   emptySub: { fontSize: 10, color: '#64748b', textAlign: 'center' },
-  peptideCard: { backgroundColor: '#090d16', borderRadius: 14, borderWidth: 1, borderColor: '#1e293b', padding: 12, gap: 8 },
+  peptideCard: { backgroundColor: '#090d16', borderRadius: 14, borderWidth: 1, borderColor: '#1e293b', padding: 14, gap: 9 },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  cardHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 },
+  cardTitleBlock: { flex: 1, minWidth: 0, gap: 3 },
+  titleLine: { flexDirection: 'row', alignItems: 'center', gap: 6, minWidth: 0 },
+  statusRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 1 },
+  badgePaused: { backgroundColor: 'rgba(56, 189, 248, 0.10)', borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.35)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
+  badgePausedText: { fontSize: 9, fontWeight: '800', color: '#38bdf8' },
+  iconBtnDisabled: { opacity: 0.35 },
   peptideName: { fontSize: 14, fontWeight: '800', color: '#ffffff' },
   vialBadge: { backgroundColor: '#1e293b', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
   vialBadgeText: { fontSize: 9, fontWeight: '700', color: '#94a3b8' },
@@ -753,7 +846,7 @@ const styles = StyleSheet.create({
   lifecycleBadgeEmpty: { backgroundColor: 'rgba(100, 116, 139, 0.12)', borderColor: '#334155' },
   lifecycleBadgeText: { fontSize: 8, fontWeight: '800', color: '#10b981' },
   lifecycleBadgeTextEmpty: { color: '#94a3b8' },
-  headerActionRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  headerActionRow: { flexDirection: 'row', alignItems: 'center', gap: 2, marginLeft: 6 },
   badgeToday: { backgroundColor: 'rgba(16, 185, 129, 0.15)', borderWidth: 1, borderColor: '#10b981', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
   badgeTodayText: { fontSize: 9, fontWeight: '800', color: '#10b981' },
   badgeRest: { backgroundColor: '#1e293b', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
@@ -788,7 +881,7 @@ const styles = StyleSheet.create({
   progressBarFill: { height: '100%', backgroundColor: '#38bdf8', borderRadius: 2 },
   progressFooterRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 },
   progressFooterText: { fontSize: 8, color: '#64748b' },
-  injectMainBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: '#10b981', paddingVertical: 10, borderRadius: 10, marginTop: 4 },
+  injectMainBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: '#10b981', paddingVertical: 9, borderRadius: 10, marginTop: 3 },
   injectMainBtnDisabled: { backgroundColor: '#111827', borderColor: '#334155' },
   injectMainBtnTextDisabled: { color: '#64748b' },
   injectMainBtnText: { fontSize: 12, fontWeight: '800', color: '#022c22' },
