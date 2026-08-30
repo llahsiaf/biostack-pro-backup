@@ -53,6 +53,7 @@ import {
   getScheduleSummary,
 } from '../utils/scheduleUtils';
 import { getTrackerSuggestedSite } from '../utils/rotationUtils';
+import { cancelNotificationIds } from '../utils/notificationUtils';
 
 const DAYS_OF_WEEK = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 
@@ -155,8 +156,10 @@ export const InventoryScreen: React.FC = () => {
     0,
   );
 
+  // Ringkasan jadwal selalu merepresentasikan seluruh inventory,
+  // bukan hanya filter Aktif/Kosong yang sedang dipilih.
   const scheduleSummary = getScheduleSummary(
-    inventoryList,
+    allInventory,
     injectionHistory,
     new Date(),
   );
@@ -460,12 +463,12 @@ export const InventoryScreen: React.FC = () => {
             />
 
             <Text style={styles.sectionTitle}>
-              Active Fridge Inventory
+              Inventory Kulkas Aktif
             </Text>
           </View>
 
           <Text style={styles.sectionSub}>
-            Peptida dilarutkan & siap disuntikkan
+            Peptida aktif yang tersimpan di kulkas
           </Text>
         </View>
 
@@ -501,11 +504,15 @@ export const InventoryScreen: React.FC = () => {
             />
 
             <Text style={styles.emptyTitle}>
-              Kulkas Masih Kosong
+              {lifecycleFilter === 'empty'
+                ? 'Belum Ada Vial Kosong'
+                : 'Belum Ada Vial Aktif'}
             </Text>
 
             <Text style={styles.emptySub}>
-              Tekan tombol Ambil Vial di atas.
+              {lifecycleFilter === 'empty'
+                ? 'Semua vial di kulkas masih memiliki cairan.'
+                : 'Tekan tombol Ambil Vial di atas untuk menambahkan vial.'}
             </Text>
           </View>
         }
@@ -703,10 +710,17 @@ export const InventoryScreen: React.FC = () => {
                           {
                             text: 'Hapus',
                             style: 'destructive',
-                            onPress: () =>
-                              removeInventoryItem(
-                                item.id,
-                              ),
+                            onPress: async () => {
+                              // Hapus juga reminder lokal yang masih terkait
+                              // dengan vial agar tidak muncul setelah vial dihapus.
+                              if (item.notificationIds?.length) {
+                                await cancelNotificationIds(
+                                  item.notificationIds,
+                                );
+                              }
+
+                              removeInventoryItem(item.id);
+                            },
                           },
                         ],
                       );
