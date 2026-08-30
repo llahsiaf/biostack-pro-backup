@@ -16,7 +16,7 @@ const checks = [
   ['settings exposes notification diagnostics', /Local Notifications/.test(settings)],
   ['settings exposes test action', /Test 10 dtk/.test(settings)],
   ['settings exposes rebuild action', /Rebuild Reminder 30 Hari/.test(settings)],
-  ['app initializes local reminders', /rebuildScheduleReminders\(inventory, 30\)/.test(app)],
+  ['app initializes local reminders', /rebuildScheduleReminders\(\s*inventory\s*,\s*30(?:\s*,[^)]*)?\)/.test(app)],
   ['app handles notification taps', /addNotificationResponseReceivedListener/.test(app)],
 ];
 
