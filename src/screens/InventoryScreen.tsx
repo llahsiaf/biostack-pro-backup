@@ -1753,296 +1753,182 @@ export const InventoryScreen: React.FC = () => {
         transparent
       >
         <KeyboardAvoidingView
-          behavior={
-            Platform.OS === 'ios'
-              ? 'padding'
-              : undefined
-          }
-          style={styles.doseModalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.scheduleModalOverlay}
         >
-          <View
-            style={styles.modalLargeBox}
-          >
-            <View
-              style={
-                styles.modalHeaderBasic
-              }
-            >
-              <View
-                style={
-                  styles.modalTitleRow
-                }
-              >
-                <Clock
-                  size={16}
-                  color="#38bdf8"
-                />
-
-                <Text
-                  style={styles.modalHeading}
-                >
-                  Jadwal & Pengaturan Suntik
-                </Text>
+          <View style={styles.scheduleModalBox}>
+            <View style={styles.scheduleModalHeader}>
+              <View style={styles.scheduleModalTitleArea}>
+                <View style={styles.scheduleModalIcon}>
+                  <Clock size={17} color="#10b981" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.scheduleModalTitle}>Jadwal & Pengaturan</Text>
+                  <Text style={styles.scheduleModalSubtitle}>Atur hari, waktu, siklus, dan pengingat</Text>
+                </View>
               </View>
-
               <TouchableOpacity
-                onPress={() =>
-                  setIsScheduleModalOpen(
-                    false,
-                  )
-                }
+                onPress={() => setIsScheduleModalOpen(false)}
+                style={styles.scheduleCloseButton}
+                accessibilityLabel="Tutup pengaturan jadwal"
               >
-                <X
-                  size={18}
-                  color="#94a3b8"
-                />
+                <X size={18} color="#94a3b8" />
               </TouchableOpacity>
             </View>
 
             {scheduleItem && (
               <ScrollView
-                contentContainerStyle={
-                  styles.modalScrollBody
-                }
-                showsVerticalScrollIndicator={
-                  false
-                }
+                contentContainerStyle={styles.scheduleModalScroll}
+                showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
               >
-                <Text
-                  style={
-                    styles.sectionHeadingMini
-                  }
-                >
-                  PRESET FREKUENSI INJEKSI:
-                </Text>
+                <View style={styles.scheduleItemHero}>
+                  <View style={styles.scheduleHeroPeptideRow}>
+                    <View style={styles.scheduleHeroDot} />
+                    <Text style={styles.scheduleHeroName} numberOfLines={1}>
+                      {scheduleItem.name}
+                    </Text>
+                  </View>
+                  <Text style={styles.scheduleHeroMeta}>
+                    {scheduleItem.vialSize} {scheduleItem.unit} Vial • {scheduleItem.targetDose} {scheduleItem.doseUnit} per tindakan
+                  </Text>
+                </View>
 
-                <View
-                  style={
-                    styles.presetGrid
-                  }
-                >
-                  {FREQUENCY_PRESETS.map(
-                    (p) => (
+                <View style={styles.scheduleSection}>
+                  <View style={styles.scheduleSectionHeader}>
+                    <Text style={styles.scheduleSectionTitle}>FREKUENSI</Text>
+                    <Text style={styles.scheduleSectionHint}>{frequencyLabel}</Text>
+                  </View>
+                  <View style={styles.presetGridCompact}>
+                    {FREQUENCY_PRESETS.map((p) => (
                       <TouchableOpacity
                         key={p.id}
                         onPress={() => {
-                          setFrequencyKey(
-                            p.id,
-                          );
-                          setFrequencyLabel(
-                            p.label,
-                          );
-                          setActiveDays(
-                            p.days,
-                          );
+                          setFrequencyKey(p.id);
+                          setFrequencyLabel(p.label);
+                          setActiveDays(p.days);
                         }}
                         style={[
-                          styles.freqCard,
-                          frequencyKey ===
-                            p.id &&
-                            styles.freqCardActive,
+                          styles.freqCardCompact,
+                          frequencyKey === p.id && styles.freqCardCompactActive,
                         ]}
                       >
-                        <Text
-                          style={[
-                            styles.freqTitle,
-                            frequencyKey ===
-                              p.id &&
-                              styles.freqTitleActive,
-                          ]}
-                        >
-                          {p.label}
-                        </Text>
-
-                        <Text
-                          style={
-                            styles.freqSub
-                          }
-                        >
-                          {p.sub}
-                        </Text>
+                        <View style={styles.freqCardTopRow}>
+                          <Text
+                            style={[
+                              styles.freqTitleCompact,
+                              frequencyKey === p.id && styles.freqTitleCompactActive,
+                            ]}
+                            numberOfLines={1}
+                          >
+                            {p.label}
+                          </Text>
+                          {frequencyKey === p.id && <CheckCircle2 size={14} color="#10b981" />}
+                        </View>
+                        <Text style={styles.freqSubCompact}>{p.sub}</Text>
                       </TouchableOpacity>
-                    ),
-                  )}
+                    ))}
+                  </View>
                 </View>
 
-                <Text
-                  style={
-                    styles.sectionHeadingMini
-                  }
-                >
-                  HARI AKTIF:
-                </Text>
-
-                <View
-                  style={
-                    styles.daysSelectorRow
-                  }
-                >
-                  {DAYS_OF_WEEK.map(
-                    (d) => {
-                      const isSel =
-                        activeDays.includes(
-                          d,
-                        );
-
+                <View style={styles.scheduleSection}>
+                  <View style={styles.scheduleSectionHeader}>
+                    <Text style={styles.scheduleSectionTitle}>HARI AKTIF</Text>
+                    <Text style={styles.scheduleSectionHint}>{activeDays.length} hari dipilih</Text>
+                  </View>
+                  <View style={styles.daysSelectorModern}>
+                    {DAYS_OF_WEEK.map((d) => {
+                      const isSel = activeDays.includes(d);
                       return (
                         <TouchableOpacity
                           key={d}
                           onPress={() => {
-                            if (
-                              isSel &&
-                              activeDays.length >
-                                1
-                            ) {
-                              setActiveDays(
-                                activeDays.filter(
-                                  (x) =>
-                                    x !== d,
-                                ),
-                              );
-                            } else if (
-                              !isSel
-                            ) {
-                              setActiveDays([
-                                ...activeDays,
-                                d,
-                              ]);
+                            if (isSel && activeDays.length > 1) {
+                              setActiveDays(activeDays.filter((x) => x !== d));
+                            } else if (!isSel) {
+                              setActiveDays([...activeDays, d]);
                             }
                           }}
-                          style={[
-                            styles.dayToggleChip,
-                            isSel &&
-                              styles.dayToggleChipActive,
-                          ]}
+                          style={[styles.dayToggleModern, isSel && styles.dayToggleModernActive]}
                         >
-                          <Text
-                            style={[
-                              styles.dayToggleText,
-                              isSel &&
-                                styles.dayToggleTextActive,
-                            ]}
-                          >
+                          <Text style={[styles.dayToggleModernText, isSel && styles.dayToggleModernTextActive]}>
                             {d}
                           </Text>
                         </TouchableOpacity>
                       );
-                    },
-                  )}
+                    })}
+                  </View>
                 </View>
 
-                <View
-                  style={
-                    styles.fancyInputContainer
-                  }
-                >
-                  <Text
-                    style={
-                      styles.fancyInputTitle
-                    }
-                  >
-                    Jam Penyuntikan:
-                  </Text>
-
-                  <TextInput
-                    style={
-                      styles.textInputBasic
-                    }
-                    value={injectionTime}
-                    onChangeText={
-                      setInjectionTime
-                    }
-                  />
+                <View style={styles.scheduleSection}>
+                  <View style={styles.scheduleSectionHeader}>
+                    <Text style={styles.scheduleSectionTitle}>WAKTU PENYUNTIKAN</Text>
+                    <Text style={styles.scheduleSectionHint}>Format 24 jam</Text>
+                  </View>
+                  <View style={styles.timePickerCard}>
+                    <View style={styles.timePickerIcon}>
+                      <Clock size={17} color="#38bdf8" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.timePickerLabel}>Jam tindakan</Text>
+                      <Text style={styles.timePickerHint}>Pengingat mengikuti waktu ini</Text>
+                    </View>
+                    <TextInput
+                      style={styles.timePickerInput}
+                      value={injectionTime}
+                      onChangeText={setInjectionTime}
+                      keyboardType="numbers-and-punctuation"
+                      maxLength={5}
+                      placeholder="08:00"
+                      placeholderTextColor="#64748b"
+                    />
+                  </View>
                 </View>
 
-                <View
-                  style={styles.toggleRow}
-                >
-                  <Text
-                    style={
-                      styles.toggleLabel
-                    }
-                  >
-                    Aktifkan Siklus /
-                    Periodisasi (Cycle)
-                  </Text>
-
-                  <Switch
-                    value={isCycleActive}
-                    onValueChange={
-                      setIsCycleActive
-                    }
-                    trackColor={{
-                      false: '#1e293b',
-                      true: '#10b981',
-                    }}
-                  />
+                <View style={styles.scheduleOptionsCard}>
+                  <View style={styles.scheduleOptionRow}>
+                    <View style={styles.scheduleOptionIconGreen}>
+                      <Activity size={15} color="#10b981" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.scheduleOptionTitle}>Siklus / Periodisasi</Text>
+                      <Text style={styles.scheduleOptionSub}>Aktifkan pengaturan cycle untuk jadwal berkala</Text>
+                    </View>
+                    <Switch
+                      value={isCycleActive}
+                      onValueChange={setIsCycleActive}
+                      trackColor={{ false: '#1e293b', true: '#10b981' }}
+                      thumbColor="#ffffff"
+                    />
+                  </View>
+                  <View style={styles.scheduleOptionDivider} />
+                  <View style={styles.scheduleOptionRow}>
+                    <View style={styles.scheduleOptionIconBlue}>
+                      <Clock size={15} color="#38bdf8" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.scheduleOptionTitle}>Pengingat notifikasi</Text>
+                      <Text style={styles.scheduleOptionSub}>Beri pengingat ketika jadwal sudah tiba</Text>
+                    </View>
+                    <Switch
+                      value={isReminderActive}
+                      onValueChange={setIsReminderActive}
+                      trackColor={{ false: '#1e293b', true: '#10b981' }}
+                      thumbColor="#ffffff"
+                    />
+                  </View>
                 </View>
 
-                <View
-                  style={styles.toggleRow}
-                >
-                  <Text
-                    style={
-                      styles.toggleLabel
-                    }
-                  >
-                    Aktifkan Notifikasi
-                    Pengingat
-                  </Text>
-
-                  <Switch
-                    value={isReminderActive}
-                    onValueChange={
-                      setIsReminderActive
-                    }
-                    trackColor={{
-                      false: '#1e293b',
-                      true: '#10b981',
-                    }}
-                  />
-                </View>
-
-                <View
-                  style={
-                    styles.modalActionsRow
-                  }
-                >
+                <View style={styles.scheduleActionsModern}>
                   <TouchableOpacity
-                    onPress={() =>
-                      setIsScheduleModalOpen(
-                        false,
-                      )
-                    }
-                    style={
-                      styles.modalCancelBtn
-                    }
+                    onPress={() => setIsScheduleModalOpen(false)}
+                    style={styles.scheduleCancelModern}
                   >
-                    <Text
-                      style={
-                        styles.modalCancelBtnText
-                      }
-                    >
-                      Batal
-                    </Text>
+                    <Text style={styles.scheduleCancelModernText}>Batal</Text>
                   </TouchableOpacity>
-
-                  <TouchableOpacity
-                    onPress={
-                      handleSaveSchedule
-                    }
-                    style={
-                      styles.modalSaveScheduleBtn
-                    }
-                  >
-                    <Text
-                      style={
-                        styles.applyBtnText
-                      }
-                    >
-                      Simpan Pengaturan
-                    </Text>
+                  <TouchableOpacity onPress={handleSaveSchedule} style={styles.scheduleSaveModern}>
+                    <CheckCircle2 size={16} color="#022c22" />
+                    <Text style={styles.scheduleSaveModernText}>Simpan Jadwal</Text>
                   </TouchableOpacity>
                 </View>
               </ScrollView>
@@ -2337,76 +2223,68 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#030712',
     paddingHorizontal: 14,
-    paddingTop: 10,
+    paddingTop: 8,
   },
 
   statsRow: {
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: 12,
+    gap: 10,
+    marginBottom: 10,
   },
 
   statCard: {
     flex: 1,
-    minHeight: 72,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#080d17',
+    backgroundColor: '#090d16',
     borderWidth: 1,
-    borderColor: '#172235',
-    borderRadius: 16,
-    paddingHorizontal: 10,
-    paddingVertical: 9,
-    gap: 8,
+    borderColor: '#1e293b',
+    borderRadius: 12,
+    padding: 10,
+    gap: 10,
   },
 
   statLabel: {
-    fontSize: 8,
-    color: '#71819a',
-    fontWeight: '800',
-    letterSpacing: 0.25,
+    fontSize: 9,
+    color: '#64748b',
+    fontWeight: '700',
   },
 
   statValue: {
-    fontSize: 16,
-    lineHeight: 18,
-    fontWeight: '900',
-    color: '#f8fafc',
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#ffffff',
   },
 
   statSub: {
-    fontSize: 9,
-    fontWeight: '500',
-    color: '#8b9ab1',
+    fontSize: 10,
+    fontWeight: '400',
+    color: '#94a3b8',
   },
 
   statMini: {
     fontSize: 8,
-    lineHeight: 11,
-    color: '#617089',
-    marginTop: 3,
+    color: '#64748b',
+    marginTop: 2,
   },
 
   scheduleStatCard: {
     flex: 1,
-    minHeight: 72,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#080d17',
+    backgroundColor: '#090d16',
     borderWidth: 1,
-    borderColor: '#172235',
-    borderRadius: 16,
-    paddingHorizontal: 10,
-    paddingVertical: 9,
-    gap: 8,
+    borderColor: '#1e293b',
+    borderRadius: 12,
+    padding: 10,
+    gap: 10,
   },
 
   sectionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 2,
-    marginBottom: 10,
+    marginBottom: 8,
   },
 
   sectionTitleWithIcon: {
@@ -2416,42 +2294,41 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    fontSize: 15,
-    fontWeight: '900',
-    color: '#f8fafc',
-    letterSpacing: -0.2,
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#ffffff',
   },
 
   sectionSub: {
-    fontSize: 10,
-    color: '#687991',
-    marginTop: 2,
+    fontSize: 9,
+    color: '#64748b',
   },
 
   lifecycleFilterRow: {
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: 12,
+    gap: 6,
+    marginBottom: 8,
   },
 
   lifecycleFilterChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 10,
-    backgroundColor: '#080d17',
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 8,
+    backgroundColor: '#090d16',
     borderWidth: 1,
-    borderColor: '#1c2a3f',
+    borderColor: '#1e293b',
   },
 
   lifecycleFilterChipActive: {
-    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+    backgroundColor:
+      'rgba(16, 185, 129, 0.12)',
     borderColor: '#10b981',
   },
 
   lifecycleFilterText: {
-    fontSize: 10,
-    fontWeight: '900',
-    color: '#687991',
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#64748b',
   },
 
   lifecycleFilterTextActive: {
@@ -2461,22 +2338,22 @@ const styles = StyleSheet.create({
   takeFreezerBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: 4,
     backgroundColor: '#10b981',
-    paddingHorizontal: 13,
-    paddingVertical: 9,
-    borderRadius: 11,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 8,
   },
 
   takeFreezerBtnText: {
     fontSize: 10,
-    fontWeight: '900',
+    fontWeight: '800',
     color: '#022c22',
   },
 
   listContainer: {
-    paddingBottom: 110,
-    gap: 14,
+    paddingBottom: 104,
+    gap: 12,
   },
 
   emptyCard: {
@@ -2503,39 +2380,33 @@ const styles = StyleSheet.create({
   },
 
   peptideCard: {
-    backgroundColor: '#080d17',
-    borderRadius: 18,
+    backgroundColor: '#090d16',
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#1a2940',
-    padding: 15,
-    gap: 11,
-    shadowColor: '#000000',
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 3,
+    borderColor: '#1e293b',
+    padding: 11,
+    gap: 6,
+    marginBottom: 8,
   },
 
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    gap: 8,
   },
 
   cardTitleBlock: {
     flex: 1,
     minWidth: 0,
-    gap: 4,
+    gap: 2,
     paddingTop: 1,
   },
 
   titleLine: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
+    gap: 6,
     minWidth: 0,
-    paddingRight: 2,
   },
 
   statusRow: {
@@ -2568,37 +2439,37 @@ const styles = StyleSheet.create({
   },
 
   peptideName: {
-    flexShrink: 1,
-    fontSize: 17,
-    lineHeight: 20,
+    fontSize: 15,
+    lineHeight: 18,
     fontWeight: '900',
-    color: '#f8fafc',
-    letterSpacing: -0.2,
+    color: '#ffffff',
   },
 
   vialBadge: {
-    backgroundColor: '#111c2d',
+    backgroundColor: '#111827',
     borderWidth: 1,
-    borderColor: '#23334b',
-    paddingHorizontal: 7,
-    paddingVertical: 4,
-    borderRadius: 8,
+    borderColor: '#26364e',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 7,
     flexShrink: 0,
   },
 
   vialBadgeText: {
     fontSize: 9,
-    fontWeight: '800',
-    color: '#91a1b8',
+    fontWeight: '700',
+    color: '#94a3b8',
   },
 
   lifecycleBadge: {
-    backgroundColor: 'rgba(16, 185, 129, 0.10)',
+    backgroundColor:
+      'rgba(16, 185, 129, 0.10)',
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.35)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    borderColor:
+      'rgba(16, 185, 129, 0.35)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
   },
 
   lifecycleBadgeEmpty: {
@@ -2608,8 +2479,8 @@ const styles = StyleSheet.create({
   },
 
   lifecycleBadgeText: {
-    fontSize: 9,
-    fontWeight: '900',
+    fontSize: 8,
+    fontWeight: '800',
     color: '#10b981',
   },
 
@@ -2621,38 +2492,36 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    marginLeft: 2,
-    paddingLeft: 2,
+    marginLeft: 5,
   },
 
   badgeToday: {
-    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+    backgroundColor:
+      'rgba(16, 185, 129, 0.15)',
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.55)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    borderColor: '#10b981',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
   },
 
   badgeTodayText: {
     fontSize: 9,
-    fontWeight: '900',
+    fontWeight: '800',
     color: '#10b981',
   },
 
   badgeRest: {
-    backgroundColor: '#111c2d',
-    borderWidth: 1,
-    borderColor: '#23334b',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    backgroundColor: '#1e293b',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
   },
 
   badgeRestText: {
     fontSize: 9,
-    fontWeight: '800',
-    color: '#71819a',
+    fontWeight: '700',
+    color: '#64748b',
   },
 
   iconBtn: {
@@ -2661,89 +2530,82 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 9,
-    backgroundColor: '#0c1422',
+    backgroundColor: '#0b1220',
     borderWidth: 1,
-    borderColor: '#1b2a40',
+    borderColor: '#1e293b',
   },
 
   categorySubText: {
     fontSize: 10,
-    color: '#71819a',
-    fontWeight: '600',
+    color: '#64748b',
   },
 
   doseMetricsGrid: {
     flexDirection: 'row',
-    gap: 7,
-    marginVertical: 4,
+    gap: 6,
+    marginVertical: 2,
+    alignItems: 'center',
   },
 
   metricChipDose: {
     flex: 1,
-    minHeight: 44,
+    minHeight: 36,
     justifyContent: 'center',
     backgroundColor: 'rgba(245, 158, 11, 0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.25)',
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderRadius: 10,
+    borderColor: 'rgba(245, 158, 11, 0.28)',
+    paddingHorizontal: 6,
+    paddingVertical: 5,
+    borderRadius: 9,
   },
 
   metricChipDoseText: {
-    fontSize: 10,
-    lineHeight: 13,
-    fontWeight: '900',
+    fontSize: 9,
+    fontWeight: '800',
     color: '#f59e0b',
-    textAlign: 'center',
   },
 
   metricChipSpuit: {
-    flex: 1,
-    minHeight: 44,
+    flex: 1.15,
+    minHeight: 36,
     justifyContent: 'center',
     backgroundColor: 'rgba(6, 182, 212, 0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(6, 182, 212, 0.25)',
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderRadius: 10,
+    borderColor: 'rgba(6, 182, 212, 0.28)',
+    paddingHorizontal: 6,
+    paddingVertical: 5,
+    borderRadius: 9,
   },
 
   metricChipSpuitText: {
-    fontSize: 10,
-    lineHeight: 13,
-    fontWeight: '900',
+    fontSize: 9,
+    fontWeight: '800',
     color: '#06b6d4',
-    textAlign: 'center',
   },
 
   metricChipDial: {
     flex: 1,
-    minHeight: 44,
+    minHeight: 36,
     justifyContent: 'center',
     backgroundColor: 'rgba(56, 189, 248, 0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.25)',
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderRadius: 10,
+    borderColor: 'rgba(56, 189, 248, 0.28)',
+    paddingHorizontal: 6,
+    paddingVertical: 5,
+    borderRadius: 9,
   },
 
   metricChipDialText: {
-    fontSize: 10,
-    lineHeight: 13,
-    fontWeight: '900',
+    fontSize: 9,
+    fontWeight: '800',
     color: '#38bdf8',
-    textAlign: 'center',
   },
 
   daysRowContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
-    marginVertical: 3,
-    paddingHorizontal: 1,
+    gap: 5,
+    marginVertical: 1,
   },
 
   daysRowLabel: {
@@ -2760,22 +2622,22 @@ const styles = StyleSheet.create({
 
   dayDot: {
     paddingHorizontal: 5,
-    paddingVertical: 3,
-    borderRadius: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
     backgroundColor: '#030712',
     borderWidth: 1,
-    borderColor: '#1b2a3f',
+    borderColor: '#1e293b',
   },
 
   dayDotActive: {
-    backgroundColor: 'rgba(16, 185, 129, 0.92)',
+    backgroundColor: '#10b981',
     borderColor: '#10b981',
   },
 
   dayDotText: {
     fontSize: 8,
-    color: '#65758d',
-    fontWeight: '800',
+    color: '#64748b',
+    fontWeight: '700',
   },
 
   dayDotTextActive: {
@@ -2785,39 +2647,29 @@ const styles = StyleSheet.create({
   timeTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#0c1422',
-    borderWidth: 1,
-    borderColor: '#1b2a40',
-    paddingHorizontal: 7,
-    paddingVertical: 4,
-    borderRadius: 7,
+    gap: 3,
   },
 
   timeTagText: {
     fontSize: 10,
-    fontWeight: '900',
-    color: '#f8fafc',
+    fontWeight: '800',
+    color: '#ffffff',
   },
 
   scheduleStatusRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#050a12',
-    borderWidth: 1,
-    borderColor: '#111d2e',
-    borderRadius: 9,
-    paddingHorizontal: 9,
-    paddingVertical: 7,
+    gap: 5,
+    backgroundColor: '#030712',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
   },
 
   scheduleStatusText: {
-    flex: 1,
     fontSize: 9,
-    lineHeight: 13,
     color: '#f59e0b',
-    fontWeight: '800',
+    fontWeight: '700',
   },
 
   scheduleStatusMissed: {
@@ -2825,13 +2677,13 @@ const styles = StyleSheet.create({
   },
 
   progressContainer: {
-    backgroundColor: '#050a12',
-    borderRadius: 11,
+    backgroundColor: '#030712',
+    borderRadius: 9,
     borderWidth: 1,
-    borderColor: '#18263a',
-    padding: 10,
-    gap: 6,
-    marginVertical: 3,
+    borderColor: '#1e293b',
+    padding: 7,
+    gap: 4,
+    marginVertical: 1,
   },
 
   progressTextRow: {
@@ -2848,20 +2700,20 @@ const styles = StyleSheet.create({
 
   progressTitle: {
     fontSize: 10,
-    fontWeight: '900',
+    fontWeight: '800',
     color: '#38bdf8',
   },
 
   progressPercentText: {
     fontSize: 9,
-    fontWeight: '900',
+    fontWeight: '700',
     color: '#38bdf8',
   },
 
   progressBarBg: {
-    height: 6,
-    backgroundColor: '#18263a',
-    borderRadius: 3,
+    height: 4,
+    backgroundColor: '#1e293b',
+    borderRadius: 2,
     overflow: 'hidden',
   },
 
@@ -2879,19 +2731,18 @@ const styles = StyleSheet.create({
 
   progressFooterText: {
     fontSize: 8,
-    color: '#687991',
-    fontWeight: '600',
+    color: '#64748b',
   },
 
   injectMainBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 7,
+    gap: 6,
     backgroundColor: '#10b981',
-    paddingVertical: 12,
-    borderRadius: 12,
-    marginTop: 3,
+    paddingVertical: 9,
+    borderRadius: 10,
+    marginTop: 1,
   },
 
   injectMainBtnDisabled: {
@@ -2905,7 +2756,7 @@ const styles = StyleSheet.create({
 
   injectMainBtnText: {
     fontSize: 12,
-    fontWeight: '900',
+    fontWeight: '800',
     color: '#022c22',
   },
 
@@ -3192,162 +3043,356 @@ const styles = StyleSheet.create({
   },
 
   /* ====================================================== */
-  /* MODAL JADWAL */
+  /* MODAL JADWAL — COMPACT REDESIGN */
   /* ====================================================== */
 
-  modalLargeBox: {
-    backgroundColor: '#0f172a',
-    borderRadius: 16,
+  scheduleModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.78)',
+    justifyContent: 'flex-end',
+  },
+
+  scheduleModalBox: {
+    backgroundColor: '#0b1220',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     borderWidth: 1,
     borderColor: '#1e293b',
-    padding: 16,
-    maxHeight: '85%',
+    paddingHorizontal: 15,
+    paddingTop: 11,
+    maxHeight: '90%',
   },
 
-  modalHeaderBasic: {
+  scheduleModalHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: 11,
     borderBottomWidth: 1,
     borderColor: '#1e293b',
-    paddingBottom: 10,
   },
 
-  modalTitleRow: {
+  scheduleModalTitleArea: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 9,
+    flex: 1,
   },
 
-  modalHeading: {
-    fontSize: 13,
-    fontWeight: '800',
+  scheduleModalIcon: {
+    width: 35,
+    height: 35,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(16, 185, 129, 0.10)',
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.25)',
+  },
+
+  scheduleModalTitle: {
+    fontSize: 15,
+    fontWeight: '900',
     color: '#ffffff',
   },
 
-  modalScrollBody: {
-    paddingTop: 12,
-    gap: 12,
+  scheduleModalSubtitle: {
+    fontSize: 8,
+    color: '#64748b',
+    marginTop: 2,
   },
 
-  presetGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-
-  freqCard: {
-    width: '48.5%',
-    backgroundColor: '#030712',
+  scheduleCloseButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#111827',
     borderWidth: 1,
     borderColor: '#1e293b',
-    borderRadius: 8,
+  },
+
+  scheduleModalScroll: {
+    paddingTop: 11,
+    paddingBottom: 22,
+    gap: 9,
+  },
+
+  scheduleItemHero: {
+    backgroundColor: '#090d16',
+    borderWidth: 1,
+    borderColor: '#1e293b',
+    borderRadius: 12,
     padding: 10,
   },
 
-  freqCardActive: {
-    borderColor: '#38bdf8',
-    backgroundColor:
-      'rgba(56, 189, 248, 0.1)',
+  scheduleHeroPeptideRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
   },
 
-  freqTitle: {
-    fontSize: 11,
+  scheduleHeroDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: '#10b981',
+  },
+
+  scheduleHeroName: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '900',
+    color: '#ffffff',
+  },
+
+  scheduleHeroMeta: {
+    fontSize: 8,
+    color: '#64748b',
+    marginTop: 4,
+    marginLeft: 14,
+  },
+
+  scheduleSection: {
+    backgroundColor: '#090d16',
+    borderWidth: 1,
+    borderColor: '#1e293b',
+    borderRadius: 12,
+    padding: 10,
+    gap: 8,
+  },
+
+  scheduleSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  scheduleSectionTitle: {
+    fontSize: 8,
+    fontWeight: '900',
+    letterSpacing: 1,
+    color: '#94a3b8',
+  },
+
+  scheduleSectionHint: {
+    fontSize: 8,
+    fontWeight: '700',
+    color: '#10b981',
+  },
+
+  presetGridCompact: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+
+  freqCardCompact: {
+    width: '48.5%',
+    minHeight: 46,
+    backgroundColor: '#030712',
+    borderWidth: 1,
+    borderColor: '#1e293b',
+    borderRadius: 9,
+    paddingHorizontal: 8,
+    paddingVertical: 7,
+    justifyContent: 'center',
+  },
+
+  freqCardCompactActive: {
+    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+    borderColor: '#10b981',
+  },
+
+  freqCardTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 4,
+  },
+
+  freqTitleCompact: {
+    flex: 1,
+    fontSize: 9,
     fontWeight: '800',
     color: '#ffffff',
   },
 
-  freqTitleActive: {
-    color: '#38bdf8',
+  freqTitleCompactActive: {
+    color: '#10b981',
   },
 
-  freqSub: {
-    fontSize: 9,
+  freqSubCompact: {
+    fontSize: 8,
     color: '#64748b',
+    marginTop: 2,
   },
 
-  daysSelectorRow: {
+  daysSelectorModern: {
     flexDirection: 'row',
     gap: 4,
   },
 
-  dayToggleChip: {
+  dayToggleModern: {
     flex: 1,
+    minHeight: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: '#030712',
     borderWidth: 1,
     borderColor: '#1e293b',
-    paddingVertical: 8,
-    borderRadius: 6,
-    alignItems: 'center',
+    borderRadius: 7,
   },
 
-  dayToggleChipActive: {
+  dayToggleModernActive: {
     backgroundColor: '#10b981',
     borderColor: '#10b981',
   },
 
-  dayToggleText: {
-    fontSize: 10,
-    fontWeight: '700',
+  dayToggleModernText: {
+    fontSize: 9,
+    fontWeight: '800',
     color: '#64748b',
   },
 
-  dayToggleTextActive: {
+  dayToggleModernTextActive: {
     color: '#022c22',
   },
 
-  textInputBasic: {
+  timePickerCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     backgroundColor: '#030712',
-    borderRadius: 8,
     borderWidth: 1,
     borderColor: '#1e293b',
+    borderRadius: 9,
+    padding: 7,
+  },
+
+  timePickerIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(56, 189, 248, 0.08)',
+  },
+
+  timePickerLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#ffffff',
+  },
+
+  timePickerHint: {
+    fontSize: 8,
+    color: '#64748b',
+    marginTop: 2,
+  },
+
+  timePickerInput: {
+    width: 68,
+    height: 38,
+    backgroundColor: '#0b1220',
+    borderWidth: 1,
+    borderColor: '#38bdf8',
+    borderRadius: 8,
     color: '#ffffff',
     fontSize: 14,
-    padding: 12,
-    fontWeight: '700',
+    fontWeight: '900',
+    textAlign: 'center',
+    paddingHorizontal: 3,
   },
 
-  toggleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 4,
-  },
-
-  toggleLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#cbd5e1',
-  },
-
-  modalActionsRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 10,
-  },
-
-  modalCancelBtn: {
-    flex: 1,
-    backgroundColor: '#030712',
+  scheduleOptionsCard: {
+    backgroundColor: '#090d16',
     borderWidth: 1,
     borderColor: '#1e293b',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
+    borderRadius: 12,
+    paddingHorizontal: 10,
   },
 
-  modalCancelBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
+  scheduleOptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 9,
+  },
+
+  scheduleOptionIconGreen: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+  },
+
+  scheduleOptionIconBlue: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(56, 189, 248, 0.08)',
+  },
+
+  scheduleOptionTitle: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#ffffff',
+  },
+
+  scheduleOptionSub: {
+    fontSize: 8,
+    color: '#64748b',
+    marginTop: 2,
+  },
+
+  scheduleOptionDivider: {
+    height: 1,
+    backgroundColor: '#1e293b',
+  },
+
+  scheduleActionsModern: {
+    flexDirection: 'row',
+    gap: 7,
+  },
+
+  scheduleCancelModern: {
+    flex: 1,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#090d16',
+    borderWidth: 1,
+    borderColor: '#1e293b',
+    borderRadius: 10,
+  },
+
+  scheduleCancelModernText: {
+    fontSize: 11,
+    fontWeight: '800',
     color: '#94a3b8',
   },
 
-  modalSaveScheduleBtn: {
+  scheduleSaveModern: {
     flex: 2,
-    backgroundColor: '#38bdf8',
-    paddingVertical: 12,
-    borderRadius: 8,
+    minHeight: 44,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#10b981',
+    borderRadius: 10,
+  },
+
+  scheduleSaveModernText: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: '#022c22',
   },
 
   /* ====================================================== */
