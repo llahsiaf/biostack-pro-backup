@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import type { FreezerItem, InjectionLog, InventoryItem, VialLifecycleStatus } from '../types';
+import type { FreezerItem, InjectionLog, InventoryItem } from '../types';
 
 export interface BioStackSettings {
   allowAiNetwork: boolean;
@@ -21,7 +21,6 @@ export interface BioStackBackupPayload {
     freezerStock: FreezerItem[];
     injectionHistory: InjectionLog[];
     currentSite: string;
-  settings: BioStackSettings;
     settings: BioStackSettings;
   };
 }
@@ -114,7 +113,15 @@ const normalizeInventoryItem = (item: InventoryItem): InventoryItem => ({
   currentVolumeMl: item.currentVolumeMl === undefined ? undefined : sanitizePositiveNumber(Number(item.currentVolumeMl)),
   initialVolumeMl: item.initialVolumeMl === undefined ? undefined : sanitizePositiveNumber(Number(item.initialVolumeMl)),
   notificationIds: Array.isArray(item.notificationIds) ? item.notificationIds : [],
-  lifecycleStatus: item.lifecycleStatus || (item.currentVolumeMl !== undefined && item.currentVolumeMl <= 0 ? 'empty' : 'active'),
+  lifecycleStatus:
+    item.currentVolumeMl !== undefined && item.currentVolumeMl <= 0
+      ? 'empty'
+      : item.lifecycleStatus === 'empty'
+        ? 'empty'
+        : 'active',
+  // Archive is no longer a user-facing lifecycle. Legacy archived items
+  // are normalized back to active (or empty when their liquid is depleted).
+  archivedAt: undefined,
   activatedAt: item.activatedAt || (item.reconstitutedDate ? `${item.reconstitutedDate}T00:00:00` : undefined),
   schedulePaused: Boolean(item.schedulePaused),
 });
@@ -151,8 +158,6 @@ interface BioStackState {
   transferLiquidToFridge: (freezerItemId: string) => void;
   removeInventoryItem: (id: string) => void;
   updateInventoryItem: (id: string, updates: Partial<InventoryItem>) => void;
-  archiveInventoryItem: (id: string) => void;
-  restoreInventoryItem: (id: string) => void;
   setSchedulePaused: (id: string, paused: boolean) => void;
   updateSettings: (updates: Partial<BioStackSettings>) => void;
   replaceData: (data: BioStackBackupPayload['data']) => void;
@@ -436,24 +441,6 @@ export const useBioStackStore = create<BioStackState>()(
           ),
         })),
 
-      archiveInventoryItem: (id) =>
-        set((state) => ({
-          inventory: (state.inventory || []).map((inv) =>
-            inv.id === id
-              ? { ...inv, lifecycleStatus: 'archived' as VialLifecycleStatus, archivedAt: new Date().toISOString(), isReminderActive: false }
-              : inv
-          ),
-        })),
-
-      restoreInventoryItem: (id) =>
-        set((state) => ({
-          inventory: (state.inventory || []).map((inv) =>
-            inv.id === id
-              ? { ...inv, lifecycleStatus: (inv.currentVolumeMl || 0) > 0 ? 'active' : 'empty', archivedAt: undefined, isReminderActive: true }
-              : inv
-          ),
-        })),
-
       setSchedulePaused: (id, paused) =>
         set((state) => ({
           inventory: (state.inventory || []).map((inv) =>
@@ -502,7 +489,7 @@ export const useBioStackStore = create<BioStackState>()(
     {
       name: 'biostack-pro-store',
       storage: createJSONStorage(() => AsyncStorage),
-      version: 5,
+      version: 6,
       migrate: (persistedState: unknown) => {
         const state = (persistedState && typeof persistedState === 'object')
           ? (persistedState as Partial<BioStackState>)
