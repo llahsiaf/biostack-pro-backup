@@ -84,6 +84,8 @@ const FREQUENCY_PRESETS = [
   },
 ];
 
+// V5 INVENTORY FINAL: compact card hierarchy + slim dose metrics.
+// Schedule & Pengaturan Suntik logic/UI is intentionally preserved.
 export const InventoryScreen: React.FC = () => {
   const {
     inventory,
@@ -823,9 +825,9 @@ export const InventoryScreen: React.FC = () => {
                       style={
                         styles.metricChipDoseText
                       }
+                      numberOfLines={1}
                     >
-                      Dosis: {item.targetDose}{' '}
-                      {item.doseUnit}
+                      Dosis: {item.targetDose} {item.doseUnit}
                     </Text>
                   </View>
 
@@ -838,9 +840,10 @@ export const InventoryScreen: React.FC = () => {
                       style={
                         styles.metricChipSpuitText
                       }
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
                     >
-                      Spuit: {metrics.iu} IU (
-                      {metrics.volumeMl} mL)
+                      Spuit: {metrics.iu} IU ({metrics.volumeMl} mL)
                     </Text>
                   </View>
 
@@ -853,9 +856,9 @@ export const InventoryScreen: React.FC = () => {
                       style={
                         styles.metricChipDialText
                       }
+                      numberOfLines={1}
                     >
-                      Dial: {metrics.dialClicks}{' '}
-                      Klik
+                      Dial: {metrics.dialClicks} Klik
                     </Text>
                   </View>
                 </View>
@@ -2223,13 +2226,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#030712',
     paddingHorizontal: 14,
-    paddingTop: 8,
+    paddingTop: 6,
   },
 
   statsRow: {
     flexDirection: 'row',
-    gap: 10,
-    marginBottom: 10,
+    gap: 8,
+    marginBottom: 8,
   },
 
   statCard: {
@@ -2240,8 +2243,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#1e293b',
     borderRadius: 12,
-    padding: 10,
-    gap: 10,
+    padding: 9,
+    gap: 8,
   },
 
   statLabel: {
@@ -2276,15 +2279,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#1e293b',
     borderRadius: 12,
-    padding: 10,
-    gap: 10,
+    padding: 9,
+    gap: 8,
   },
 
   sectionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 7,
   },
 
   sectionTitleWithIcon: {
@@ -2294,13 +2297,13 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '800',
     color: '#ffffff',
   },
 
   sectionSub: {
-    fontSize: 9,
+    fontSize: 8,
     color: '#64748b',
   },
 
@@ -2352,8 +2355,8 @@ const styles = StyleSheet.create({
   },
 
   listContainer: {
-    paddingBottom: 104,
-    gap: 12,
+    paddingBottom: 96,
+    gap: 6,
   },
 
   emptyCard: {
@@ -2381,12 +2384,12 @@ const styles = StyleSheet.create({
 
   peptideCard: {
     backgroundColor: '#090d16',
-    borderRadius: 14,
+    borderRadius: 13,
     borderWidth: 1,
     borderColor: '#1e293b',
-    padding: 11,
-    gap: 6,
-    marginBottom: 8,
+    padding: 9,
+    gap: 4,
+    marginBottom: 5,
   },
 
   cardHeader: {
@@ -2429,7 +2432,7 @@ const styles = StyleSheet.create({
   },
 
   badgePausedText: {
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: '800',
     color: '#38bdf8',
   },
@@ -2440,7 +2443,7 @@ const styles = StyleSheet.create({
 
   peptideName: {
     fontSize: 15,
-    lineHeight: 18,
+    lineHeight: 17,
     fontWeight: '900',
     color: '#ffffff',
   },
@@ -2491,8 +2494,8 @@ const styles = StyleSheet.create({
   headerActionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginLeft: 5,
+    gap: 3,
+    marginLeft: 4,
   },
 
   badgeToday: {
@@ -2525,11 +2528,11 @@ const styles = StyleSheet.create({
   },
 
   iconBtn: {
-    width: 30,
-    height: 30,
+    width: 28,
+    height: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 9,
+    borderRadius: 8,
     backgroundColor: '#0b1220',
     borderWidth: 1,
     borderColor: '#1e293b',
@@ -2542,57 +2545,63 @@ const styles = StyleSheet.create({
 
   doseMetricsGrid: {
     flexDirection: 'row',
-    gap: 6,
+    gap: 4,
     marginVertical: 2,
     alignItems: 'center',
   },
 
   metricChipDose: {
-    flex: 1,
-    minHeight: 36,
+    flex: 0.9,
+    minWidth: 0,
+    alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(245, 158, 11, 0.08)',
+    backgroundColor: 'rgba(245, 158, 11, 0.1)',
     borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.28)',
-    paddingHorizontal: 6,
-    paddingVertical: 5,
-    borderRadius: 9,
+    borderColor: 'rgba(245, 158, 11, 0.3)',
+    paddingHorizontal: 5,
+    paddingVertical: 3,
+    minHeight: 28,
+    borderRadius: 7,
   },
 
   metricChipDoseText: {
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: '800',
     color: '#f59e0b',
   },
 
   metricChipSpuit: {
-    flex: 1.15,
-    minHeight: 36,
+    flex: 1.35,
+    minWidth: 0,
+    alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(6, 182, 212, 0.08)',
+    backgroundColor: 'rgba(6, 182, 212, 0.1)',
     borderWidth: 1,
-    borderColor: 'rgba(6, 182, 212, 0.28)',
-    paddingHorizontal: 6,
-    paddingVertical: 5,
-    borderRadius: 9,
+    borderColor: 'rgba(6, 182, 212, 0.3)',
+    paddingHorizontal: 5,
+    paddingVertical: 4,
+    minHeight: 31,
+    borderRadius: 7,
   },
 
   metricChipSpuitText: {
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: '800',
     color: '#06b6d4',
   },
 
   metricChipDial: {
-    flex: 1,
-    minHeight: 36,
+    flex: 0.9,
+    minWidth: 0,
+    alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(56, 189, 248, 0.08)',
+    backgroundColor: 'rgba(56, 189, 248, 0.1)',
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.28)',
-    paddingHorizontal: 6,
-    paddingVertical: 5,
-    borderRadius: 9,
+    borderColor: 'rgba(56, 189, 248, 0.3)',
+    paddingHorizontal: 5,
+    paddingVertical: 4,
+    minHeight: 31,
+    borderRadius: 7,
   },
 
   metricChipDialText: {
@@ -2604,8 +2613,8 @@ const styles = StyleSheet.create({
   daysRowContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    marginVertical: 1,
+    gap: 3,
+    marginVertical: 0,
   },
 
   daysRowLabel: {
@@ -2616,14 +2625,18 @@ const styles = StyleSheet.create({
 
   daysChipsList: {
     flexDirection: 'row',
-    gap: 4,
+    gap: 3,
     flex: 1,
+    minWidth: 0,
   },
 
   dayDot: {
-    paddingHorizontal: 5,
+    flex: 1,
+    minWidth: 0,
+    alignItems: 'center',
+    paddingHorizontal: 2,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: 5,
     backgroundColor: '#030712',
     borderWidth: 1,
     borderColor: '#1e293b',
@@ -2647,11 +2660,19 @@ const styles = StyleSheet.create({
   timeTag: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 3,
+    minWidth: 54,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 6,
+    backgroundColor: '#0b1220',
+    borderWidth: 1,
+    borderColor: '#1e293b',
   },
 
   timeTagText: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '800',
     color: '#ffffff',
   },
@@ -2662,8 +2683,8 @@ const styles = StyleSheet.create({
     gap: 5,
     backgroundColor: '#030712',
     borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
   },
 
   scheduleStatusText: {
@@ -2681,9 +2702,9 @@ const styles = StyleSheet.create({
     borderRadius: 9,
     borderWidth: 1,
     borderColor: '#1e293b',
-    padding: 7,
-    gap: 4,
-    marginVertical: 1,
+    padding: 5,
+    gap: 3,
+    marginVertical: 0,
   },
 
   progressTextRow: {
@@ -2740,8 +2761,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     backgroundColor: '#10b981',
-    paddingVertical: 9,
-    borderRadius: 10,
+    paddingVertical: 7,
+    borderRadius: 9,
     marginTop: 1,
   },
 
@@ -2755,7 +2776,7 @@ const styles = StyleSheet.create({
   },
 
   injectMainBtnText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '800',
     color: '#022c22',
   },
