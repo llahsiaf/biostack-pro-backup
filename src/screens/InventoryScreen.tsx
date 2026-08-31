@@ -1951,235 +1951,180 @@ export const InventoryScreen: React.FC = () => {
         visible={isTakeFreezerModalOpen}
         animationType="fade"
         transparent
+        onRequestClose={() => {
+          setIsTakeFreezerModalOpen(false);
+          setSelectedFreezerItem(null);
+        }}
       >
         <KeyboardAvoidingView
-          behavior={
-            Platform.OS === 'ios'
-              ? 'padding'
-              : undefined
-          }
-          style={
-            styles.floatingModalOverlay
-          }
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.freezerModalOverlayV1}
         >
-          <View
-            style={
-              styles.floatingModalBox
-            }
-          >
-            <View
-              style={
-                styles.modalHeaderBasic
-              }
-            >
-              <View
-                style={
-                  styles.modalTitleRow
-                }
-              >
-                <Snowflake
-                  size={18}
-                  color="#38bdf8"
-                />
+          <View style={styles.freezerModalBoxV1}>
+            <View style={styles.freezerModalHeaderV1}>
+              <View style={styles.freezerModalHeaderLeftV1}>
+                <View style={styles.freezerModalIconBoxV1}>
+                  <Snowflake size={17} color="#38bdf8" />
+                </View>
 
-                <Text
-                  style={
-                    styles.doseModalTitle
-                  }
-                >
-                  Ambil Stok dari Freezer
-                </Text>
+                <View style={styles.freezerModalHeaderTextV1}>
+                  <Text style={styles.freezerModalTitleV1} numberOfLines={1}>
+                    Ambil Stok dari Freezer
+                  </Text>
+                  <Text style={styles.freezerModalSubtitleV1} numberOfLines={1}>
+                    Pilih vial untuk dipindahkan ke kulkas
+                  </Text>
+                </View>
               </View>
 
               <TouchableOpacity
-                onPress={() =>
-                  setIsTakeFreezerModalOpen(
-                    false,
-                  )
-                }
-                style={
-                  styles.closeIconCircle
-                }
+                onPress={() => {
+                  setIsTakeFreezerModalOpen(false);
+                  setSelectedFreezerItem(null);
+                }}
+                style={styles.freezerModalCloseV1}
+                accessibilityLabel="Tutup ambil stok dari freezer"
               >
-                <X
-                  size={18}
-                  color="#94a3b8"
-                />
+                <X size={17} color="#94a3b8" />
               </TouchableOpacity>
             </View>
 
             <ScrollView
-              contentContainerStyle={
-                styles.freezerModalScroll
-              }
-              showsVerticalScrollIndicator={
-                false
-              }
+              contentContainerStyle={styles.freezerModalScrollV1}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
             >
               {!selectedFreezerItem ? (
                 <>
-                  <Text
-                    style={
-                      styles.modalInstruction
-                    }
-                  >
-                    Pilih peptida yang ingin
-                    dipindahkan ke kulkas:
+                  <Text style={styles.freezerModalInstructionV1}>
+                    Pilih peptida yang ingin dipindahkan ke kulkas
                   </Text>
 
-                  {freezerList.map((f) => (
-                    <TouchableOpacity
-                      key={f.id}
-                      onPress={() => {
-                        if (
-                          f.quantity <= 0
-                        ) {
-                          return;
-                        }
+                  <View style={styles.freezerItemsListV1}>
+                    {freezerList.map((f) => {
+                      const isEmpty = f.quantity <= 0;
 
-                        if (
-                          f.unit === 'mL'
-                        ) {
-                          transferLiquidToFridge(
-                            f.id,
-                          );
+                      return (
+                        <TouchableOpacity
+                          key={f.id}
+                          activeOpacity={isEmpty ? 1 : 0.75}
+                          disabled={isEmpty}
+                          onPress={() => {
+                            if (isEmpty) return;
 
-                          setIsTakeFreezerModalOpen(
-                            false,
-                          );
-                        } else {
-                          setSelectedFreezerItem(
-                            f,
-                          );
-
-                          setFreezerBacInput(
-                            (
-                              f.defaultBacWater ||
-                              2
-                            ).toString(),
-                          );
-                        }
-                      }}
-                      style={
-                        styles.freezerListCard
-                      }
-                    >
-                      <View
-                        style={{
-                          flex: 1,
-                        }}
-                      >
-                        <Text
-                          style={
-                            styles.freezerListTitle
-                          }
+                            if (f.unit === 'mL') {
+                              transferLiquidToFridge(f.id);
+                              setIsTakeFreezerModalOpen(false);
+                              setSelectedFreezerItem(null);
+                            } else {
+                              setSelectedFreezerItem(f);
+                              setFreezerBacInput(
+                                (f.defaultBacWater || 2).toString(),
+                              );
+                            }
+                          }}
+                          style={[
+                            styles.freezerSelectCardV1,
+                            isEmpty && styles.freezerSelectCardEmptyV1,
+                          ]}
                         >
-                          {f.name}
-                        </Text>
+                          <View style={styles.freezerSelectIconV1}>
+                            <FlaskConical
+                              size={16}
+                              color={isEmpty ? '#475569' : '#10b981'}
+                            />
+                          </View>
 
-                        <Text
-                          style={
-                            styles.freezerListSub
-                          }
-                        >
-                          {f.category} •{' '}
-                          {f.vialSize}{' '}
-                          {f.unit}
-                        </Text>
-                      </View>
+                          <View style={styles.freezerSelectContentV1}>
+                            <View style={styles.freezerSelectTitleRowV1}>
+                              <Text
+                                style={[
+                                  styles.freezerSelectTitleV1,
+                                  isEmpty &&
+                                    styles.freezerSelectTitleEmptyV1,
+                                ]}
+                                numberOfLines={1}
+                              >
+                                {f.name}
+                              </Text>
 
-                      <View
-                        style={
-                          styles.freezerListBadge
-                        }
-                      >
-                        <Text
-                          style={
-                            styles.freezerListBadgeText
-                          }
-                        >
-                          {f.quantity} Vial
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  ))}
+                              <Text
+                                style={[
+                                  styles.freezerSelectQuantityV1,
+                                  isEmpty &&
+                                    styles.freezerSelectQuantityEmptyV1,
+                                ]}
+                              >
+                                {f.quantity} Vial
+                              </Text>
+                            </View>
+
+                            <Text
+                              style={[
+                                styles.freezerSelectMetaV1,
+                                isEmpty && styles.freezerSelectMetaEmptyV1,
+                              ]}
+                              numberOfLines={1}
+                            >
+                              {f.category} • {f.vialSize} {f.unit}
+                            </Text>
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
                 </>
               ) : (
-                <View
-                  style={
-                    styles.reconContainer
-                  }
-                >
-                  <Text
-                    style={
-                      styles.reconHeaderTitle
-                    }
-                  >
-                    Pelarutan:{' '}
-                    {
-                      selectedFreezerItem.name
-                    }{' '}
-                    (
-                    {
-                      selectedFreezerItem.vialSize
-                    }{' '}
-                    {
-                      selectedFreezerItem.unit
-                    }
-                    )
-                  </Text>
+                <View style={styles.reconContainerV1}>
+                  <View style={styles.reconHeroV1}>
+                    <View style={styles.reconHeroIconV1}>
+                      <FlaskConical size={18} color="#10b981" />
+                    </View>
 
-                  <Text
-                    style={
-                      styles.reconDesc
-                    }
-                  >
-                    Masukkan jumlah
-                    Bacteriostatic (BAC)
-                    Water untuk melarutkan
-                    peptida ini ke kulkas
-                    aktif.
-                  </Text>
+                    <View style={styles.reconHeroTextV1}>
+                      <Text style={styles.reconHeroTitleV1} numberOfLines={1}>
+                        {selectedFreezerItem.name}
+                      </Text>
+                      <Text style={styles.reconHeroMetaV1}>
+                        {selectedFreezerItem.vialSize}{' '}
+                        {selectedFreezerItem.unit} Vial •{' '}
+                        {selectedFreezerItem.category}
+                      </Text>
+                    </View>
+                  </View>
 
-                  <Text
-                    style={
-                      styles.reconInputLabel
-                    }
-                  >
-                    Volume BAC Water (mL):
-                  </Text>
+                  <View style={styles.reconInfoV1}>
+                    <Text style={styles.reconInfoTitleV1}>Pelarutan</Text>
+                    <Text style={styles.reconInfoTextV1}>
+                      Masukkan volume BAC Water untuk melarutkan peptida ini ke
+                      kulkas aktif.
+                    </Text>
+                  </View>
 
-                  <TextInput
-                    style={
-                      styles.reconInputBox
-                    }
-                    keyboardType="numeric"
-                    value={freezerBacInput}
-                    onChangeText={
-                      setFreezerBacInput
-                    }
-                  />
+                  <View style={styles.reconInputCardV1}>
+                    <View style={styles.reconInputHeaderV1}>
+                      <Text style={styles.reconInputLabelV1}>
+                        Volume BAC Water
+                      </Text>
+                      <Text style={styles.reconInputUnitV1}>mL</Text>
+                    </View>
 
-                  <View
-                    style={
-                      styles.reconActionRow
-                    }
-                  >
+                    <TextInput
+                      style={styles.reconInputV1}
+                      keyboardType="numeric"
+                      value={freezerBacInput}
+                      onChangeText={setFreezerBacInput}
+                      placeholder="2.0"
+                      placeholderTextColor="#475569"
+                    />
+                  </View>
+
+                  <View style={styles.reconActionRowV1}>
                     <TouchableOpacity
-                      onPress={() =>
-                        setSelectedFreezerItem(
-                          null,
-                        )
-                      }
-                      style={
-                        styles.reconBtnBack
-                      }
+                      onPress={() => setSelectedFreezerItem(null)}
+                      style={styles.reconBtnBackV1}
                     >
-                      <Text
-                        style={
-                          styles.reconBtnBackText
-                        }
-                      >
+                      <Text style={styles.reconBtnBackTextV1}>
                         Kembali
                       </Text>
                     </TouchableOpacity>
@@ -2188,28 +2133,15 @@ export const InventoryScreen: React.FC = () => {
                       onPress={() => {
                         reconstituteToFridge(
                           selectedFreezerItem.id,
-                          parseFloat(
-                            freezerBacInput,
-                          ) || 2.0,
+                          parseFloat(freezerBacInput) || 2.0,
                         );
-
-                        setIsTakeFreezerModalOpen(
-                          false,
-                        );
-
-                        setSelectedFreezerItem(
-                          null,
-                        );
+                        setIsTakeFreezerModalOpen(false);
+                        setSelectedFreezerItem(null);
                       }}
-                      style={
-                        styles.reconBtnSubmit
-                      }
+                      style={styles.reconBtnSubmitV1}
                     >
-                      <Text
-                        style={
-                          styles.reconBtnSubmitText
-                        }
-                      >
+                      <FlaskConical size={15} color="#022c22" />
+                      <Text style={styles.reconBtnSubmitTextV1}>
                         Larutkan Sekarang
                       </Text>
                     </TouchableOpacity>
@@ -3425,144 +3357,311 @@ const styles = StyleSheet.create({
   },
 
   /* ====================================================== */
-  /* MODAL FREEZER */
+  /* MODAL FREEZER - PRIORITAS 1 */
   /* ====================================================== */
 
-  floatingModalOverlay: {
+  freezerModalOverlayV1: {
     flex: 1,
-    backgroundColor:
-      'rgba(0, 0, 0, 0.85)',
+    backgroundColor: 'rgba(0, 0, 0, 0.82)',
     justifyContent: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
   },
 
-  floatingModalBox: {
-    backgroundColor: '#0f172a',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#1e293b',
-    padding: 16,
-    maxHeight: '85%',
-  },
-
-  freezerModalScroll: {
-    paddingTop: 14,
-    paddingBottom: 10,
-  },
-
-  modalInstruction: {
-    fontSize: 11,
-    color: '#94a3b8',
-    marginBottom: 12,
-  },
-
-  freezerListCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  freezerModalBoxV1: {
+    width: '100%',
+    maxHeight: '78%',
     backgroundColor: '#090d16',
     borderWidth: 1,
     borderColor: '#1e293b',
-    padding: 14,
-    borderRadius: 12,
-    marginBottom: 10,
+    borderRadius: 18,
+    overflow: 'hidden',
   },
 
-  freezerListTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#ffffff',
+  freezerModalHeaderV1: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
+    paddingVertical: 13,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1e293b',
   },
 
-  freezerListSub: {
-    fontSize: 10,
-    color: '#64748b',
-    marginTop: 2,
+  freezerModalHeaderLeftV1: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    minWidth: 0,
   },
 
-  freezerListBadge: {
+  freezerModalIconBoxV1: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(56, 189, 248, 0.10)',
     borderWidth: 1,
-    borderColor: '#0284c7',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    backgroundColor: 'transparent',
+    borderColor: 'rgba(56, 189, 248, 0.18)',
   },
 
-  freezerListBadgeText: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    color: '#38bdf8',
+  freezerModalHeaderTextV1: {
+    flex: 1,
+    minWidth: 0,
   },
 
-  reconContainer: {
-    marginTop: 10,
-  },
-
-  reconHeaderTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
+  freezerModalTitleV1: {
+    fontSize: 14,
+    fontWeight: '900',
     color: '#ffffff',
-    marginBottom: 6,
   },
 
-  reconDesc: {
-    fontSize: 12,
+  freezerModalSubtitleV1: {
+    marginTop: 2,
+    fontSize: 9,
+    color: '#64748b',
+  },
+
+  freezerModalCloseV1: {
+    width: 32,
+    height: 32,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#111827',
+    borderWidth: 1,
+    borderColor: '#1e293b',
+    marginLeft: 8,
+  },
+
+  freezerModalScrollV1: {
+    padding: 13,
+    paddingBottom: 18,
+  },
+
+  freezerModalInstructionV1: {
+    marginBottom: 9,
+    fontSize: 10,
+    fontWeight: '800',
     color: '#94a3b8',
-    lineHeight: 18,
-    marginBottom: 16,
   },
 
-  reconInputLabel: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 6,
+  freezerItemsListV1: {
+    gap: 7,
   },
 
-  reconInputBox: {
+  freezerSelectCardV1: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 58,
+    paddingHorizontal: 10,
+    paddingVertical: 9,
+    borderRadius: 11,
     backgroundColor: '#030712',
     borderWidth: 1,
     borderColor: '#1e293b',
-    borderRadius: 8,
-    color: '#ffffff',
-    padding: 12,
-    fontSize: 14,
+    gap: 9,
   },
 
-  reconActionRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 20,
+  freezerSelectCardEmptyV1: {
+    opacity: 0.5,
   },
 
-  reconBtnBack: {
-    flex: 1,
-    backgroundColor: '#090d16',
+  freezerSelectIconV1: {
+    width: 32,
+    height: 32,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0b1220',
     borderWidth: 1,
     borderColor: '#1e293b',
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: 'center',
   },
 
-  reconBtnBackText: {
-    color: '#ffffff',
-    fontSize: 13,
-    fontWeight: 'bold',
-  },
-
-  reconBtnSubmit: {
+  freezerSelectContentV1: {
     flex: 1,
-    backgroundColor: '#10b981',
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: 'center',
+    minWidth: 0,
   },
 
-  reconBtnSubmitText: {
-    color: '#022c22',
-    fontSize: 13,
-    fontWeight: 'bold',
+  freezerSelectTitleRowV1: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
   },
+
+  freezerSelectTitleV1: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: 12,
+    fontWeight: '900',
+    color: '#ffffff',
+  },
+
+  freezerSelectTitleEmptyV1: {
+    color: '#64748b',
+  },
+
+  freezerSelectQuantityV1: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#10b981',
+  },
+
+  freezerSelectQuantityEmptyV1: {
+    color: '#64748b',
+  },
+
+  freezerSelectMetaV1: {
+    marginTop: 3,
+    fontSize: 9,
+    color: '#64748b',
+  },
+
+  freezerSelectMetaEmptyV1: {
+    color: '#475569',
+  },
+
+  reconContainerV1: {
+    gap: 10,
+  },
+
+  reconHeroV1: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    padding: 11,
+    borderRadius: 11,
+    backgroundColor: '#030712',
+    borderWidth: 1,
+    borderColor: '#1e293b',
+  },
+
+  reconHeroIconV1: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(16, 185, 129, 0.10)',
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.18)',
+  },
+
+  reconHeroTextV1: {
+    flex: 1,
+    minWidth: 0,
+  },
+
+  reconHeroTitleV1: {
+    fontSize: 13,
+    fontWeight: '900',
+    color: '#ffffff',
+  },
+
+  reconHeroMetaV1: {
+    marginTop: 3,
+    fontSize: 9,
+    color: '#64748b',
+  },
+
+  reconInfoV1: {
+    paddingHorizontal: 2,
+  },
+
+  reconInfoTitleV1: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: '#10b981',
+  },
+
+  reconInfoTextV1: {
+    marginTop: 3,
+    fontSize: 9,
+    lineHeight: 14,
+    color: '#64748b',
+  },
+
+  reconInputCardV1: {
+    padding: 11,
+    borderRadius: 11,
+    backgroundColor: '#030712',
+    borderWidth: 1,
+    borderColor: '#1e293b',
+    gap: 7,
+  },
+
+  reconInputHeaderV1: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  reconInputLabelV1: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#94a3b8',
+  },
+
+  reconInputUnitV1: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#38bdf8',
+  },
+
+  reconInputV1: {
+    minHeight: 42,
+    borderRadius: 9,
+    backgroundColor: '#090d16',
+    borderWidth: 1,
+    borderColor: '#38bdf8',
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '900',
+    paddingHorizontal: 11,
+    paddingVertical: 8,
+    textAlign: 'center',
+  },
+
+  reconActionRowV1: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 2,
+  },
+
+  reconBtnBackV1: {
+    flex: 1,
+    minHeight: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 9,
+    backgroundColor: '#030712',
+    borderWidth: 1,
+    borderColor: '#1e293b',
+  },
+
+  reconBtnBackTextV1: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#94a3b8',
+  },
+
+  reconBtnSubmitV1: {
+    flex: 1.7,
+    minHeight: 42,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    borderRadius: 9,
+    backgroundColor: '#10b981',
+  },
+
+  reconBtnSubmitTextV1: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: '#022c22',
+  },
+
 });
