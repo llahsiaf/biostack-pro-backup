@@ -34,6 +34,7 @@ import { AnalyticsScreen } from './src/screens/AnalyticsScreen';
 import { COLORS, RADIUS, SHADOWS } from './src/theme';
 import { useBioStackStore } from './src/store/useBioStackStore';
 import { getNotificationPermission, rebuildScheduleReminders } from './src/utils/notificationUtils';
+import { LanguageProvider, useLanguage } from './src/i18n/LanguageContext';
 
 // Konfigurasi handler notifikasi lokal internal
 Notifications.setNotificationHandler({
@@ -44,7 +45,9 @@ Notifications.setNotificationHandler({
   }),
 });
 
-export default function App() {
+function BioStackApp() {
+  const { t } = useLanguage();
+
   const [activeTab, setActiveTab] = useState<'today' | 'inventory' | 'rotation' | 'history' | 'freezer' | 'analytics' | 'settings'>('today');
   const [notificationTarget, setNotificationTarget] = useState<{ inventoryId?: string; date?: string } | null>(null);
   const injectionHistory = useBioStackStore((state) => state.injectionHistory || []);
@@ -249,11 +252,11 @@ export default function App() {
       {/* Navigasi Utama — bottom tab bar */}
       <View style={styles.navBar}>
         {([
-          ['today', 'Today', Activity],
-          ['inventory', 'Inventory', FlaskConical],
-          ['rotation', 'Rotasi', RotateCw],
-          ['history', 'Riwayat', History],
-          ['freezer', 'Freezer', Snowflake],
+          ['today', t('navigation.today'), Activity],
+          ['inventory', t('navigation.inventory'), FlaskConical],
+          ['rotation', t('navigation.rotation'), RotateCw],
+          ['history', t('navigation.history'), History],
+          ['freezer', t('navigation.freezer'), Snowflake],
         ] as const).map(([tab, label, Icon]) => {
           const active = activeTab === tab;
           return (
@@ -294,6 +297,14 @@ export default function App() {
       {/* Tombol AI Chat Assistant Melayang */}
       <FloatingAIChat />
     </SafeAreaView>
+  );
+}
+
+export default function App() {
+  return (
+    <LanguageProvider>
+      <BioStackApp />
+    </LanguageProvider>
   );
 }
 
