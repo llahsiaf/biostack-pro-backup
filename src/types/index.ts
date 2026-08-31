@@ -88,6 +88,7 @@ export interface FreezerItem {
   id: string;
   name: string;
   category: string;
+  description?: string;
   vialSize: number;
   unit: PeptideUnit;
   quantity: number;
