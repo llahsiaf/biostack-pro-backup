@@ -124,6 +124,18 @@ export const ID_TRANSLATIONS = {
     peptideName:
       'Nama Peptida / Senyawa',
 
+    categoryShort:
+      'Kategori',
+
+    namePlaceholder:
+      'Contoh: Semaglutide',
+
+    autofillPlaceholder:
+      'Terisi otomatis jika peptide dikenali',
+
+    vialUnitLabel:
+      'Vial',
+
     vialSize:
       'Ukuran Vial',
 
@@ -704,6 +716,18 @@ export const EN_TRANSLATIONS = {
 
     peptideName:
       'Peptide / Compound Name',
+
+    categoryShort:
+      'Category',
+
+    namePlaceholder:
+      'Example: Semaglutide',
+
+    autofillPlaceholder:
+      'Filled automatically when the peptide is recognized',
+
+    vialUnitLabel:
+      'Vial',
 
     vialSize:
       'Vial Size',
