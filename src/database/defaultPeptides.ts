@@ -374,6 +374,58 @@ export const DEFAULT_PEPTIDES: PeptideTemplate[] = [
 
 
   // ==========================================================
+  // CAGRILINTIDE
+  // ==========================================================
+
+  {
+    id: 'cagrilintide',
+
+    name: 'Cagrilintide',
+
+    aliases: [
+      'Cagri',
+      'Cagrilintide',
+    ],
+
+    category:
+      'Amylin Analogue / Satiety',
+
+    categoryTranslations: {
+      id:
+        'Amylin Analogue / Satiety',
+      en:
+        'Amylin Analogue / Satiety',
+    },
+
+    description:
+      '',
+
+    descriptionTranslations: {
+      id:
+        '',
+      en:
+        '',
+    },
+
+    defaultVialSize: 5,
+    vialUnit: 'mg',
+    defaultBacWater: 2.0,
+    targetDose: 0.3,
+    doseUnit: 'mg',
+    defaultStock: 8,
+    frequency: 'weekly',
+    frequencyLabel: 'Mingguan (Weekly)',
+    halfLifeDays: 7.0,
+    maxFridgeDays: 56,
+    presetLow: 0,
+    presetStandard: 0,
+    presetHigh: 0,
+    activeDays: ['Sen'],
+    injectionTime: '08:00',
+  },
+
+
+  // ==========================================================
   // GHK-Cu
   // ==========================================================
 
