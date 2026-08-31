@@ -964,60 +964,60 @@ const styles = StyleSheet.create({
   // =====================================
   freezerCard: {
     backgroundColor: '#090d16',
-    borderRadius: 15,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: '#1e293b',
-    paddingHorizontal: 14,
-    paddingVertical: 13,
-    gap: 8,
+    paddingHorizontal: 11,
+    paddingVertical: 9,
+    gap: 5,
   },
 
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    minHeight: 28,
+    minHeight: 24,
   },
 
   titleRow: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingRight: 8,
+    gap: 6,
+    paddingRight: 5,
   },
 
   peptideName: {
     flexShrink: 1,
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '800',
     color: '#ffffff',
   },
 
   sizeBadge: {
-    backgroundColor: '#1e293b',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 7,
+    backgroundColor: '#111827',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 6,
   },
 
   sizeBadgeText: {
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: '700',
     color: '#94a3b8',
   },
 
   deleteBtn: {
-    width: 34,
-    height: 34,
+    width: 28,
+    height: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 9,
+    borderRadius: 8,
   },
 
   categoryText: {
-    fontSize: 11,
-    lineHeight: 15,
+    fontSize: 9,
+    lineHeight: 12,
     color: '#64748b',
   },
 
@@ -1027,8 +1027,8 @@ const styles = StyleSheet.create({
   actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 9,
-    marginTop: 3,
+    gap: 7,
+    marginTop: 1,
   },
 
   // =====================================
@@ -1038,38 +1038,38 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minWidth: 128,
-    height: 42,
+    minWidth: 112,
+    height: 34,
     backgroundColor: '#030712',
-    borderRadius: 10,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: '#1e293b',
-    paddingHorizontal: 3,
+    paddingHorizontal: 2,
   },
 
   qtyBtn: {
-    width: 38,
-    height: 36,
+    width: 31,
+    height: 30,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 8,
+    borderRadius: 7,
   },
 
   qtyBtnText: {
-    fontSize: 18,
-    lineHeight: 20,
+    fontSize: 16,
+    lineHeight: 18,
     fontWeight: '800',
     color: '#94a3b8',
   },
 
   qtyValueText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '800',
     color: '#ffffff',
   },
 
   qtyUnitText: {
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: '400',
     color: '#64748b',
   },
@@ -1079,31 +1079,31 @@ const styles = StyleSheet.create({
   // =====================================
   reconstituteBtn: {
     flex: 1,
-    minHeight: 42,
+    minHeight: 34,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 7,
+    gap: 6,
     backgroundColor: '#10b981',
-    paddingHorizontal: 10,
-    borderRadius: 10,
+    paddingHorizontal: 8,
+    borderRadius: 8,
   },
 
   transferActionBtn: {
     flex: 1,
-    minHeight: 42,
+    minHeight: 34,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 7,
+    gap: 6,
     backgroundColor: '#38bdf8',
-    paddingHorizontal: 10,
-    borderRadius: 10,
+    paddingHorizontal: 8,
+    borderRadius: 8,
   },
 
   reconstituteBtnText: {
     flexShrink: 1,
-    fontSize: 11,
+    fontSize: 9,
     fontWeight: '800',
     color: '#022c22',
   },
