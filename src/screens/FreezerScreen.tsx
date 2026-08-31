@@ -26,7 +26,7 @@ import { getPeptideAutofillData } from '../database/defaultPeptides';
 import { useLanguage } from '../i18n/LanguageContext';
 
 export const FreezerScreen: React.FC = () => {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const {
     freezerStock,
     updateFreezerQuantity,
@@ -48,15 +48,6 @@ export const FreezerScreen: React.FC = () => {
   const [newVialSize, setNewVialSize] = useState('');
   const [newUnit, setNewUnit] = useState<'mg' | 'mcg' | 'mL'>('mg');
   const [newQuantity, setNewQuantity] = useState('');
-  const [newDefaultBac, setNewDefaultBac] = useState('');
-  const [newTargetDose, setNewTargetDose] = useState('');
-  const [newFrequency, setNewFrequency] = useState('');
-  const [newFrequencyLabel, setNewFrequencyLabel] = useState('');
-  const [newHalfLife, setNewHalfLife] = useState('');
-  const [newMaxFridgeDays, setNewMaxFridgeDays] = useState('');
-  const [newPresetLow, setNewPresetLow] = useState('');
-  const [newPresetStandard, setNewPresetStandard] = useState('');
-  const [newPresetHigh, setNewPresetHigh] = useState('');
 
   // =========================
   // FORM RESET + AUTO-FILL
@@ -74,15 +65,6 @@ export const FreezerScreen: React.FC = () => {
     setNewVialSize('');
     setNewUnit('mg');
     setNewQuantity('');
-    setNewDefaultBac('');
-    setNewTargetDose('');
-    setNewFrequency('');
-    setNewFrequencyLabel('');
-    setNewHalfLife('');
-    setNewMaxFridgeDays('');
-    setNewPresetLow('');
-    setNewPresetStandard('');
-    setNewPresetHigh('');
   };
 
   const handleNewNameChange = (value: string) => {
@@ -91,42 +73,21 @@ export const FreezerScreen: React.FC = () => {
     const autofill = getPeptideAutofillData(value, language);
 
     if (!autofill) {
+      // Nama tidak dikenali: jangan membawa data peptide sebelumnya.
+      setNewCategory('');
+      setNewDescription('');
+      setNewVialSize('');
+      setNewUnit('mg');
       return;
     }
 
+    // Autofill hanya menjadi nilai awal. Semua field tetap editable.
     setNewCategory(autofill.category || '');
     setNewDescription(autofill.description || '');
     setNewVialSize(
       autofill.defaultVialSize?.toString() || ''
     );
     setNewUnit(autofill.vialUnit || 'mg');
-    setNewDefaultBac(
-      autofill.defaultBacWater?.toString() || ''
-    );
-    setNewTargetDose(
-      autofill.targetDose?.toString() || ''
-    );
-    setNewFrequency(
-      autofill.frequency || ''
-    );
-    setNewFrequencyLabel(
-      autofill.frequencyLabel || ''
-    );
-    setNewHalfLife(
-      autofill.halfLifeDays?.toString() || ''
-    );
-    setNewMaxFridgeDays(
-      autofill.maxFridgeDays?.toString() || ''
-    );
-    setNewPresetLow(
-      autofill.presetLow?.toString() || ''
-    );
-    setNewPresetStandard(
-      autofill.presetStandard?.toString() || ''
-    );
-    setNewPresetHigh(
-      autofill.presetHigh?.toString() || ''
-    );
   };
 
   const openAddModal = () => {
@@ -179,7 +140,7 @@ export const FreezerScreen: React.FC = () => {
     // Cairan mL langsung dipindahkan ke kulkas
     if (item.unit === 'mL') {
       Alert.alert(
-        'Pindahkan ke Kulkas',
+        t('freezer.moveToFridge'),
         `${item.name} adalah senyawa cairan siap pakai (${item.vialSize} mL). Pindahkan 1 vial langsung ke kulkas aktif tanpa pelarutan BAC Water?`,
         [
           {
@@ -260,6 +221,8 @@ export const FreezerScreen: React.FC = () => {
       return;
     }
 
+    const autofill = getPeptideAutofillData(newName, language);
+
     const newItem = {
       id: `pep-${Date.now()}`,
       name: newName.trim(),
@@ -272,34 +235,29 @@ export const FreezerScreen: React.FC = () => {
       unit: newUnit,
       quantity:
         parseInt(newQuantity, 10),
+      // Field protokol tidak ditampilkan di form Freezer.
+      // Jika peptide dikenali, nilai master tetap dibawa ke model
+      // agar fitur Inventory/Reconstitute yang sudah ada tetap bekerja.
       defaultBacWater:
         newUnit === 'mL'
           ? 0
-          : parseFloat(newDefaultBac) || 0,
+          : autofill?.defaultBacWater || 0,
       targetDose:
-        parseFloat(newTargetDose) || 0,
+        autofill?.targetDose || 0,
       frequency:
-        newFrequency.trim(),
+        autofill?.frequency || 'weekly',
       frequencyLabel:
-        newFrequencyLabel.trim(),
+        autofill?.frequencyLabel ||
+        (language === 'en' ? 'Weekly' : 'Mingguan (Weekly)'),
       halfLifeDays:
-        parseFloat(newHalfLife) || 0,
+        autofill?.halfLifeDays || 0,
       maxFridgeDays:
-        parseInt(newMaxFridgeDays, 10) || 0,
-      presetLow:
-        parseFloat(newPresetLow) || 0,
-      presetStandard:
-        parseFloat(newPresetStandard) || 0,
-      presetHigh:
-        parseFloat(newPresetHigh) || 0,
-      activeDays: ['Sen'],
-      injectionTime: '08:00',
-    } as FreezerItem & {
-      description?: string;
-      presetLow?: number;
-      presetStandard?: number;
-      presetHigh?: number;
-    };
+        autofill?.maxFridgeDays || 0,
+      activeDays:
+        autofill?.activeDays || ['Sen'],
+      injectionTime:
+        autofill?.injectionTime || '08:00',
+    } as FreezerItem;
 
     addFreezerItem(newItem);
 
@@ -330,11 +288,11 @@ export const FreezerScreen: React.FC = () => {
 
         <View style={styles.bannerContent}>
           <Text style={styles.bannerTitle}>
-            Freezer Lyophilized Stock
+            {t('freezer.title')}
           </Text>
 
           <Text style={styles.bannerSubtitle}>
-            {stockList.length} Senyawa • {totalVials} Vial Padat Terkunci
+            {t('freezer.stockSummary', { compounds: stockList.length, vials: totalVials })} • {t('freezer.protectedStock')}
           </Text>
         </View>
       </View>
@@ -353,7 +311,7 @@ export const FreezerScreen: React.FC = () => {
         />
 
         <Text style={styles.addMainBtnText}>
-          Tambah Peptida Baru
+          {t('freezer.addPeptide')}
         </Text>
       </TouchableOpacity>
 
@@ -368,7 +326,7 @@ export const FreezerScreen: React.FC = () => {
 
         <TextInput
           style={styles.searchInput}
-          placeholder="Cari peptida dalam freezer..."
+          placeholder={t('freezer.searchPlaceholder')}
           placeholderTextColor="#64748b"
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -505,7 +463,7 @@ export const FreezerScreen: React.FC = () => {
                   <Text style={styles.qtyValueText}>
                     {item.quantity}{' '}
                     <Text style={styles.qtyUnitText}>
-                      Vial
+                      {t('freezer.vialUnitLabel')}
                     </Text>
                   </Text>
 
@@ -564,7 +522,7 @@ export const FreezerScreen: React.FC = () => {
                       style={styles.reconstituteBtnText}
                       numberOfLines={1}
                     >
-                      Larutkan ke Kulkas
+                      {t('freezer.dissolveToFridge')}
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -749,7 +707,7 @@ export const FreezerScreen: React.FC = () => {
                 />
 
                 <Text style={styles.modalHeading}>
-                  Tambah Peptida ke Freezer
+                  {t('freezer.addModalTitle')}
                 </Text>
               </View>
 
@@ -774,12 +732,12 @@ export const FreezerScreen: React.FC = () => {
 
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>
-                  Nama Peptida / Senyawa:
+                  {t('freezer.peptideName')}:
                 </Text>
 
                 <TextInput
                   style={styles.textInput}
-                  placeholder="Contoh: Semaglutide"
+                  placeholder={t('freezer.namePlaceholder')}
                   placeholderTextColor="#64748b"
                   value={newName}
                   onChangeText={handleNewNameChange}
@@ -788,12 +746,12 @@ export const FreezerScreen: React.FC = () => {
 
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>
-                  Kategori:
+                  {t('freezer.categoryShort')}:
                 </Text>
 
                 <TextInput
                   style={styles.textInput}
-                  placeholder="Terisi otomatis jika peptide dikenali"
+                  placeholder={t('freezer.autofillPlaceholder')}
                   placeholderTextColor="#64748b"
                   value={newCategory}
                   onChangeText={setNewCategory}
@@ -802,7 +760,7 @@ export const FreezerScreen: React.FC = () => {
 
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>
-                  Deskripsi:
+                  {t('freezer.description')}:
                 </Text>
 
                 <TextInput
@@ -810,7 +768,7 @@ export const FreezerScreen: React.FC = () => {
                     styles.textInput,
                     styles.multilineTextInput,
                   ]}
-                  placeholder="Terisi otomatis jika peptide dikenali"
+                  placeholder={t('freezer.autofillPlaceholder')}
                   placeholderTextColor="#64748b"
                   value={newDescription}
                   onChangeText={setNewDescription}
@@ -824,7 +782,7 @@ export const FreezerScreen: React.FC = () => {
 
                 <View style={styles.colBox}>
                   <Text style={styles.inputLabel}>
-                    Ukuran Vial:
+                    {t('freezer.vialSize')}:
                   </Text>
 
                   <TextInput
@@ -837,7 +795,7 @@ export const FreezerScreen: React.FC = () => {
 
                 <View style={styles.colBox}>
                   <Text style={styles.inputLabel}>
-                    Satuan:
+                    {t('freezer.unit')}:
                   </Text>
 
                   <View style={styles.unitSelectorRow}>
@@ -876,169 +834,18 @@ export const FreezerScreen: React.FC = () => {
 
               </View>
 
-              {/* STOK + BAC WATER */}
-              <View style={styles.twoColRow}>
-
-                <View style={styles.colBox}>
-                  <Text style={styles.inputLabel}>
-                    Jumlah Stok (Vial):
-                  </Text>
-
-                  <TextInput
-                    style={styles.textInput}
-                    keyboardType="numeric"
-                    value={newQuantity}
-                    onChangeText={setNewQuantity}
-                  />
-                </View>
-
-                {newUnit !== 'mL' && (
-                  <View style={styles.colBox}>
-                    <Text style={styles.inputLabel}>
-                      Default BAC Water (mL):
-                    </Text>
-
-                    <TextInput
-                      style={styles.textInput}
-                      keyboardType="numeric"
-                      value={newDefaultBac}
-                      onChangeText={setNewDefaultBac}
-                    />
-                  </View>
-                )}
-
-              </View>
-
-              {/* TARGET DOSIS */}
+              {/* JUMLAH STOK */}
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>
-                  Target Dosis Default ({newUnit}):
+                  {t('freezer.quantity')}:
                 </Text>
 
                 <TextInput
                   style={styles.textInput}
                   keyboardType="numeric"
-                  value={newTargetDose}
-                  onChangeText={setNewTargetDose}
+                  value={newQuantity}
+                  onChangeText={setNewQuantity}
                 />
-              </View>
-
-              {/* FREQUENCY */}
-              <View style={styles.twoColRow}>
-
-                <View style={styles.colBox}>
-                  <Text style={styles.inputLabel}>
-                    Frequency:
-                  </Text>
-
-                  <TextInput
-                    style={styles.textInput}
-                    placeholder="Contoh: weekly"
-                    placeholderTextColor="#64748b"
-                    value={newFrequency}
-                    onChangeText={setNewFrequency}
-                  />
-                </View>
-
-                <View style={styles.colBox}>
-                  <Text style={styles.inputLabel}>
-                    Frequency Label:
-                  </Text>
-
-                  <TextInput
-                    style={styles.textInput}
-                    placeholder="Contoh: Mingguan"
-                    placeholderTextColor="#64748b"
-                    value={newFrequencyLabel}
-                    onChangeText={setNewFrequencyLabel}
-                  />
-                </View>
-
-              </View>
-
-              {/* HALF LIFE + MAX FRIDGE */}
-              <View style={styles.twoColRow}>
-
-                <View style={styles.colBox}>
-                  <Text style={styles.inputLabel}>
-                    Half Life (hari):
-                  </Text>
-
-                  <TextInput
-                    style={styles.textInput}
-                    keyboardType="numeric"
-                    placeholder="Contoh: 7"
-                    placeholderTextColor="#64748b"
-                    value={newHalfLife}
-                    onChangeText={setNewHalfLife}
-                  />
-                </View>
-
-                <View style={styles.colBox}>
-                  <Text style={styles.inputLabel}>
-                    Max Fridge (hari):
-                  </Text>
-
-                  <TextInput
-                    style={styles.textInput}
-                    keyboardType="numeric"
-                    placeholder="Contoh: 56"
-                    placeholderTextColor="#64748b"
-                    value={newMaxFridgeDays}
-                    onChangeText={setNewMaxFridgeDays}
-                  />
-                </View>
-
-              </View>
-
-              {/* PRESET DOSIS */}
-              <View style={styles.threeColRow}>
-
-                <View style={styles.colBox}>
-                  <Text style={styles.inputLabel}>
-                    Preset Low:
-                  </Text>
-
-                  <TextInput
-                    style={styles.textInput}
-                    keyboardType="numeric"
-                    placeholder="Low"
-                    placeholderTextColor="#64748b"
-                    value={newPresetLow}
-                    onChangeText={setNewPresetLow}
-                  />
-                </View>
-
-                <View style={styles.colBox}>
-                  <Text style={styles.inputLabel}>
-                    Preset Standard:
-                  </Text>
-
-                  <TextInput
-                    style={styles.textInput}
-                    keyboardType="numeric"
-                    placeholder="Standard"
-                    placeholderTextColor="#64748b"
-                    value={newPresetStandard}
-                    onChangeText={setNewPresetStandard}
-                  />
-                </View>
-
-                <View style={styles.colBox}>
-                  <Text style={styles.inputLabel}>
-                    Preset High:
-                  </Text>
-
-                  <TextInput
-                    style={styles.textInput}
-                    keyboardType="numeric"
-                    placeholder="High"
-                    placeholderTextColor="#64748b"
-                    value={newPresetHigh}
-                    onChangeText={setNewPresetHigh}
-                  />
-                </View>
-
               </View>
 
               <View style={styles.modalActionsRow}>
@@ -1049,7 +856,7 @@ export const FreezerScreen: React.FC = () => {
                   style={styles.modalCancelBtn}
                 >
                   <Text style={styles.modalCancelBtnText}>
-                    Batal
+                    {t('app.cancel')}
                   </Text>
                 </TouchableOpacity>
 
@@ -1059,7 +866,7 @@ export const FreezerScreen: React.FC = () => {
                   style={styles.modalSaveBtn}
                 >
                   <Text style={styles.modalSaveBtnText}>
-                    Simpan ke Freezer
+                    {t('freezer.saveToFreezer')}
                   </Text>
                 </TouchableOpacity>
 
