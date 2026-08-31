@@ -1,5 +1,7 @@
 // src/i18n/LanguageContext.tsx
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import React, {
   createContext,
   useCallback,
@@ -37,6 +39,8 @@ export interface LanguageProviderProps {
   initialLanguage?: SupportedLanguage;
 }
 
+const LANGUAGE_STORAGE_KEY = 'biostack.language';
+
 export const LanguageProvider: React.FC<LanguageProviderProps> = ({
   children,
   initialLanguage,
@@ -48,10 +52,48 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    const initial = initialLanguage || getLanguage() || DEFAULT_LANGUAGE;
-    setGlobalLanguage(initial);
-    setLanguageState(initial);
-    setIsReady(true);
+    let cancelled = false;
+
+    const initializeLanguage = async () => {
+      const fallback =
+        initialLanguage ||
+        getLanguage() ||
+        DEFAULT_LANGUAGE;
+
+      try {
+        const stored = await AsyncStorage.getItem(
+          LANGUAGE_STORAGE_KEY,
+        );
+
+        const persisted =
+          stored === 'id' || stored === 'en'
+            ? stored
+            : undefined;
+
+        const initial =
+          initialLanguage ||
+          persisted ||
+          fallback;
+
+        if (cancelled) return;
+
+        setGlobalLanguage(initial);
+        setLanguageState(initial);
+        setIsReady(true);
+      } catch {
+        if (cancelled) return;
+
+        setGlobalLanguage(fallback);
+        setLanguageState(fallback);
+        setIsReady(true);
+      }
+    };
+
+    void initializeLanguage();
+
+    return () => {
+      cancelled = true;
+    };
   }, [initialLanguage]);
 
   const handleSetLanguage = useCallback(
@@ -62,6 +104,10 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
 
       setGlobalLanguage(nextLanguage);
       setLanguageState(nextLanguage);
+      void AsyncStorage.setItem(
+        LANGUAGE_STORAGE_KEY,
+        nextLanguage,
+      );
     },
     [language],
   );
