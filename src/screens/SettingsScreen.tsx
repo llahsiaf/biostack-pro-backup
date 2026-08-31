@@ -16,6 +16,7 @@ import {
   Download,
   FileJson,
   LockKeyhole,
+  Languages,
   RotateCcw,
   Settings as SettingsIcon,
   ShieldCheck,
@@ -24,6 +25,7 @@ import {
 } from 'lucide-react-native';
 
 import { useBioStackStore } from '../store/useBioStackStore';
+import { useLanguage } from '../i18n/LanguageContext';
 import {
   buildBackupPayload,
   exportBackupFile,
@@ -42,6 +44,7 @@ interface SettingsScreenProps {
 }
 
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
+  const { language, setLanguage, languages, t } = useLanguage();
   const {
     inventory,
     freezerStock,
@@ -359,6 +362,68 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
               />
             </TouchableOpacity>
           )}
+        </View>
+
+        {/* LANGUAGE */}
+        <SectionTitle
+          icon={
+            <Languages
+              size={16}
+              color="#38bdf8"
+            />
+          }
+          title={t('settings.language')}
+        />
+
+        <View style={styles.card}>
+          <Text style={styles.rowTitle}>
+            {t('settings.languageDescription')}
+          </Text>
+
+          <View style={styles.languageSelector}>
+            {languages.map((option) => {
+              const active = language === option.code;
+
+              return (
+                <TouchableOpacity
+                  key={option.code}
+                  onPress={() => setLanguage(option.code)}
+                  style={[
+                    styles.languageOption,
+                    active && styles.languageOptionActive,
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
+                  accessibilityLabel={option.label}
+                >
+                  <Text
+                    style={[
+                      styles.languageOptionCode,
+                      active && styles.languageOptionCodeActive,
+                    ]}
+                  >
+                    {option.shortLabel}
+                  </Text>
+
+                  <Text
+                    style={[
+                      styles.languageOptionLabel,
+                      active && styles.languageOptionLabelActive,
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+
+                  {active && (
+                    <CheckCircle2
+                      size={15}
+                      color="#10b981"
+                    />
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
 
         {/* BACKUP & RESTORE */}
@@ -1189,6 +1254,50 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 10,
     lineHeight: 13,
+  },
+
+  languageSelector: {
+    marginTop: 10,
+    gap: 8,
+  },
+
+  languageOption: {
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 11,
+    borderRadius: 10,
+    backgroundColor: '#030712',
+    borderWidth: 1,
+    borderColor: '#1e293b',
+  },
+
+  languageOptionActive: {
+    borderColor: 'rgba(16,185,129,.55)',
+    backgroundColor: 'rgba(16,185,129,.06)',
+  },
+
+  languageOptionCode: {
+    width: 32,
+    fontSize: 10,
+    fontWeight: '900',
+    color: '#64748b',
+  },
+
+  languageOptionCodeActive: {
+    color: '#10b981',
+  },
+
+  languageOptionLabel: {
+    flex: 1,
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#cbd5e1',
+  },
+
+  languageOptionLabelActive: {
+    color: '#ffffff',
   },
 
   modalOverlay: {
