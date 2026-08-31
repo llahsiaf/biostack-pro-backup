@@ -401,7 +401,7 @@ export const InventoryScreen: React.FC = () => {
             color="#f59e0b"
           />
 
-          <View>
+          <View style={styles.scheduleStatContent}>
             <Text style={styles.statLabel}>
               Jadwal Hari Ini
             </Text>
@@ -411,7 +411,10 @@ export const InventoryScreen: React.FC = () => {
               {scheduleSummary.total}
             </Text>
 
-            <Text style={styles.statMini}>
+            <Text
+              style={styles.statMini}
+              numberOfLines={2}
+            >
               {scheduleSummary.missed} terlewat •{' '}
               {scheduleSummary.due} perlu dicatat
             </Text>
@@ -2271,6 +2274,11 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
+  scheduleStatContent: {
+    flex: 1,
+    minWidth: 0,
+  },
+
   scheduleStatCard: {
     flex: 1,
     flexDirection: 'row',
@@ -2560,7 +2568,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(245, 158, 11, 0.3)',
     paddingHorizontal: 5,
     paddingVertical: 3,
-    minHeight: 28,
+    minHeight: 26,
     borderRadius: 7,
   },
 
@@ -2579,8 +2587,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(6, 182, 212, 0.3)',
     paddingHorizontal: 5,
-    paddingVertical: 4,
-    minHeight: 31,
+    paddingVertical: 3,
+    minHeight: 26,
     borderRadius: 7,
   },
 
@@ -2599,8 +2607,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(56, 189, 248, 0.3)',
     paddingHorizontal: 5,
-    paddingVertical: 4,
-    minHeight: 31,
+    paddingVertical: 3,
+    minHeight: 26,
     borderRadius: 7,
   },
 
