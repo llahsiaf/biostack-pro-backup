@@ -1313,13 +1313,9 @@ export function t(
   >,
 ): string {
 
-  const activeTree =
-    TRANSLATIONS[currentLanguage]
-      as unknown as TranslationTree;
+  const activeTree = TRANSLATIONS[currentLanguage] as unknown as TranslationTree;
 
-  const fallbackTree =
-    TRANSLATIONS[DEFAULT_LANGUAGE]
-      as unknown as TranslationTree;
+  const fallbackTree = TRANSLATIONS[DEFAULT_LANGUAGE] as unknown as TranslationTree;
 
   const activeValue =
     getNestedValue(
