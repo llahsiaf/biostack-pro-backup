@@ -23,8 +23,10 @@ import {
 } from 'lucide-react-native';
 import { useBioStackStore, FreezerItem } from '../store/useBioStackStore';
 import { getPeptideAutofillData } from '../database/defaultPeptides';
+import { useLanguage } from '../i18n/LanguageContext';
 
 export const FreezerScreen: React.FC = () => {
+  const { language } = useLanguage();
   const {
     freezerStock,
     updateFreezerQuantity,
@@ -86,7 +88,7 @@ export const FreezerScreen: React.FC = () => {
   const handleNewNameChange = (value: string) => {
     setNewName(value);
 
-    const autofill = getPeptideAutofillData(value, 'id');
+    const autofill = getPeptideAutofillData(value, language);
 
     if (!autofill) {
       return;
@@ -1040,9 +1042,6 @@ export const FreezerScreen: React.FC = () => {
               </View>
 
               <View style={styles.modalActionsRow}>
-
-                <TouchableOpacity
-
 
                 <TouchableOpacity
                   activeOpacity={0.8}
