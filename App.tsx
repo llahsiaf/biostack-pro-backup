@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   SafeAreaView,
   StatusBar,
@@ -10,7 +10,7 @@ import {
   Image,
   Alert,
 } from 'react-native';
-import * as Notifications from 'expo-notifications';
+
 import {
   Activity,
   FlaskConical,
@@ -31,80 +31,147 @@ import { FloatingAIChat } from './src/components/FloatingAIChat';
 import { TodayScreen } from './src/screens/TodayScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { AnalyticsScreen } from './src/screens/AnalyticsScreen';
-import { COLORS, RADIUS, SHADOWS } from './src/theme';
-import { useBioStackStore } from './src/store/useBioStackStore';
-import { getNotificationPermission, rebuildScheduleReminders } from './src/utils/notificationUtils';
-import { LanguageProvider, useLanguage } from './src/i18n/LanguageContext';
 
-// Konfigurasi handler notifikasi lokal internal
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-});
+import { COLORS, RADIUS } from './src/theme';
+import { useBioStackStore } from './src/store/useBioStackStore';
+
+import {
+  configureNotifications,
+  getNotificationPermission,
+  requestNotificationPermission,
+  subscribeToNotificationResponse,
+  getLastNotificationTarget,
+  syncScheduleReminders,
+} from './src/utils/notificationBridge';
+
+import { LanguageProvider, useLanguage } from './src/i18n/LanguageContext';
 
 function BioStackApp() {
   const { t } = useLanguage();
 
-  const [activeTab, setActiveTab] = useState<'today' | 'inventory' | 'rotation' | 'history' | 'freezer' | 'analytics' | 'settings'>('today');
-  const [notificationTarget, setNotificationTarget] = useState<{ inventoryId?: string; date?: string } | null>(null);
-  const injectionHistory = useBioStackStore((state) => state.injectionHistory || []);
-  const inventory = useBioStackStore((state) => state.inventory || []);
+  const [activeTab, setActiveTab] = useState<
+    | 'today'
+    | 'inventory'
+    | 'rotation'
+    | 'history'
+    | 'freezer'
+    | 'analytics'
+    | 'settings'
+  >('today');
+
+  const [notificationTarget, setNotificationTarget] = useState<{
+    inventoryId?: string;
+    date?: string;
+  } | null>(null);
+
+  const injectionHistory = useBioStackStore(
+    (state) => state.injectionHistory || [],
+  );
+
+  const inventory = useBioStackStore(
+    (state) => state.inventory || [],
+  );
+
   const notificationInventoryKey = inventory
     .map(({ notificationIds, ...item }) => JSON.stringify(item))
     .join('|');
+
   const notificationLogKey = injectionHistory
     .map((log) => `${log.id}:${log.timestamp}`)
     .join('|');
 
-  // Mendaftarkan Izin Notifikasi ke Sistem iOS secara otomatis saat startup
+  /**
+   * Configure the notification system.
+   *
+   * Native:
+   *   Uses expo-notifications.
+   *
+   * Web:
+   *   Uses the web bridge and does nothing for now.
+   */
   useEffect(() => {
-    async function initializeLocalNotifications() {
-      try {
-        const { status: existingStatus } = await Notifications.getPermissionsAsync();
-        let status = existingStatus;
-
-        if (existingStatus !== 'granted') {
-          const requested = await Notifications.requestPermissionsAsync({
-            ios: {
-              allowAlert: true,
-              allowBadge: true,
-              allowSound: true,
-              provideAppNotificationSettings: true,
-            },
-          });
-          status = requested.status;
-        }
-
-        if (status === 'granted') {
-          const currentState = useBioStackStore.getState();
-          const currentInventory = currentState.inventory || [];
-          const currentLogs = currentState.injectionHistory || [];
-          const idsByInventory = await rebuildScheduleReminders(currentInventory, 30, currentLogs);
-          for (const [inventoryId, ids] of idsByInventory.entries()) {
-            useBioStackStore.getState().setNotificationIds(inventoryId, ids);
-          }
-        }
-      } catch (error) {
-        // Notification is an optional convenience; tracker remains fully usable without it.
-      }
+    try {
+      configureNotifications();
+    } catch {
+      // Notifications are optional.
     }
-
-    void initializeLocalNotifications();
   }, []);
 
+  /**
+   * Initialize existing reminders after startup.
+   *
+   * The platform-specific bridge decides whether this is supported.
+   */
   useEffect(() => {
-    const handleResponse = (response: Notifications.NotificationResponse) => {
-      const data = response.notification.request.content.data as
-        | { kind?: string; inventoryId?: string; date?: string }
-        | undefined;
+    let cancelled = false;
 
-      if (data?.kind === 'schedule') {
+    const initializeNotifications = async () => {
+      try {
+        const permission = await getNotificationPermission();
+
+        if (permission.status !== 'granted') {
+          return;
+        }
+
+        const currentState = useBioStackStore.getState();
+
+        const currentInventory =
+          currentState.inventory || [];
+
+        const currentLogs =
+          currentState.injectionHistory || [];
+
+        const idsByInventory =
+          await syncScheduleReminders(
+            currentInventory,
+            currentLogs,
+          );
+
+        if (cancelled) {
+          return;
+        }
+
+        for (const [inventoryId, ids] of idsByInventory.entries()) {
+          useBioStackStore
+            .getState()
+            .setNotificationIds(inventoryId, ids);
+        }
+      } catch {
+        // Notification is optional.
+        // Never prevent the tracker from opening.
+      }
+    };
+
+    void initializeNotifications();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  /**
+   * Handle notification taps.
+   *
+   * Native bridge returns schedule information.
+   * Web bridge currently returns null.
+   */
+  useEffect(() => {
+    let mounted = true;
+
+    const handleNotificationTarget = (
+      target: {
+        inventoryId?: string;
+        date?: string;
+      } | null,
+    ) => {
+      if (!mounted) {
+        return;
+      }
+
+      if (target) {
         setNotificationTarget({
-          inventoryId: data.inventoryId,
-          date: data.date,
+          inventoryId: target.inventoryId,
+          date: target.date,
         });
       } else {
         setNotificationTarget(null);
@@ -113,19 +180,30 @@ function BioStackApp() {
       setActiveTab('today');
     };
 
-    const subscription = Notifications.addNotificationResponseReceivedListener(handleResponse);
+    const subscription =
+      subscribeToNotificationResponse(handleNotificationTarget);
 
-    void Notifications.getLastNotificationResponseAsync().then((response) => {
-      if (response) handleResponse(response);
+    void getLastNotificationTarget().then((target) => {
+      if (target) {
+        handleNotificationTarget(target);
+      }
     });
 
-    return () => subscription.remove();
+    return () => {
+      mounted = false;
+      subscription.remove();
+    };
   }, []);
 
   /**
-   * Sinkronisasi reminder setelah log atau konfigurasi inventory berubah.
-   * Ini memastikan reminder 5 menit sebelumnya tidak tetap tersisa
-   * setelah aktivitas sudah dicatat.
+   * Rebuild scheduled reminders whenever inventory configuration
+   * or injection history changes.
+   *
+   * Native:
+   *   Rebuilds local iOS notifications.
+   *
+   * Web:
+   *   No-op until browser-compatible scheduling is added.
    */
   useEffect(() => {
     let cancelled = false;
@@ -133,21 +211,28 @@ function BioStackApp() {
     const syncReminders = async () => {
       try {
         const permission = await getNotificationPermission();
-        if (permission.status !== 'granted') return;
 
-        const idsByInventory = await rebuildScheduleReminders(
-          inventory,
-          30,
-          injectionHistory,
-        );
+        if (permission.status !== 'granted') {
+          return;
+        }
 
-        if (cancelled) return;
+        const idsByInventory =
+          await syncScheduleReminders(
+            inventory,
+            injectionHistory,
+          );
+
+        if (cancelled) {
+          return;
+        }
 
         for (const [inventoryId, ids] of idsByInventory.entries()) {
-          useBioStackStore.getState().setNotificationIds(inventoryId, ids);
+          useBioStackStore
+            .getState()
+            .setNotificationIds(inventoryId, ids);
         }
-      } catch (error) {
-        // Reminder adalah fitur opsional; jangan mengganggu tracker jika gagal.
+      } catch {
+        // Notifications are optional.
       }
     };
 
@@ -158,45 +243,62 @@ function BioStackApp() {
     };
   }, [notificationInventoryKey, notificationLogKey]);
 
-  // Fungsi Pemicu Izin Manual (Tombol Lonceng)
+  /**
+   * Manual notification permission/status button.
+   */
   const handleManualNotificationRequest = async () => {
     try {
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
+      const current =
+        await getNotificationPermission();
 
-      if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync({
-          ios: {
-            allowAlert: true,
-            allowBadge: true,
-            allowSound: true,
-          },
-        });
-        finalStatus = status;
+      let finalStatus = current.status;
+
+      if (current.status !== 'granted') {
+        const requested =
+          await requestNotificationPermission();
+
+        finalStatus = requested.status;
       }
 
       if (finalStatus === 'granted') {
-        Alert.alert('Status Notifikasi', 'Izin notifikasi sudah AKTIF. BioStack akan mengirimkan pengingat jadwal injeksi Anda.');
-      } else {
         Alert.alert(
-          'Izin Ditolak', 
-          'Notifikasi terblokir oleh iOS. Silakan buka Pengaturan > BioStack > izinkan Notifikasi secara manual.'
+          'Status Notifikasi',
+          'Izin notifikasi sudah AKTIF. BioStack dapat mengirim pengingat jadwal.',
         );
+        return;
       }
-    } catch (error) {
-      Alert.alert('Gagal', 'Sistem tidak dapat memproses permintaan izin saat ini.');
+
+      if (finalStatus === 'unavailable') {
+        Alert.alert(
+          'Notifikasi Web',
+          'Pengingat notifikasi terjadwal belum tersedia pada versi web BioStack. Data dan tracker tetap dapat digunakan seperti biasa.',
+        );
+        return;
+      }
+
+      Alert.alert(
+        'Notifikasi',
+        'Izin notifikasi belum aktif.',
+      );
+    } catch {
+      Alert.alert(
+        'Gagal',
+        'Sistem tidak dapat memproses permintaan notifikasi saat ini.',
+      );
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#030712" />
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="#030712"
+      />
 
       {/* Header Utama BioStack PRO */}
       <View style={styles.topHeader}>
         <View style={styles.headerContent}>
           <View style={styles.brandingRow}>
-            {/* Memanggil icon.png dari direktori root */}
             <View style={styles.brandIconBox}>
               <Image
                 source={require('./icon.png')}
@@ -204,97 +306,207 @@ function BioStackApp() {
                 resizeMode="cover"
               />
             </View>
+
             <View>
               <View style={styles.titleWithBadge}>
-                <Text style={styles.appTitle}>BioStack</Text>
+                <Text style={styles.appTitle}>
+                  BioStack
+                </Text>
+
                 <View style={styles.proBadge}>
-                  <Text style={styles.proBadgeText}>PRO</Text>
+                  <Text style={styles.proBadgeText}>
+                    PRO
+                  </Text>
                 </View>
               </View>
-              <Text style={styles.appSubtitle}>Personal Tracker</Text>
+
+              <Text style={styles.appSubtitle}>
+                Personal Tracker
+              </Text>
             </View>
           </View>
 
           <View style={styles.headerStatus}>
-            <ShieldCheck size={13} color="#34d399" />
-            <Text style={styles.headerStatusText}>LOCAL</Text>
+            <ShieldCheck
+              size={13}
+              color="#34d399"
+            />
+
+            <Text style={styles.headerStatusText}>
+              LOCAL
+            </Text>
           </View>
 
-          {/* Tombol Pemicu Izin Notifikasi Manual */}
           <View style={styles.headerActions}>
-            <TouchableOpacity 
-              onPress={handleManualNotificationRequest} 
+            <TouchableOpacity
+              onPress={handleManualNotificationRequest}
               style={styles.notificationBtn}
-              accessibilityLabel="Status notifikasi"
+              accessibilityLabel="Notification status"
             >
-              <Bell size={18} color="#94a3b8" />
+              <Bell
+                size={18}
+                color="#94a3b8"
+              />
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => setActiveTab('analytics')}
+              onPress={() =>
+                setActiveTab('analytics')
+              }
               style={styles.notificationBtn}
-              accessibilityLabel="Buka analytics"
+              accessibilityLabel="Open analytics"
             >
-              <TrendingUp size={18} color={activeTab === 'analytics' ? '#10b981' : '#94a3b8'} />
+              <TrendingUp
+                size={18}
+                color={
+                  activeTab === 'analytics'
+                    ? '#10b981'
+                    : '#94a3b8'
+                }
+              />
             </TouchableOpacity>
 
-            <TouchableOpacity 
-              onPress={() => setActiveTab('settings')} 
+            <TouchableOpacity
+              onPress={() =>
+                setActiveTab('settings')
+              }
               style={styles.notificationBtn}
-              accessibilityLabel="Buka pengaturan"
+              accessibilityLabel="Open settings"
             >
-              <Settings size={18} color={activeTab === 'settings' ? '#10b981' : '#94a3b8'} />
+              <Settings
+                size={18}
+                color={
+                  activeTab === 'settings'
+                    ? '#10b981'
+                    : '#94a3b8'
+                }
+              />
             </TouchableOpacity>
           </View>
         </View>
       </View>
 
-      {/* Navigasi Utama — bottom tab bar */}
+      {/* Bottom Navigation */}
       <View style={styles.navBar}>
         {([
           ['today', t('navigation.today'), Activity],
-          ['inventory', t('navigation.inventory'), FlaskConical],
-          ['rotation', t('navigation.rotation'), RotateCw],
-          ['history', t('navigation.history'), History],
-          ['freezer', t('navigation.freezer'), Snowflake],
-        ] as const).map(([tab, label, Icon]) => {
-          const active = activeTab === tab;
-          return (
-            <TouchableOpacity
-              key={tab}
-              style={styles.navTab}
-              onPress={() => setActiveTab(tab)}
-              accessibilityRole="button"
-              accessibilityState={{ selected: active }}
-              accessibilityLabel={label}
-            >
-              <View style={[styles.navIconWrap, active && styles.navIconWrapActive]}>
-                <Icon size={16} color={active ? COLORS.accent : COLORS.muted} />
-              </View>
-              <Text style={[styles.navTabText, active && styles.navTabTextActive]}>{label}</Text>
-              {active && <View style={styles.navActiveDot} />}
-            </TouchableOpacity>
-          );
-        })}
+          [
+            'inventory',
+            t('navigation.inventory'),
+            FlaskConical,
+          ],
+          [
+            'rotation',
+            t('navigation.rotation'),
+            RotateCw,
+          ],
+          [
+            'history',
+            t('navigation.history'),
+            History,
+          ],
+          [
+            'freezer',
+            t('navigation.freezer'),
+            Snowflake,
+          ],
+        ] as const).map(
+          ([tab, label, Icon]) => {
+            const active = activeTab === tab;
+
+            return (
+              <TouchableOpacity
+                key={tab}
+                style={styles.navTab}
+                onPress={() =>
+                  setActiveTab(tab)
+                }
+                accessibilityRole="button"
+                accessibilityState={{
+                  selected: active,
+                }}
+                accessibilityLabel={label}
+              >
+                <View
+                  style={[
+                    styles.navIconWrap,
+                    active &&
+                      styles.navIconWrapActive,
+                  ]}
+                >
+                  <Icon
+                    size={16}
+                    color={
+                      active
+                        ? COLORS.accent
+                        : COLORS.muted
+                    }
+                  />
+                </View>
+
+                <Text
+                  style={[
+                    styles.navTabText,
+                    active &&
+                      styles.navTabTextActive,
+                  ]}
+                >
+                  {label}
+                </Text>
+
+                {active && (
+                  <View
+                    style={styles.navActiveDot}
+                  />
+                )}
+              </TouchableOpacity>
+            );
+          },
+        )}
       </View>
 
-      {/* Tampilan Konten Layar Aktif */}
+      {/* Active Screen */}
       <View style={styles.mainContent}>
         {activeTab === 'today' && (
           <TodayScreen
-            onOpenInventory={() => setActiveTab('inventory')}
-            notificationTarget={notificationTarget}
+            onOpenInventory={() =>
+              setActiveTab('inventory')
+            }
+            notificationTarget={
+              notificationTarget
+            }
           />
         )}
-        {activeTab === 'inventory' && <InventoryScreen />}
-        {activeTab === 'rotation' && <RotationScreen />}
-        {activeTab === 'history' && <HistoryScreen />}
-        {activeTab === 'analytics' && <AnalyticsScreen />}
-        {activeTab === 'freezer' && <FreezerScreen />}
-        {activeTab === 'settings' && <SettingsScreen onDone={() => setActiveTab('today')} />}
+
+        {activeTab === 'inventory' && (
+          <InventoryScreen />
+        )}
+
+        {activeTab === 'rotation' && (
+          <RotationScreen />
+        )}
+
+        {activeTab === 'history' && (
+          <HistoryScreen />
+        )}
+
+        {activeTab === 'analytics' && (
+          <AnalyticsScreen />
+        )}
+
+        {activeTab === 'freezer' && (
+          <FreezerScreen />
+        )}
+
+        {activeTab === 'settings' && (
+          <SettingsScreen
+            onDone={() =>
+              setActiveTab('today')
+            }
+          />
+        )}
       </View>
 
-      {/* Tombol AI Chat Assistant Melayang */}
       <FloatingAIChat />
     </SafeAreaView>
   );
@@ -313,65 +525,82 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#030712',
   },
+
   topHeader: {
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'android' ? 12 : 6,
+    paddingTop:
+      Platform.OS === 'android'
+        ? 12
+        : 6,
     paddingBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomColor:
+      COLORS.border,
     backgroundColor: COLORS.bg,
   },
+
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+
   brandingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     flex: 1,
   },
+
   brandIconBox: {
     width: 36,
     height: 36,
     borderRadius: RADIUS.md,
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.3)',
+    borderColor:
+      'rgba(16, 185, 129, 0.3)',
     backgroundColor: COLORS.card,
     overflow: 'hidden',
   },
+
   brandIconImage: {
     width: '100%',
     height: '100%',
   },
+
   titleWithBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
+
   appTitle: {
     fontSize: 16,
     fontWeight: '900',
     color: COLORS.text,
     letterSpacing: 0.5,
   },
+
   proBadge: {
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+    backgroundColor:
+      'rgba(16, 185, 129, 0.2)',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
   },
+
   proBadgeText: {
     fontSize: 10,
     fontWeight: '800',
     color: '#10b981',
   },
+
   appSubtitle: {
     fontSize: 9,
     color: COLORS.muted,
     marginTop: 2,
   },
+
   headerStatus: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -379,22 +608,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 7,
     paddingVertical: 5,
     borderRadius: 8,
-    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+    backgroundColor:
+      'rgba(16, 185, 129, 0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.2)',
+    borderColor:
+      'rgba(16, 185, 129, 0.2)',
     marginRight: 6,
   },
+
   headerStatusText: {
     fontSize: 8,
     fontWeight: '900',
     letterSpacing: 0.8,
     color: '#34d399',
   },
+
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
+
   notificationBtn: {
     padding: 8,
     backgroundColor: '#090d16',
@@ -402,6 +636,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#1e293b',
   },
+
   navBar: {
     flexDirection: 'row',
     paddingHorizontal: 10,
@@ -415,9 +650,13 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOpacity: 0.22,
     shadowRadius: 18,
-    shadowOffset: { width: 0, height: -8 },
+    shadowOffset: {
+      width: 0,
+      height: -8,
+    },
     zIndex: 20,
   },
+
   navTab: {
     flex: 1,
     alignItems: 'center',
@@ -428,6 +667,7 @@ const styles = StyleSheet.create({
     minHeight: 52,
     position: 'relative',
   },
+
   navIconWrap: {
     width: 30,
     height: 28,
@@ -435,17 +675,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+
   navIconWrapActive: {
-    backgroundColor: 'rgba(16, 185, 129, 0.10)',
+    backgroundColor:
+      'rgba(16, 185, 129, 0.10)',
   },
+
   navTabText: {
     fontSize: 9,
     fontWeight: '800',
     color: COLORS.muted,
   },
+
   navTabTextActive: {
     color: COLORS.accent,
   },
+
   navActiveDot: {
     position: 'absolute',
     bottom: 0,
@@ -454,6 +699,7 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     backgroundColor: COLORS.accent,
   },
+
   mainContent: {
     flex: 1,
   },
