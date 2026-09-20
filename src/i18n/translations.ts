@@ -40,7 +40,7 @@ export interface TranslationTree {
 // DEFAULT LANGUAGE
 // ============================================================
 
-export const DEFAULT_LANGUAGE: SupportedLanguage = 'id';
+export const DEFAULT_LANGUAGE: SupportedLanguage = 'en';
 
 
 // ============================================================
@@ -1614,14 +1614,14 @@ export function t(
 
 export const LANGUAGE_OPTIONS = [
   {
-    code: 'id' as const,
-    label: 'Bahasa Indonesia',
-    shortLabel: 'ID',
-  },
-  {
     code: 'en' as const,
     label: 'English',
     shortLabel: 'EN',
+  },
+  {
+    code: 'id' as const,
+    label: 'Bahasa Indonesia',
+    shortLabel: 'ID',
   },
 ];
 
