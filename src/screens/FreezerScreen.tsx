@@ -131,8 +131,8 @@ export const FreezerScreen: React.FC = () => {
   const handleActionOnItem = (item: FreezerItem) => {
     if (item.quantity <= 0) {
       Alert.alert(
-        'Stok Habis',
-        `Stok ${item.name} di freezer sudah 0. Tambah stok terlebih dahulu.`
+        t('freezer.stockEmpty'),
+        t('freezer.stockEmptyDescription', { name: item.name }) || `Stok ${item.name} di freezer sudah 0.`
       );
       return;
     }
@@ -144,17 +144,17 @@ export const FreezerScreen: React.FC = () => {
         `${item.name} adalah senyawa cairan siap pakai (${item.vialSize} mL). Pindahkan 1 vial langsung ke kulkas aktif tanpa pelarutan BAC Water?`,
         [
           {
-            text: 'Batal',
+            text: t('app.cancel'),
             style: 'cancel',
           },
           {
-            text: 'Pindahkan',
+            text: t('freezer.moveToFridge'),
             onPress: () => {
               transferLiquidToFridge(item.id);
 
               Alert.alert(
-                'Berhasil',
-                `${item.name} berhasil dipindahkan ke kulkas aktif.`
+                t('freezer.transferTitle'),
+                t('freezer.transferSuccess', { name: item.name }) || `${item.name} berhasil dipindahkan ke kulkas aktif.`
               );
             },
           },
@@ -188,8 +188,9 @@ export const FreezerScreen: React.FC = () => {
     setIsReconstituteModalOpen(false);
 
     Alert.alert(
-      'Pelarutan Selesai',
-      `1 vial ${selectedFreezerItem.name} berhasil dilarutkan dengan ${bac} mL BAC Water dan dimasukkan ke kulkas aktif.`
+      t('freezer.reconstitutionSuccess'),
+      t('freezer.reconstitutionSuccessDescription', { name: selectedFreezerItem.name }) ||
+        `1 vial ${selectedFreezerItem.name} berhasil dilarutkan dengan ${bac} mL BAC Water dan dimasukkan ke kulkas aktif.`
     );
   };
 
@@ -199,7 +200,7 @@ export const FreezerScreen: React.FC = () => {
   const handleAddNewPeptide = () => {
     if (!newName.trim()) {
       Alert.alert(
-        'Peringatan',
+        t('app.confirm'),
         'Harap masukkan nama peptida.'
       );
       return;
@@ -207,7 +208,7 @@ export const FreezerScreen: React.FC = () => {
 
     if (!newVialSize.trim()) {
       Alert.alert(
-        'Peringatan',
+        t('app.confirm'),
         'Harap masukkan ukuran vial.'
       );
       return;
@@ -215,7 +216,7 @@ export const FreezerScreen: React.FC = () => {
 
     if (!newQuantity.trim()) {
       Alert.alert(
-        'Peringatan',
+        t('app.confirm'),
         'Harap masukkan jumlah stok.'
       );
       return;
@@ -235,24 +236,22 @@ export const FreezerScreen: React.FC = () => {
       unit: newUnit,
       quantity:
         parseInt(newQuantity, 10),
-      // Field protokol tidak ditampilkan di form Freezer.
-      // Jika peptide dikenali, nilai master tetap dibawa ke model
-      // agar fitur Inventory/Reconstitute yang sudah ada tetap bekerja.
+      // Field protokol: gunakan autofill jika dikenali, atau nilai bawaan yang aman
       defaultBacWater:
         newUnit === 'mL'
           ? 0
-          : autofill?.defaultBacWater || 0,
+          : autofill?.defaultBacWater || 2.0,
       targetDose:
-        autofill?.targetDose || 0,
+        autofill?.targetDose || (newUnit === 'mL' ? 0.5 : 1.0),
       frequency:
         autofill?.frequency || 'weekly',
       frequencyLabel:
         autofill?.frequencyLabel ||
         (language === 'en' ? 'Weekly' : 'Mingguan (Weekly)'),
       halfLifeDays:
-        autofill?.halfLifeDays || 0,
+        autofill?.halfLifeDays || 1.0,
       maxFridgeDays:
-        autofill?.maxFridgeDays || 0,
+        autofill?.maxFridgeDays || 28,
       activeDays:
         autofill?.activeDays || ['Sen'],
       injectionTime:
@@ -502,7 +501,7 @@ export const FreezerScreen: React.FC = () => {
                       style={styles.reconstituteBtnText}
                       numberOfLines={1}
                     >
-                      Pindahkan ke Kulkas
+                      {t('freezer.moveToFridge')}
                     </Text>
                   </TouchableOpacity>
                 ) : (
@@ -562,7 +561,7 @@ export const FreezerScreen: React.FC = () => {
                 />
 
                 <Text style={styles.modalHeading}>
-                  Pelarutan Peptida
+                  {t('freezer.reconstitutionTitle')}
                 </Text>
               </View>
 
@@ -595,9 +594,7 @@ export const FreezerScreen: React.FC = () => {
                 </Text>
 
                 <Text style={styles.reconPeptideDesc}>
-                  Masukkan volume Bacteriostatic
-                  (BAC) Water yang akan disuntikkan
-                  ke dalam vial bubuk.
+                  {t('freezer.reconstitutionDescription')}
                 </Text>
 
                 <View style={styles.inputGroup}>
@@ -659,7 +656,7 @@ export const FreezerScreen: React.FC = () => {
                     style={styles.modalCancelBtn}
                   >
                     <Text style={styles.modalCancelBtnText}>
-                      Batal
+                      {t('app.cancel')}
                     </Text>
                   </TouchableOpacity>
 
@@ -669,7 +666,7 @@ export const FreezerScreen: React.FC = () => {
                     style={styles.modalSaveBtn}
                   >
                     <Text style={styles.modalSaveBtnText}>
-                      Larutkan & Masukkan Kulkas
+                      {t('freezer.dissolveToFridge')}
                     </Text>
                   </TouchableOpacity>
 

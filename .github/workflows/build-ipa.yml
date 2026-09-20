@@ -23,7 +23,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
 
       # ==========================================
       # VERIFY PROJECT
@@ -92,6 +92,7 @@ jobs:
           echo "=========================================="
 
           npm run audit-syntax
+          npm run typecheck
           npm run verify-phase10
           npm run verify-phase10-1
 
@@ -129,7 +130,10 @@ jobs:
           echo "Contents of ios/:"
           ls -la ios
 
-          WORKSPACE="ios/BioStackPRO.xcworkspace"
+          WORKSPACE="$(find ios -maxdepth 1 -type d -name '*.xcworkspace' -print -quit)"
+          if [[ -z "$WORKSPACE" ]]; then
+            WORKSPACE="ios/BioStackPRO.xcworkspace"
+          fi
 
           if [[ ! -d "$WORKSPACE" ]]; then
             echo "::error::Expected workspace not found:"
@@ -164,36 +168,32 @@ jobs:
         run: |
           set -euo pipefail
 
-          WORKSPACE="ios/BioStackPRO.xcworkspace"
-          SCHEME="BioStackPRO"
+          WORKSPACE="$(find ios -maxdepth 1 -type d -name '*.xcworkspace' -print -quit)"
+          if [[ -z "$WORKSPACE" ]]; then
+            WORKSPACE="ios/BioStackPRO.xcworkspace"
+          fi
+
+          SCHEME="$(
+            xcodebuild -list -json -workspace "$WORKSPACE" 2>/dev/null |
+            node -e "try { const data = JSON.parse(require('fs').readFileSync(0, 'utf-8')); console.log(data.workspace?.schemes?.[0] || data.project?.schemes?.[0] || ''); } catch { console.log(''); }"
+          )"
+          if [[ -z "$SCHEME" ]]; then
+            SCHEME="BioStackPRO"
+          fi
 
           echo "=========================================="
           echo "XCODE SCHEME CHECK"
           echo "=========================================="
 
           echo ""
-          echo "Expected scheme:"
+          echo "Resolved scheme:"
           echo "$SCHEME"
 
-          echo ""
-          echo "Available schemes:"
-
-          xcodebuild \
-            -list \
-            -workspace "$WORKSPACE"
-
-          if ! xcodebuild \
-            -list \
-            -workspace "$WORKSPACE" |
-            grep -Fq "$SCHEME"; then
-
-            echo ""
-            echo "::error::Scheme '$SCHEME' was not found."
-            exit 1
-          fi
+          echo "WORKSPACE=$WORKSPACE" >> "$GITHUB_ENV"
+          echo "SCHEME=$SCHEME" >> "$GITHUB_ENV"
 
           echo ""
-          echo "✓ Scheme '$SCHEME' found"
+          echo "✓ Scheme '$SCHEME' configured"
 
       # ==========================================
       # COMPILE UNSIGNED IOS APP
@@ -210,8 +210,8 @@ jobs:
           mkdir -p dist
 
           xcodebuild \
-            -workspace ios/BioStackPRO.xcworkspace \
-            -scheme BioStackPRO \
+            -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
             -configuration Release \
             -sdk iphoneos \
             -destination 'generic/platform=iOS' \

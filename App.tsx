@@ -249,6 +249,22 @@ function BioStackApp() {
         </View>
       </View>
 
+      {/* Tampilan Konten Layar Aktif */}
+      <View style={styles.mainContent}>
+        {activeTab === 'today' && (
+          <TodayScreen
+            onOpenInventory={() => setActiveTab('inventory')}
+            notificationTarget={notificationTarget}
+          />
+        )}
+        {activeTab === 'inventory' && <InventoryScreen />}
+        {activeTab === 'rotation' && <RotationScreen />}
+        {activeTab === 'history' && <HistoryScreen />}
+        {activeTab === 'analytics' && <AnalyticsScreen />}
+        {activeTab === 'freezer' && <FreezerScreen />}
+        {activeTab === 'settings' && <SettingsScreen onDone={() => setActiveTab('today')} />}
+      </View>
+
       {/* Navigasi Utama — bottom tab bar */}
       <View style={styles.navBar}>
         {([
@@ -276,22 +292,6 @@ function BioStackApp() {
             </TouchableOpacity>
           );
         })}
-      </View>
-
-      {/* Tampilan Konten Layar Aktif */}
-      <View style={styles.mainContent}>
-        {activeTab === 'today' && (
-          <TodayScreen
-            onOpenInventory={() => setActiveTab('inventory')}
-            notificationTarget={notificationTarget}
-          />
-        )}
-        {activeTab === 'inventory' && <InventoryScreen />}
-        {activeTab === 'rotation' && <RotationScreen />}
-        {activeTab === 'history' && <HistoryScreen />}
-        {activeTab === 'analytics' && <AnalyticsScreen />}
-        {activeTab === 'freezer' && <FreezerScreen />}
-        {activeTab === 'settings' && <SettingsScreen onDone={() => setActiveTab('today')} />}
       </View>
 
       {/* Tombol AI Chat Assistant Melayang */}

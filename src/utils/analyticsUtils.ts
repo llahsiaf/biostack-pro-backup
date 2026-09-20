@@ -123,6 +123,7 @@ export interface PeptideDailyPoint {
   date: string;
   label: string;
   count: number;
+  logs: number;
   totalVolumeMl: number;
 }
 
@@ -148,6 +149,7 @@ export const getPeptideDailyActivity = (
       date: key,
       label: new Intl.DateTimeFormat('id-ID', { day: '2-digit', month: 'short' }).format(date),
       count: dayLogs.length,
+      logs: dayLogs.length,
       totalVolumeMl: dayLogs.reduce((sum, log) => sum + Math.max(0, safeNumber(log.volumeMl, 0)), 0),
     });
   }

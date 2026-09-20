@@ -43,7 +43,7 @@ export const sendTestNotification = async (seconds = 60) => {
       sound: 'default',
       data: { kind: 'diagnostic' },
     },
-    trigger: { type: 'date', date: triggerDate },
+    trigger: { type: 'date', date: triggerDate } as unknown as Notifications.NotificationTriggerInput,
   });
 };
 
@@ -137,7 +137,7 @@ export const scheduleInventoryReminders = async (
         trigger: {
           type: 'date',
           date: reminderDate,
-        },
+        } as unknown as Notifications.NotificationTriggerInput,
       });
 
     existingIds.push(notificationId);

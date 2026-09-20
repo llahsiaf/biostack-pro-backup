@@ -142,6 +142,7 @@ interface BioStackState {
   freezerStock: FreezerItem[];
   injectionHistory: InjectionLog[];
   currentSite: string;
+  settings: BioStackSettings;
 
   setSite: (siteId: string) => void;
   rotateToNextSite: () => void;
