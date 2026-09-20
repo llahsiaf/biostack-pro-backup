@@ -6,6 +6,7 @@ export type WebNotificationPermission = {
 export type NotificationTarget = {
   inventoryId?: string;
   date?: string;
+  time?: string;
 };
 
 export type NotificationResponseHandler = (
@@ -13,21 +14,15 @@ export type NotificationResponseHandler = (
 ) => void;
 
 /**
- * Web notification bridge.
+ * Browser-side notification bridge.
  *
- * expo-notifications is native-only, so the web build uses this
- * no-op bridge instead of trying to call native notification APIs.
- *
- * Reminder scheduling on the web will be implemented separately
- * when a browser-compatible notification service is added.
+ * expo-notifications is native-only, so the web build never imports
+ * or executes its APIs. Reminder scheduling on the web is disabled
+ * for now rather than pretending to provide native scheduling parity.
  */
 
 export const configureNotifications = (): void => {
-  // Intentionally empty on web.
-};
-
-export const initializeNotifications = async (): Promise<void> => {
-  // Native-only functionality.
+  // No-op on web.
 };
 
 export const getNotificationPermission =
@@ -42,36 +37,21 @@ export const requestNotificationPermission =
     canAskAgain: false,
   });
 
-export const requestManualNotificationPermission =
-  async (): Promise<WebNotificationPermission> => {
-    return {
-      status: 'unavailable',
-      canAskAgain: false,
-    };
-  };
-
 export const subscribeToNotificationResponse = (
   _handler: NotificationResponseHandler,
-): { remove: () => void } => {
-  return {
-    remove: () => {
-      // No-op on web.
-    },
-  };
-};
+): { remove: () => void } => ({
+  remove: () => {
+    // No-op on web.
+  },
+});
 
 export const getLastNotificationTarget =
-  async (): Promise<NotificationTarget | null> => {
-    return null;
-  };
+  async (): Promise<NotificationTarget | null> => null;
 
 export const syncScheduleReminders = async (
   _inventory: unknown[],
   _injectionHistory: unknown[],
-): Promise<void> => {
-  // Web notification scheduling is intentionally disabled for now.
-};
-
-export const getScheduledNotificationCount = async (): Promise<number> => {
-  return 0;
+): Promise<Map<string, string[]>> => {
+  // Web reminder scheduling is intentionally disabled for now.
+  return new Map<string, string[]>();
 };
