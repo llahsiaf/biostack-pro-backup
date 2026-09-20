@@ -24,6 +24,7 @@ import {
 import { useBioStackStore, FreezerItem } from '../store/useBioStackStore';
 import { getPeptideAutofillData } from '../database/defaultPeptides';
 import { useLanguage } from '../i18n/LanguageContext';
+import { normalizeDecimalInput, parseDecimal } from '../utils/injectionCalculations';
 
 export const FreezerScreen: React.FC = () => {
   const { language, t } = useLanguage();
@@ -183,7 +184,7 @@ export const FreezerScreen: React.FC = () => {
   const handleConfirmReconstitute = () => {
     if (!selectedFreezerItem) return;
 
-    const bac = parseFloat(bacWaterInput) || 2.0;
+    const bac = parseDecimal(bacWaterInput) || 2.0;
 
     reconstituteToFridge(
       selectedFreezerItem.id,
@@ -239,7 +240,7 @@ export const FreezerScreen: React.FC = () => {
       description:
         newDescription.trim(),
       vialSize:
-        parseFloat(newVialSize),
+        parseDecimal(newVialSize),
       unit: newUnit,
       quantity:
         parseInt(newQuantity, 10),
@@ -625,15 +626,16 @@ export const FreezerScreen: React.FC = () => {
 
                   <TextInput
                     style={styles.textInput}
-                    keyboardType="numeric"
+                    keyboardType="decimal-pad"
+                    inputMode="decimal"
                     value={bacWaterInput}
-                    onChangeText={setBacWaterInput}
+                    onChangeText={(v) => setBacWaterInput(normalizeDecimalInput(v))}
                     placeholder={language === 'en' ? 'Example: 2.0' : 'Contoh: 2.0'}
                     placeholderTextColor="#64748b"
                   />
                 </View>
 
-                {parseFloat(bacWaterInput) > 0 && (
+                {parseDecimal(bacWaterInput) > 0 && (
                   <View style={styles.reconPreviewBox}>
 
                     <Text style={styles.reconPreviewTitle}>
@@ -643,15 +645,15 @@ export const FreezerScreen: React.FC = () => {
                     <Text style={styles.reconPreviewVal}>
                       {(
                         selectedFreezerItem.vialSize /
-                        parseFloat(bacWaterInput)
+                        parseDecimal(bacWaterInput)
                       ).toFixed(2)}{' '}
                       {selectedFreezerItem.unit}/mL
                     </Text>
 
                     <Text style={styles.reconPreviewSub}>
                       {language === 'en'
-                        ? `Target dose ${selectedFreezerItem.targetDose} ${selectedFreezerItem.unit} = ${((selectedFreezerItem.targetDose / (selectedFreezerItem.vialSize / parseFloat(bacWaterInput))) * 100).toFixed(0)} IU on U-100 syringe.`
-                        : `Target dosis ${selectedFreezerItem.targetDose} ${selectedFreezerItem.unit} = ${((selectedFreezerItem.targetDose / (selectedFreezerItem.vialSize / parseFloat(bacWaterInput))) * 100).toFixed(0)} IU pada spuit U-100.`}
+                        ? `Target dose ${selectedFreezerItem.targetDose} ${selectedFreezerItem.unit} = ${((selectedFreezerItem.targetDose / (selectedFreezerItem.vialSize / parseDecimal(bacWaterInput))) * 100).toFixed(0)} IU on U-100 syringe.`
+                        : `Target dosis ${selectedFreezerItem.targetDose} ${selectedFreezerItem.unit} = ${((selectedFreezerItem.targetDose / (selectedFreezerItem.vialSize / parseDecimal(bacWaterInput))) * 100).toFixed(0)} IU pada spuit U-100.`}
                     </Text>
 
                   </View>
@@ -795,9 +797,10 @@ export const FreezerScreen: React.FC = () => {
 
                   <TextInput
                     style={styles.textInput}
-                    keyboardType="numeric"
+                    keyboardType="decimal-pad"
+                    inputMode="decimal"
                     value={newVialSize}
-                    onChangeText={setNewVialSize}
+                    onChangeText={(v) => setNewVialSize(normalizeDecimalInput(v))}
                   />
                 </View>
 

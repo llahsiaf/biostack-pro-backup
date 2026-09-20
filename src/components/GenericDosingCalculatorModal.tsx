@@ -13,7 +13,11 @@ import {
 import { Calculator, X, Sparkles, Droplet, Syringe, RotateCcw } from 'lucide-react-native';
 import Svg, { Rect, Line, Text as SvgText, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { useLanguage } from '../i18n/LanguageContext';
-import { calculateGenericDosing } from '../utils/injectionCalculations';
+import {
+  calculateGenericDosing,
+  normalizeDecimalInput,
+  parseDecimal,
+} from '../utils/injectionCalculations';
 import { SyringeVisualizer } from './SyringeVisualizer';
 import { COLORS, RADIUS, SHADOWS } from '../theme';
 
@@ -35,9 +39,9 @@ export const GenericDosingCalculatorModal: React.FC<GenericDosingCalculatorModal
   const [doseUnit, setDoseUnit] = useState<'mg' | 'mcg' | 'mL'>('mcg');
 
   const result = useMemo(() => {
-    const vSize = parseFloat(vialSize) || 0;
-    const bWater = parseFloat(bacWater) || 0;
-    const tDose = parseFloat(targetDose) || 0;
+    const vSize = parseDecimal(vialSize);
+    const bWater = parseDecimal(bacWater);
+    const tDose = parseDecimal(targetDose);
 
     return calculateGenericDosing({
       vialAmount: vSize,
@@ -114,9 +118,10 @@ export const GenericDosingCalculatorModal: React.FC<GenericDosingCalculatorModal
 
               <TextInput
                 style={styles.textInput}
-                keyboardType="numeric"
+                keyboardType="decimal-pad"
+                inputMode="decimal"
                 value={vialSize}
-                onChangeText={setVialSize}
+                onChangeText={(v) => setVialSize(normalizeDecimalInput(v))}
                 placeholder={language === 'en' ? 'e.g. 10' : 'Contoh: 10'}
                 placeholderTextColor="#64748b"
               />
@@ -147,9 +152,10 @@ export const GenericDosingCalculatorModal: React.FC<GenericDosingCalculatorModal
 
                 <TextInput
                   style={styles.textInput}
-                  keyboardType="numeric"
+                  keyboardType="decimal-pad"
+                  inputMode="decimal"
                   value={bacWater}
-                  onChangeText={setBacWater}
+                  onChangeText={(v) => setBacWater(normalizeDecimalInput(v))}
                   placeholder={language === 'en' ? 'e.g. 2.0' : 'Contoh: 2.0'}
                   placeholderTextColor="#64748b"
                 />
@@ -180,7 +186,7 @@ export const GenericDosingCalculatorModal: React.FC<GenericDosingCalculatorModal
                       key={unit}
                       onPress={() => {
                         if (unit !== doseUnit) {
-                          const curDose = parseFloat(targetDose) || 0;
+                          const curDose = parseDecimal(targetDose);
                           if (unit === 'mcg' && doseUnit === 'mg') {
                             setTargetDose((curDose * 1000).toString());
                           } else if (unit === 'mg' && doseUnit === 'mcg') {
@@ -201,9 +207,10 @@ export const GenericDosingCalculatorModal: React.FC<GenericDosingCalculatorModal
 
               <TextInput
                 style={styles.textInput}
-                keyboardType="numeric"
+                keyboardType="decimal-pad"
+                inputMode="decimal"
                 value={targetDose}
-                onChangeText={setTargetDose}
+                onChangeText={(v) => setTargetDose(normalizeDecimalInput(v))}
                 placeholder={
                   doseUnit === 'mcg'
                     ? (language === 'en' ? 'e.g. 250' : 'Contoh: 250')

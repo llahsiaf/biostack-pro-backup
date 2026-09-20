@@ -37,7 +37,7 @@ import {
   WEEKDAY_LABELS,
 } from '../utils/scheduleUtils';
 import { getDashboardAnalytics, getLogsForLocalDate, getOccurrenceStatusLabel } from '../utils/dashboardUtils';
-import { calculateInjectionMetrics } from '../utils/injectionCalculations';
+import { calculateInjectionMetrics, normalizeDecimalInput } from '../utils/injectionCalculations';
 import { getSiteLabel, getSiteCode, getTrackerSuggestedSite, ROTATION_SITE_ORDER } from '../utils/rotationUtils';
 import type { InventoryItem } from '../types';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -544,9 +544,10 @@ export const TodayScreen: React.FC<{
               <Text style={styles.inputLabel}>{t('inventory.injectionDose') || 'NILAI DOSIS YANG DICATAT'}</Text>
               <TextInput
                 style={styles.modalInput}
-                keyboardType="numeric"
+                keyboardType="decimal-pad"
+                inputMode="decimal"
                 value={quickLogDose}
-                onChangeText={setQuickLogDose}
+                onChangeText={(v) => setQuickLogDose(normalizeDecimalInput(v))}
                 placeholder="0.0"
                 placeholderTextColor="#475569"
               />

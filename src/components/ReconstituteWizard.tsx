@@ -4,6 +4,7 @@ import { X, FlaskConical, ChevronRight, Check, Info, ShieldAlert } from 'lucide-
 import { FreezerStockItem, ActiveInventoryItem } from '../types';
 import { DEFAULT_PEPTIDES } from '../database/defaultPeptides';
 import { useLanguage } from '../i18n/LanguageContext';
+import { normalizeDecimalInput, parseDecimal } from '../utils/injectionCalculations';
 
 interface ReconstituteWizardProps {
   visible: boolean;
@@ -20,8 +21,8 @@ export const ReconstituteWizard: React.FC<ReconstituteWizardProps> = ({
 }) => {
   const { language } = useLanguage();
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [bacWater, setBacWater] = useState(2.0);
-  const [selectedDose, setSelectedDose] = useState(1.0);
+  const [bacWaterInput, setBacWaterInput] = useState('2.0');
+  const [selectedDoseInput, setSelectedDoseInput] = useState('1.0');
   const [schedule, setSchedule] = useState('Mingguan (Weekly)');
   const [injectionTime, setInjectionTime] = useState('08:00');
 
@@ -36,13 +37,16 @@ export const ReconstituteWizard: React.FC<ReconstituteWizardProps> = ({
     );
 
     setStep(1);
-    setBacWater(freezerItem.bacWaterMl || def?.defaultBacWater || 2.0);
-    setSelectedDose(freezerItem.defaultDose || def?.targetDose || 1.0);
+    setBacWaterInput((freezerItem.bacWaterMl || def?.defaultBacWater || 2.0).toString());
+    setSelectedDoseInput((freezerItem.defaultDose || def?.targetDose || 1.0).toString());
     setSchedule(freezerItem.schedule || def?.frequencyLabel || (language === 'en' ? 'Weekly' : 'Mingguan (Weekly)'));
     setInjectionTime(def?.injectionTime || '08:00');
   }, [freezerItem, language]);
 
   if (!freezerItem) return null;
+
+  const bacWater = parseDecimal(bacWaterInput) || 1.0;
+  const selectedDose = parseDecimal(selectedDoseInput) || 1.0;
 
   const handleFinish = () => {
     const today = new Date().toISOString().split('T')[0];
@@ -123,9 +127,10 @@ export const ReconstituteWizard: React.FC<ReconstituteWizardProps> = ({
                   </Text>
                   <TextInput
                     style={styles.inputField}
-                    keyboardType="numeric"
-                    value={bacWater.toString()}
-                    onChangeText={(v) => setBacWater(parseFloat(v) || 1.0)}
+                    keyboardType="decimal-pad"
+                    inputMode="decimal"
+                    value={bacWaterInput}
+                    onChangeText={(v) => setBacWaterInput(normalizeDecimalInput(v))}
                   />
                   <Text style={styles.calcSubtext}>
                     {language === 'en' ? 'Final Concentration:' : 'Konsentrasi Akhir:'}{' '}
@@ -152,9 +157,10 @@ export const ReconstituteWizard: React.FC<ReconstituteWizardProps> = ({
                   </Text>
                   <TextInput
                     style={styles.inputField}
-                    keyboardType="numeric"
-                    value={selectedDose.toString()}
-                    onChangeText={(v) => setSelectedDose(parseFloat(v) || 0)}
+                    keyboardType="decimal-pad"
+                    inputMode="decimal"
+                    value={selectedDoseInput}
+                    onChangeText={(v) => setSelectedDoseInput(normalizeDecimalInput(v))}
                   />
 
                   <Text style={[styles.fieldLabel, { marginTop: 12 }]}>

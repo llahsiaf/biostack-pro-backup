@@ -117,6 +117,24 @@ export function calculateGenericDosing(params: GenericDosingParams): GenericDosi
 }
 
 /**
+ * Normalizes decimal input string by replacing commas with dots.
+ */
+export function normalizeDecimalInput(text: string): string {
+  return (text || '').replace(',', '.');
+}
+
+/**
+ * Safely parses any number or string (including comma-decimal strings like "7,5") into a valid finite number.
+ */
+export function parseDecimal(val: string | number | undefined | null): number {
+  if (val === undefined || val === null) return 0;
+  if (typeof val === 'number') return Number.isFinite(val) ? val : 0;
+  const normalized = String(val).trim().replace(',', '.');
+  const parsed = Number.parseFloat(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+/**
  * Calculates tracker-only volume/marking metrics from values already stored by the user.
  * It does not recommend or select a dose.
  */
@@ -127,11 +145,11 @@ export function calculateInjectionMetrics(
   overrideDoseUnit?: InventoryItem['doseUnit'],
 ): InjectionMetrics {
   const dose = overrideDose !== undefined
-    ? Number.parseFloat(overrideDose) || 0
-    : Number(item.targetDose) || 0;
+    ? parseDecimal(overrideDose)
+    : parseDecimal(item.targetDose);
   const bac = overrideBac !== undefined
-    ? Number.parseFloat(overrideBac) || 0
-    : Number(item.bacWater) || 0;
+    ? parseDecimal(overrideBac)
+    : parseDecimal(item.bacWater);
   const effectiveDoseUnit = overrideDoseUnit || item.doseUnit || item.unit;
 
   if (dose <= 0) {

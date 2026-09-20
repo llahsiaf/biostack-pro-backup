@@ -46,6 +46,8 @@ import { exportToAppleCalendar } from '../utils/calendarHelper';
 import {
   calculateInjectionMetrics,
   getLiquidStatus,
+  normalizeDecimalInput,
+  parseDecimal,
 } from '../utils/injectionCalculations';
 import {
   getOccurrenceForDate,
@@ -323,8 +325,8 @@ export const InventoryScreen: React.FC = () => {
   const handleSaveDose = () => {
     if (!editingItem) return;
 
-    const newTarget = parseFloat(editTargetDose) || editingItem.targetDose;
-    const newBac = parseFloat(editBacWater) || editingItem.bacWater;
+    const newTarget = parseDecimal(editTargetDose) || editingItem.targetDose;
+    const newBac = parseDecimal(editBacWater) || editingItem.bacWater;
 
     updateInventoryItem(editingItem.id, {
       targetDose: newTarget,
@@ -1358,7 +1360,7 @@ export const InventoryScreen: React.FC = () => {
                                 key={u}
                                 onPress={() => {
                                   if (u !== editDoseUnit) {
-                                    const cur = parseFloat(editTargetDose) || 0;
+                                    const cur = parseDecimal(editTargetDose) || 0;
                                     if (u === 'mcg' && editDoseUnit === 'mg') {
                                       setEditTargetDose((cur * 1000).toString());
                                     } else if (u === 'mg' && editDoseUnit === 'mcg') {
@@ -1392,9 +1394,10 @@ export const InventoryScreen: React.FC = () => {
 
                       <TextInput
                         style={styles.fancyTextInput}
-                        keyboardType="numeric"
+                        keyboardType="decimal-pad"
+                        inputMode="decimal"
                         value={editTargetDose}
-                        onChangeText={setEditTargetDose}
+                        onChangeText={(v) => setEditTargetDose(normalizeDecimalInput(v))}
                         textAlign="center"
                       />
                     </View>
@@ -1433,10 +1436,11 @@ export const InventoryScreen: React.FC = () => {
                           style={
                             styles.fancyTextInputBlue
                           }
-                          keyboardType="numeric"
+                          keyboardType="decimal-pad"
+                          inputMode="decimal"
                           value={editBacWater}
-                          onChangeText={
-                            setEditBacWater
+                          onChangeText={(v) =>
+                            setEditBacWater(normalizeDecimalInput(v))
                           }
                           textAlign="center"
                         />
@@ -1967,9 +1971,10 @@ export const InventoryScreen: React.FC = () => {
 
                     <TextInput
                       style={styles.reconInputV1}
-                      keyboardType="numeric"
+                      keyboardType="decimal-pad"
+                      inputMode="decimal"
                       value={freezerBacInput}
-                      onChangeText={setFreezerBacInput}
+                      onChangeText={(v) => setFreezerBacInput(normalizeDecimalInput(v))}
                       placeholder="2.0"
                       placeholderTextColor="#475569"
                     />
@@ -1989,7 +1994,7 @@ export const InventoryScreen: React.FC = () => {
                       onPress={() => {
                         reconstituteToFridge(
                           selectedFreezerItem.id,
-                          parseFloat(freezerBacInput) || 2.0,
+                          parseDecimal(freezerBacInput) || 2.0,
                         );
                         setIsTakeFreezerModalOpen(false);
                         setSelectedFreezerItem(null);

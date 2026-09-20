@@ -4,6 +4,7 @@ import { X, Activity, Check } from 'lucide-react-native';
 import { ActiveInventoryItem } from '../types';
 import { SyringeVisualizer } from './SyringeVisualizer';
 import { useLanguage } from '../i18n/LanguageContext';
+import { normalizeDecimalInput, parseDecimal } from '../utils/injectionCalculations';
 
 interface DoseDetailModalProps {
   visible: boolean;
@@ -14,18 +15,20 @@ interface DoseDetailModalProps {
 
 export const DoseDetailModal: React.FC<DoseDetailModalProps> = ({ visible, item, onClose, onSave }) => {
   const { language } = useLanguage();
-  const [dose, setDose] = useState<number>(item?.selectedDose ?? 0);
-  const [bacWater, setBacWater] = useState<number>(item?.bacWaterMl || 2.0);
+  const [doseInput, setDoseInput] = useState<string>(item?.selectedDose?.toString() ?? '0');
+  const [bacWaterInput, setBacWaterInput] = useState<string>((item?.bacWaterMl || 2.0).toString());
 
   useEffect(() => {
     if (item) {
-      setDose(item.selectedDose);
-      setBacWater(item.bacWaterMl || 2.0);
+      setDoseInput((item.selectedDose ?? 0).toString());
+      setBacWaterInput((item.bacWaterMl || 2.0).toString());
     }
   }, [item]);
 
   if (!item) return null;
 
+  const dose = parseDecimal(doseInput);
+  const bacWater = parseDecimal(bacWaterInput) || 1.0;
   const vialSize = item.vialSizeMg || 1;
   const isLiquidMl = item.unit === 'mL';
   const volMl = isLiquidMl ? dose : (dose / vialSize) * bacWater;
@@ -66,7 +69,7 @@ export const DoseDetailModal: React.FC<DoseDetailModalProps> = ({ visible, item,
                 return (
                   <TouchableOpacity
                     key={type}
-                    onPress={() => setDose(presetVal)}
+                    onPress={() => setDoseInput(presetVal.toString())}
                     style={[styles.presetCard, isSelected && styles.presetCardActive]}
                   >
                     <Text style={[styles.presetType, isSelected && styles.presetTextActive]}>
@@ -90,9 +93,10 @@ export const DoseDetailModal: React.FC<DoseDetailModalProps> = ({ visible, item,
               </View>
               <TextInput
                 style={styles.numericInput}
-                keyboardType="numeric"
-                value={dose.toString()}
-                onChangeText={(val) => setDose(parseFloat(val) || 0)}
+                keyboardType="decimal-pad"
+                inputMode="decimal"
+                value={doseInput}
+                onChangeText={(val) => setDoseInput(normalizeDecimalInput(val))}
               />
             </View>
 
@@ -107,9 +111,10 @@ export const DoseDetailModal: React.FC<DoseDetailModalProps> = ({ visible, item,
                 </View>
                 <TextInput
                   style={styles.numericInputCyan}
-                  keyboardType="numeric"
-                  value={bacWater.toString()}
-                  onChangeText={(val) => setBacWater(parseFloat(val) || 1.0)}
+                  keyboardType="decimal-pad"
+                  inputMode="decimal"
+                  value={bacWaterInput}
+                  onChangeText={(val) => setBacWaterInput(normalizeDecimalInput(val))}
                 />
               </View>
             )}
