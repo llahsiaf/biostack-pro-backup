@@ -16,13 +16,19 @@ export const SyringeVisualizer: React.FC<SyringeVisualizerProps> = ({
 }) => {
   const { language } = useLanguage();
   const boundedUnits = Math.max(0, Math.min(100, Math.round(u100Units)));
-  const barrelStartX = 36;
-  const barrelWidth = 200;
+  
+  // Orientasi Benar:
+  // Jarum & 0 IU di KIRI, Skala 0 s/d 100 ke KANAN, Plunger & Gagang di KANAN
+  const barrelStartX = 54;
+  const barrelWidth = 180;
   const barrelHeight = 36;
   const barrelY = 17;
+  const barrelEndX = barrelStartX + barrelWidth; // 234
 
   const fillWidth = (boundedUnits / 100) * barrelWidth;
   const targetX = barrelStartX + fillWidth;
+  // Plunger ditarik ke kanan: pangkal batang ikut bergerak mundur saat dosis ditarik
+  const plungerShaftEnd = Math.min(292, barrelEndX + 18 + (boundedUnits / 100) * 36);
 
   return (
     <View style={showHeader ? styles.container : styles.inlineContainer}>
@@ -51,29 +57,39 @@ export const SyringeVisualizer: React.FC<SyringeVisualizerProps> = ({
           </LinearGradient>
         </Defs>
 
-        {/* Plunger / Pendorong di Kiri */}
+        {/* 1. Jarum & Hub di KIRI (Menempel di titik 0 IU) */}
+        {/* Kanula Jarum (Needle Cannula) */}
         <Line
           x1="12"
           y1={barrelY + barrelHeight / 2}
-          x2={barrelStartX}
+          x2="44"
           y2={barrelY + barrelHeight / 2}
-          stroke="#334155"
-          strokeWidth="4"
-          strokeLinecap="square"
+          stroke="#94a3b8"
+          strokeWidth="2"
+          strokeLinecap="round"
         />
-        {/* Flange / Pegangan Plunger */}
+        {/* Beveled Tip Jarum */}
+        <Line
+          x1="12"
+          y1={barrelY + barrelHeight / 2}
+          x2="15"
+          y2={barrelY + barrelHeight / 2 - 1.5}
+          stroke="#cbd5e1"
+          strokeWidth="1.5"
+        />
+        {/* Hub Plastik Jarum */}
         <Rect
-          x="10"
-          y={barrelY - 3}
-          width="6"
-          height={barrelHeight + 6}
+          x="44"
+          y={barrelY + 8}
+          width="10"
+          height={barrelHeight - 16}
           rx="2"
-          fill="#1e293b"
-          stroke="#334155"
-          strokeWidth="1.2"
+          fill="#334155"
+          stroke="#475569"
+          strokeWidth="1"
         />
 
-        {/* Tabung Spuit Utama */}
+        {/* 2. Tabung Spuit Utama (Barrel) */}
         <Rect
           x={barrelStartX}
           y={barrelY}
@@ -85,19 +101,65 @@ export const SyringeVisualizer: React.FC<SyringeVisualizerProps> = ({
           strokeWidth="1.5"
         />
 
-        {/* Isi Cairan Peptida */}
+        {/* 3. Sayap Belakang Spuit (Finger Flange) */}
+        <Rect
+          x={barrelEndX - 2}
+          y={barrelY - 5}
+          width="6"
+          height={barrelHeight + 10}
+          rx="2"
+          fill="#1e293b"
+          stroke="#334155"
+          strokeWidth="1.2"
+        />
+
+        {/* 4. Cairan Peptida Hijau (Mengisi dari Kiri / 0 IU ke Kanan) */}
         {fillWidth > 0 && (
           <Rect
-            x={barrelStartX}
+            x={barrelStartX + 1}
             y={barrelY + 1.5}
-            width={Math.min(barrelWidth - 1, fillWidth)}
+            width={Math.min(barrelWidth - 2, fillWidth)}
             height={barrelHeight - 3}
             rx="3"
             fill="url(#syringeLiquidGrad)"
           />
         )}
 
-        {/* Skala Garis Ukur (0 s.d 100 IU) */}
+        {/* 5. Karet Penahan Piston (Rubber Stopper) di Ujung Cairan */}
+        <Rect
+          x={Math.max(barrelStartX, targetX - 4)}
+          y={barrelY + 2}
+          width="6"
+          height={barrelHeight - 4}
+          rx="2"
+          fill="#0f172a"
+          stroke="#334155"
+          strokeWidth="1.2"
+        />
+
+        {/* 6. Batang Pendorong Plunger & Flange Jempol (Di Kanan) */}
+        <Line
+          x1={Math.max(barrelStartX + 2, targetX + 2)}
+          y1={barrelY + barrelHeight / 2}
+          x2={plungerShaftEnd}
+          y2={barrelY + barrelHeight / 2}
+          stroke="#334155"
+          strokeWidth="4"
+          strokeLinecap="square"
+        />
+        {/* Bantalan Jempol (Thumb Rest) */}
+        <Rect
+          x={plungerShaftEnd - 2}
+          y={barrelY - 4}
+          width="6"
+          height={barrelHeight + 8}
+          rx="2"
+          fill="#1e293b"
+          stroke="#334155"
+          strokeWidth="1.2"
+        />
+
+        {/* 7. Skala Garis Ukur (0 s.d 100 IU Mengalir dari Kiri ke Kanan) */}
         {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((tick) => {
           const x = barrelStartX + (tick / 100) * barrelWidth;
           const isMajor = tick % 20 === 0;
@@ -127,39 +189,7 @@ export const SyringeVisualizer: React.FC<SyringeVisualizerProps> = ({
           );
         })}
 
-        {/* Jarum & Hub di Kanan */}
-        {/* Needle Hub */}
-        <Rect
-          x={barrelStartX + barrelWidth}
-          y={barrelY + 9}
-          width="10"
-          height={barrelHeight - 18}
-          rx="2"
-          fill="#334155"
-          stroke="#475569"
-          strokeWidth="1"
-        />
-        {/* Needle Cannula */}
-        <Line
-          x1={barrelStartX + barrelWidth + 10}
-          y1={barrelY + barrelHeight / 2}
-          x2={barrelStartX + barrelWidth + 44}
-          y2={barrelY + barrelHeight / 2}
-          stroke="#94a3b8"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-        {/* Beveled Tip */}
-        <Line
-          x1={barrelStartX + barrelWidth + 42}
-          y1={barrelY + barrelHeight / 2}
-          x2={barrelStartX + barrelWidth + 45}
-          y2={barrelY + barrelHeight / 2 - 1.5}
-          stroke="#cbd5e1"
-          strokeWidth="1.5"
-        />
-
-        {/* Garis Bidik Target & Label Dosis */}
+        {/* 8. Garis Bidik Target & Label Dosis */}
         {boundedUnits > 0 && (
           <G>
             {/* Garis bidik vertikal hijau neon */}
@@ -171,7 +201,7 @@ export const SyringeVisualizer: React.FC<SyringeVisualizerProps> = ({
               stroke="#10b981"
               strokeWidth="2"
             />
-            {/* Pointer segitiga kecil */}
+            {/* Pointer segitiga */}
             <Polygon
               points={`${targetX - 4},${barrelY + barrelHeight + 7} ${targetX + 4},${barrelY + barrelHeight + 7} ${targetX},${barrelY + barrelHeight + 2}`}
               fill="#10b981"

@@ -52,7 +52,7 @@ import {
   getNextScheduledOccurrence,
   getScheduleSummary,
 } from '../utils/scheduleUtils';
-import { getTrackerSuggestedSite } from '../utils/rotationUtils';
+import { getTrackerSuggestedSite, getSiteCode } from '../utils/rotationUtils';
 import { cancelNotificationIds } from '../utils/notificationUtils';
 import { SyringeVisualizer } from '../components/SyringeVisualizer';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -1100,7 +1100,7 @@ export const InventoryScreen: React.FC = () => {
                     ? (language === 'en' ? 'Empty Vial' : 'Vial Kosong')
                     : item.schedulePaused
                     ? (language === 'en' ? 'Schedule Paused' : 'Jadwal Dijeda')
-                    : (language === 'en' ? `Inject Now (${currentSite})` : `Suntik Sekarang (${currentSite})`)}
+                    : (language === 'en' ? `Inject Now (${getSiteCode(currentSite, 'en')})` : `Suntik Sekarang (${currentSite})`)}
                 </Text>
               </TouchableOpacity>
             </View>

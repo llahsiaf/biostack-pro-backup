@@ -37,7 +37,7 @@ import {
 } from '../utils/scheduleUtils';
 import { getDashboardAnalytics, getLogsForLocalDate, getOccurrenceStatusLabel } from '../utils/dashboardUtils';
 import { calculateInjectionMetrics } from '../utils/injectionCalculations';
-import { getSiteLabel, getTrackerSuggestedSite, ROTATION_SITE_ORDER } from '../utils/rotationUtils';
+import { getSiteLabel, getSiteCode, getTrackerSuggestedSite, ROTATION_SITE_ORDER } from '../utils/rotationUtils';
 import type { InventoryItem } from '../types';
 import { useLanguage } from '../i18n/LanguageContext';
 import { getLanguage } from '../i18n/translations';
@@ -320,7 +320,7 @@ export const TodayScreen: React.FC<{
           <View style={styles.heroCopy}>
             <Text style={styles.eyebrow}>PERSONAL TRACKER</Text>
             <Text style={styles.heroTitle}>{isToday ? (language === 'en' ? "Today's Summary" : (t('today.title') || 'Ringkasan Hari Ini')) : formatDateLong(selectedDate, language)}</Text>
-            <Text style={styles.heroSubtitle}>{formatDateLong(now, language)} • {language === 'en' ? 'Next site' : (t('rotation.suggestedSite') || 'Titik berikutnya')} {currentSite}</Text>
+            <Text style={styles.heroSubtitle}>{formatDateLong(now, language)} • {language === 'en' ? 'Next site' : (t('rotation.suggestedSite') || 'Titik berikutnya')} {getSiteCode(currentSite, language)}</Text>
           </View>
           <TouchableOpacity style={styles.quickLogBtn} onPress={openQuickLog}>
             <Syringe size={15} color="#022c22" />

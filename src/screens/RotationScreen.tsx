@@ -6,6 +6,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Image,
 } from 'react-native';
 import Svg, {
   Circle,
@@ -223,6 +224,13 @@ export const getSiteDisplayCode = (siteId: string, language: 'id' | 'en') => {
   return siteId;
 };
 
+const ANATOMY_IMAGES: Record<BodyZone, any> = {
+  perut: require('../assets/anatomy/abdomen.jpg'),
+  paha: require('../assets/anatomy/thigh.jpg'),
+  lengan: require('../assets/anatomy/arm.jpg'),
+  bokong: require('../assets/anatomy/glute.jpg'),
+};
+
 export const RotationScreen: React.FC = () => {
   const { language, t } = useLanguage();
   const {
@@ -316,6 +324,78 @@ export const RotationScreen: React.FC = () => {
     currentSite === siteId
       ? '#10b981'
       : '#ffffff';
+
+  const renderInteractiveSite = (siteId: string, cx: number, cy: number) => {
+    const isSelected = currentSite === siteId;
+    const displayCode = getSiteDisplayCode(siteId, language as 'id' | 'en');
+
+    return (
+      <G key={siteId} onPress={() => setSite(siteId)}>
+        {/* Glow halo saat aktif */}
+        {isSelected && (
+          <>
+            <Circle
+              cx={cx}
+              cy={cy}
+              r="27"
+              fill="rgba(16, 185, 129, 0.22)"
+            />
+            <Circle
+              cx={cx}
+              cy={cy}
+              r="23"
+              stroke="#10b981"
+              strokeWidth="1.5"
+              strokeDasharray="3 3"
+              opacity={0.9}
+            />
+          </>
+        )}
+
+        {/* Lingkaran dasar */}
+        <Circle
+          cx={cx}
+          cy={cy}
+          r="18"
+          fill={isSelected ? '#064e3b' : 'rgba(9, 13, 22, 0.82)'}
+          stroke={isSelected ? '#10b981' : '#38bdf8'}
+          strokeWidth={isSelected ? 2.5 : 1.5}
+        />
+
+        {/* Titik indikator kecil */}
+        <Circle
+          cx={cx}
+          cy={cy - 7}
+          r="2.5"
+          fill={isSelected ? '#34d399' : '#38bdf8'}
+        />
+
+        {/* Kode Titik (RU, LU, KA, KiA, dll) */}
+        <SvgText
+          x={cx}
+          y={cy + 4}
+          fill={isSelected ? '#ffffff' : '#f1f5f9'}
+          fontSize="11"
+          fontWeight="900"
+          textAnchor="middle"
+        >
+          {displayCode}
+        </SvgText>
+
+        {/* Sub-label status */}
+        <SvgText
+          x={cx}
+          y={cy + 13}
+          fill={isSelected ? '#34d399' : '#94a3b8'}
+          fontSize="6.5"
+          fontWeight="700"
+          textAnchor="middle"
+        >
+          {isSelected ? (language === 'en' ? 'ACTIVE' : 'AKTIF') : (language === 'en' ? 'SELECT' : 'PILIH')}
+        </SvgText>
+      </G>
+    );
+  };
 
   return (
     <ScrollView
@@ -490,130 +570,44 @@ export const RotationScreen: React.FC = () => {
           )
         </Text>
 
-        <View
-          style={styles.svgContainer}
-        >
+        <View style={styles.svgContainer}>
+          <Image
+            source={ANATOMY_IMAGES[selectedZone]}
+            style={styles.anatomyBgImage}
+            resizeMode="contain"
+          />
+
           <Svg
-            height="230"
+            height="260"
             width="100%"
-            viewBox="0 0 300 220"
+            viewBox="0 0 300 260"
+            style={styles.anatomyOverlaySvg}
           >
-            {/* =====================================================
-                PERUT
-                ===================================================== */}
+            {/* PERUT (ABDOMEN) */}
             {selectedZone === 'perut' && (
               <G>
-                {/* Leher & Clavicle */}
-                <Path
-                  d="M138 28 L138 18 Q150 14 162 18 L162 28"
-                  fill="#090d16"
-                  stroke="#334155"
-                  strokeWidth="1.5"
-                />
-
-                {/* Torso Kontur Alami Tubuh Manusia */}
-                <Path
-                  d="
-                    M138 28
-                    Q115 30 96 44
-                    Q92 56 94 72
-                    Q98 94 102 110
-                    Q100 134 94 154
-                    Q98 174 122 178
-                    Q136 180 150 174
-                    Q164 180 178 178
-                    Q202 174 206 154
-                    Q200 134 198 110
-                    Q202 94 206 72
-                    Q208 56 204 44
-                    Q185 30 162 28
-                    Z
-                  "
-                  fill="#090d16"
-                  stroke="#334155"
-                  strokeWidth="2"
-                />
-
-                {/* Garis Klavikula / Tulang Selangka */}
-                <Path
-                  d="M102 46 Q130 42 142 46 M158 46 Q170 42 198 46"
-                  stroke="#1e293b"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-
-                {/* Arkus Tulang Rusuk (Subcostal Arch) */}
-                <Path
-                  d="M112 80 Q132 60 150 62 Q168 60 188 80"
-                  stroke="#1e293b"
-                  strokeWidth="1.5"
-                  strokeDasharray="3 3"
-                  strokeLinecap="round"
-                  fill="none"
-                />
-
-                {/* Garis Lipatan Inguinal / Pinggul */}
-                <Path
-                  d="M102 154 Q124 172 146 172 M198 154 Q176 172 154 172"
-                  stroke="#1e293b"
-                  strokeWidth="1.5"
-                  strokeDasharray="3 3"
-                  fill="none"
-                />
-
-                {/* Garis Tengah (Linea Alba) */}
-                <Line
-                  x1="150"
-                  y1="46"
-                  x2="150"
-                  y2="170"
-                  stroke="#1e293b"
-                  strokeWidth="1"
-                  strokeDasharray="3 3"
-                />
-
-                {/* Garis Horizontal Transumbilikal */}
-                <Line
-                  x1="104"
-                  y1="106"
-                  x2="196"
-                  y2="106"
-                  stroke="#162035"
-                  strokeWidth="1"
-                  strokeDasharray="3 3"
-                />
-
-                {/* Zona Aman Pusar (Buffer Ring) */}
+                {/* Safe buffer ring di sekitar pusar */}
                 <Circle
                   cx="150"
-                  cy="106"
-                  r="22"
+                  cy="135"
+                  r="20"
                   fill="none"
                   stroke="#38bdf8"
                   strokeWidth="1"
                   strokeDasharray="2 3"
-                  opacity={0.35}
+                  opacity={0.4}
                 />
-
-                {/* Pusar */}
                 <Circle
                   cx="150"
-                  cy="106"
-                  r="6"
-                  fill="#030712"
+                  cy="135"
+                  r="4"
+                  fill="#0284c7"
                   stroke="#38bdf8"
                   strokeWidth="1.5"
                 />
-                <Circle
-                  cx="150"
-                  cy="106"
-                  r="2"
-                  fill="#38bdf8"
-                />
-
                 <SvgText
                   x="150"
-                  y="95"
+                  y="148"
                   fill="#38bdf8"
                   fontSize="7"
                   fontWeight="bold"
@@ -622,99 +616,18 @@ export const RotationScreen: React.FC = () => {
                   {language === 'en' ? 'NAVEL' : 'PUSAR'}
                 </SvgText>
 
-                {/* KA */}
-                <G onPress={() => setSite('KA')}>
-                  <Circle
-                    cx="125"
-                    cy="76"
-                    r="20"
-                    fill={siteFill('KA')}
-                    stroke={siteStroke('KA')}
-                    strokeWidth={siteStrokeWidth('KA')}
-                  />
-                  <SvgText
-                    x="125"
-                    y="80"
-                    fill={siteText('KA')}
-                    fontSize="11"
-                    fontWeight="bold"
-                    textAnchor="middle"
-                  >
-                    {getSiteDisplayCode('KA', language)}
-                  </SvgText>
-                </G>
-
-                {/* KiA */}
-                <G onPress={() => setSite('KiA')}>
-                  <Circle
-                    cx="175"
-                    cy="76"
-                    r="20"
-                    fill={siteFill('KiA')}
-                    stroke={siteStroke('KiA')}
-                    strokeWidth={siteStrokeWidth('KiA')}
-                  />
-                  <SvgText
-                    x="175"
-                    y="80"
-                    fill={siteText('KiA')}
-                    fontSize="11"
-                    fontWeight="bold"
-                    textAnchor="middle"
-                  >
-                    {getSiteDisplayCode('KiA', language)}
-                  </SvgText>
-                </G>
-
-                {/* KB */}
-                <G onPress={() => setSite('KB')}>
-                  <Circle
-                    cx="125"
-                    cy="136"
-                    r="20"
-                    fill={siteFill('KB')}
-                    stroke={siteStroke('KB')}
-                    strokeWidth={siteStrokeWidth('KB')}
-                  />
-                  <SvgText
-                    x="125"
-                    y="140"
-                    fill={siteText('KB')}
-                    fontSize="11"
-                    fontWeight="bold"
-                    textAnchor="middle"
-                  >
-                    {getSiteDisplayCode('KB', language)}
-                  </SvgText>
-                </G>
-
-                {/* KiB */}
-                <G onPress={() => setSite('KiB')}>
-                  <Circle
-                    cx="175"
-                    cy="136"
-                    r="20"
-                    fill={siteFill('KiB')}
-                    stroke={siteStroke('KiB')}
-                    strokeWidth={siteStrokeWidth('KiB')}
-                  />
-                  <SvgText
-                    x="175"
-                    y="140"
-                    fill={siteText('KiB')}
-                    fontSize="11"
-                    fontWeight="bold"
-                    textAnchor="middle"
-                  >
-                    {getSiteDisplayCode('KiB', language)}
-                  </SvgText>
-                </G>
+                {/* 4 Titik Kuadran Abdomen */}
+                {renderInteractiveSite('KA', 110, 105)}
+                {renderInteractiveSite('KiA', 190, 105)}
+                {renderInteractiveSite('KB', 110, 165)}
+                {renderInteractiveSite('KiB', 190, 165)}
 
                 <SvgText
                   x="150"
-                  y="204"
+                  y="252"
                   fill="#64748b"
                   fontSize="8"
+                  fontWeight="bold"
                   textAnchor="middle"
                 >
                   {language === 'en' ? 'ANTERIOR · ABDOMEN' : 'DEPAN · ABDOMEN'}
@@ -722,141 +635,18 @@ export const RotationScreen: React.FC = () => {
               </G>
             )}
 
-            {/* =====================================================
-                PAHA
-                ===================================================== */}
+            {/* PAHA (THIGH) */}
             {selectedZone === 'paha' && (
               <G>
-                {/* Pelvis & Panggul */}
-                <Path
-                  d="
-                    M98 24
-                    Q150 14 202 24
-                    Q210 42 208 58
-                    Q150 68 92 58
-                    Q90 42 98 24
-                    Z
-                  "
-                  fill="#090d16"
-                  stroke="#334155"
-                  strokeWidth="2"
-                />
-
-                {/* Kaki kiri (Anterior) */}
-                <Path
-                  d="
-                    M96 56
-                    Q86 78 88 112
-                    Q90 148 96 176
-                    Q100 196 112 198
-                    Q124 198 128 178
-                    Q134 148 138 108
-                    Q142 76 138 60
-                    Q116 66 96 56
-                    Z
-                  "
-                  fill="#090d16"
-                  stroke="#334155"
-                  strokeWidth="2"
-                />
-
-                {/* Kaki kanan (Anterior) */}
-                <Path
-                  d="
-                    M204 56
-                    Q214 78 212 112
-                    Q210 148 204 176
-                    Q200 196 188 198
-                    Q176 198 172 178
-                    Q166 148 162 108
-                    Q158 76 162 60
-                    Q184 66 204 56
-                    Z
-                  "
-                  fill="#090d16"
-                  stroke="#334155"
-                  strokeWidth="2"
-                />
-
-                {/* Garis Otot Kuadrisep / Vastus Lateralis */}
-                <Path
-                  d="M106 72 Q102 114 108 162"
-                  stroke="#1e293b"
-                  strokeWidth="1.5"
-                  strokeDasharray="3 3"
-                  fill="none"
-                />
-                <Path
-                  d="M194 72 Q198 114 192 162"
-                  stroke="#1e293b"
-                  strokeWidth="1.5"
-                  strokeDasharray="3 3"
-                  fill="none"
-                />
-
-                {/* Indikator Patella / Lutut */}
-                <Path
-                  d="M106 182 Q112 186 118 182"
-                  stroke="#334155"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-                <Path
-                  d="M182 182 Q188 186 194 182"
-                  stroke="#334155"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-
-                {/* Titik PKi */}
-                <G onPress={() => setSite('PKi')}>
-                  <Circle
-                    cx="116"
-                    cy="105"
-                    r="21"
-                    fill={siteFill('PKi')}
-                    stroke={siteStroke('PKi')}
-                    strokeWidth={siteStrokeWidth('PKi')}
-                  />
-                  <SvgText
-                    x="116"
-                    y="109"
-                    fill={siteText('PKi')}
-                    fontSize="11"
-                    fontWeight="bold"
-                    textAnchor="middle"
-                  >
-                    {getSiteDisplayCode('PKi', language)}
-                  </SvgText>
-                </G>
-
-                {/* Titik PKn */}
-                <G onPress={() => setSite('PKn')}>
-                  <Circle
-                    cx="184"
-                    cy="105"
-                    r="21"
-                    fill={siteFill('PKn')}
-                    stroke={siteStroke('PKn')}
-                    strokeWidth={siteStrokeWidth('PKn')}
-                  />
-                  <SvgText
-                    x="184"
-                    y="109"
-                    fill={siteText('PKn')}
-                    fontSize="11"
-                    fontWeight="bold"
-                    textAnchor="middle"
-                  >
-                    {getSiteDisplayCode('PKn', language)}
-                  </SvgText>
-                </G>
+                {renderInteractiveSite('PKi', 108, 120)}
+                {renderInteractiveSite('PKn', 192, 120)}
 
                 <SvgText
                   x="150"
-                  y="214"
+                  y="252"
                   fill="#64748b"
                   fontSize="8"
+                  fontWeight="bold"
                   textAnchor="middle"
                 >
                   {language === 'en' ? 'ANTERIOR · THIGH' : 'DEPAN · PAHA'}
@@ -864,154 +654,18 @@ export const RotationScreen: React.FC = () => {
               </G>
             )}
 
-            {/* =====================================================
-                LENGAN
-                ===================================================== */}
+            {/* LENGAN (ARM) */}
             {selectedZone === 'lengan' && (
               <G>
-                {/* Torso & Punggung / Bahu */}
-                <Path
-                  d="
-                    M136 28
-                    Q150 18 164 28
-                    L174 38
-                    Q178 78 174 130
-                    Q168 152 150 154
-                    Q132 152 126 130
-                    Q122 78 126 38
-                    Z
-                  "
-                  fill="#090d16"
-                  stroke="#334155"
-                  strokeWidth="2"
-                />
-
-                {/* Lengan kiri (Anatomi Deltoid & Trisep) */}
-                <Path
-                  d="
-                    M126 38
-                    Q102 36 88 52
-                    Q78 68 78 94
-                    Q80 126 84 156
-                    Q88 178 100 178
-                    Q110 178 114 158
-                    Q116 128 116 92
-                    Q118 68 126 48
-                    Z
-                  "
-                  fill="#090d16"
-                  stroke="#334155"
-                  strokeWidth="2"
-                />
-
-                {/* Lengan kanan (Anatomi Deltoid & Trisep) */}
-                <Path
-                  d="
-                    M174 38
-                    Q198 36 212 52
-                    Q222 68 222 94
-                    Q220 126 216 156
-                    Q212 178 200 178
-                    Q190 178 186 158
-                    Q184 128 184 92
-                    Q182 68 174 48
-                    Z
-                  "
-                  fill="#090d16"
-                  stroke="#334155"
-                  strokeWidth="2"
-                />
-
-                {/* Batas Otot Deltoid / Zona Injeksi Subkutan */}
-                <Path
-                  d="M82 72 Q98 84 116 76"
-                  stroke="#1e293b"
-                  strokeWidth="1.5"
-                  strokeDasharray="3 3"
-                  fill="none"
-                />
-                <Path
-                  d="M218 72 Q202 84 184 76"
-                  stroke="#1e293b"
-                  strokeWidth="1.5"
-                  strokeDasharray="3 3"
-                  fill="none"
-                />
-
-                {/* Lipatan Siku / Olecranon */}
-                <Path
-                  d="M86 158 Q98 162 112 158"
-                  stroke="#334155"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-                <Path
-                  d="M188 158 Q202 162 214 158"
-                  stroke="#334155"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-
-                {/* Garis Tengah Tulang Belakang */}
-                <Line
-                  x1="150"
-                  y1="34"
-                  x2="150"
-                  y2="140"
-                  stroke="#1e293b"
-                  strokeWidth="1"
-                  strokeDasharray="3 3"
-                />
-
-                {/* LKi */}
-                <G onPress={() => setSite('LKi')}>
-                  <Circle
-                    cx="100"
-                    cy="103"
-                    r="21"
-                    fill={siteFill('LKi')}
-                    stroke={siteStroke('LKi')}
-                    strokeWidth={siteStrokeWidth('LKi')}
-                  />
-                  <SvgText
-                    x="100"
-                    y="107"
-                    fill={siteText('LKi')}
-                    fontSize="11"
-                    fontWeight="bold"
-                    textAnchor="middle"
-                  >
-                    {getSiteDisplayCode('LKi', language)}
-                  </SvgText>
-                </G>
-
-                {/* LKn */}
-                <G onPress={() => setSite('LKn')}>
-                  <Circle
-                    cx="200"
-                    cy="103"
-                    r="21"
-                    fill={siteFill('LKn')}
-                    stroke={siteStroke('LKn')}
-                    strokeWidth={siteStrokeWidth('LKn')}
-                  />
-                  <SvgText
-                    x="200"
-                    y="107"
-                    fill={siteText('LKn')}
-                    fontSize="11"
-                    fontWeight="bold"
-                    textAnchor="middle"
-                  >
-                    {getSiteDisplayCode('LKn', language)}
-                  </SvgText>
-                </G>
+                {renderInteractiveSite('LKi', 56, 115)}
+                {renderInteractiveSite('LKn', 244, 115)}
 
                 <SvgText
                   x="150"
-                  y="202"
+                  y="252"
                   fill="#64748b"
                   fontSize="8"
+                  fontWeight="bold"
                   textAnchor="middle"
                 >
                   {language === 'en' ? 'LATERAL · UPPER ARM' : 'SISI · LENGAN ATAS'}
@@ -1019,172 +673,61 @@ export const RotationScreen: React.FC = () => {
               </G>
             )}
 
-            {/* =====================================================
-                BOKONG
-                ===================================================== */}
+            {/* BOKONG (GLUTE) */}
             {selectedZone === 'bokong' && (
               <G>
-                {/* Pinggang Bawah / Pelvis Posterior */}
-                <Path
-                  d="
-                    M112 24
-                    Q150 12 188 24
-                    Q196 42 192 62
-                    Q150 74 108 62
-                    Q104 42 112 24
-                    Z
-                  "
-                  fill="#090d16"
-                  stroke="#334155"
-                  strokeWidth="2"
-                />
-
-                {/* Bokong kiri (Anatomi Gluteus) */}
-                <Path
-                  d="
-                    M110 54
-                    Q90 58 84 82
-                    Q78 114 86 142
-                    Q94 168 116 172
-                    Q136 172 146 154
-                    L146 88
-                    Q140 62 110 54
-                    Z
-                  "
-                  fill="#090d16"
-                  stroke="#334155"
-                  strokeWidth="2"
-                />
-
-                {/* Bokong kanan (Anatomi Gluteus) */}
-                <Path
-                  d="
-                    M190 54
-                    Q210 58 216 82
-                    Q222 114 214 142
-                    Q206 168 184 172
-                    Q164 172 154 154
-                    L154 88
-                    Q160 62 190 54
-                    Z
-                  "
-                  fill="#090d16"
-                  stroke="#334155"
-                  strokeWidth="2"
-                />
-
-                {/* Garis Tengah Lipatan Bokong (Intergluteal Cleft) */}
+                {/* Garis Panduan Kuadran Atas Luar */}
                 <Line
-                  x1="150"
-                  y1="56"
-                  x2="150"
-                  y2="164"
-                  stroke="#1e293b"
-                  strokeWidth="2"
-                />
-
-                {/* Lipatan Gluteal Bawah (Infragluteal Fold) */}
-                <Path
-                  d="M96 164 Q118 174 144 164"
-                  stroke="#334155"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-                <Path
-                  d="M156 164 Q182 174 204 164"
-                  stroke="#334155"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-
-                {/* Kuadran Kuadran Bantuan Medis (Safe Upper Outer Quadrant) */}
-                <Line
-                  x1="117"
-                  y1="76"
-                  x2="117"
-                  y2="152"
-                  stroke="#1e293b"
+                  x1="104"
+                  y1="65"
+                  x2="104"
+                  y2="125"
+                  stroke="#38bdf8"
                   strokeWidth="1"
                   strokeDasharray="2 3"
+                  opacity={0.3}
                 />
                 <Line
-                  x1="90"
-                  y1="112"
-                  x2="144"
-                  y2="112"
-                  stroke="#1e293b"
+                  x1="76"
+                  y1="95"
+                  x2="132"
+                  y2="95"
+                  stroke="#38bdf8"
                   strokeWidth="1"
                   strokeDasharray="2 3"
+                  opacity={0.3}
                 />
 
                 <Line
-                  x1="183"
-                  y1="76"
-                  x2="183"
-                  y2="152"
-                  stroke="#1e293b"
+                  x1="196"
+                  y1="65"
+                  x2="196"
+                  y2="125"
+                  stroke="#38bdf8"
                   strokeWidth="1"
                   strokeDasharray="2 3"
+                  opacity={0.3}
                 />
                 <Line
-                  x1="156"
-                  y1="112"
-                  x2="210"
-                  y2="112"
-                  stroke="#1e293b"
+                  x1="168"
+                  y1="95"
+                  x2="224"
+                  y2="95"
+                  stroke="#38bdf8"
                   strokeWidth="1"
                   strokeDasharray="2 3"
+                  opacity={0.3}
                 />
 
-                {/* BKi */}
-                <G onPress={() => setSite('BKi')}>
-                  <Circle
-                    cx="117"
-                    cy="112"
-                    r="21"
-                    fill={siteFill('BKi')}
-                    stroke={siteStroke('BKi')}
-                    strokeWidth={siteStrokeWidth('BKi')}
-                  />
-                  <SvgText
-                    x="117"
-                    y="116"
-                    fill={siteText('BKi')}
-                    fontSize="11"
-                    fontWeight="bold"
-                    textAnchor="middle"
-                  >
-                    {getSiteDisplayCode('BKi', language)}
-                  </SvgText>
-                </G>
-
-                {/* BKn */}
-                <G onPress={() => setSite('BKn')}>
-                  <Circle
-                    cx="183"
-                    cy="112"
-                    r="21"
-                    fill={siteFill('BKn')}
-                    stroke={siteStroke('BKn')}
-                    strokeWidth={siteStrokeWidth('BKn')}
-                  />
-                  <SvgText
-                    x="183"
-                    y="116"
-                    fill={siteText('BKn')}
-                    fontSize="11"
-                    fontWeight="bold"
-                    textAnchor="middle"
-                  >
-                    {getSiteDisplayCode('BKn', language)}
-                  </SvgText>
-                </G>
+                {renderInteractiveSite('BKi', 104, 95)}
+                {renderInteractiveSite('BKn', 196, 95)}
 
                 <SvgText
                   x="150"
-                  y="198"
+                  y="252"
                   fill="#64748b"
                   fontSize="8"
+                  fontWeight="bold"
                   textAnchor="middle"
                 >
                   {language === 'en' ? 'POSTERIOR · GLUTE' : 'BELAKANG · BOKONG'}
@@ -1477,7 +1020,29 @@ const styles = StyleSheet.create({
     borderColor: '#1e293b',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
+    height: 270,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+
+  anatomyBgImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+  },
+
+  anatomyOverlaySvg: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
   },
 
   sectionHeaderTitle: {

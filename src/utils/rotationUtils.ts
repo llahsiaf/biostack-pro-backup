@@ -5,6 +5,26 @@ export const ROTATION_SITE_ORDER = [
   'KA', 'KiA', 'KB', 'KiB', 'PKi', 'PKn', 'LKi', 'LKn', 'BKi', 'BKn',
 ] as const;
 
+export const SITE_CODE_EN: Record<string, string> = {
+  KA: 'RU',
+  KiA: 'LU',
+  KB: 'RL',
+  KiB: 'LL',
+  PKi: 'LT',
+  PKn: 'RT',
+  LKi: 'LA',
+  LKn: 'RA',
+  BKi: 'LG',
+  BKn: 'RG',
+};
+
+export function getSiteCode(siteId: string, language?: string) {
+  if (language === 'en') {
+    return SITE_CODE_EN[siteId] || siteId;
+  }
+  return siteId;
+}
+
 export function getSiteLabel(siteId: string) {
   const key = `rotationSites.${siteId}`;
   const translated = t(key);
