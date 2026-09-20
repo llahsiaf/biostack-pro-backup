@@ -223,20 +223,21 @@ function BioStackApp() {
                 resizeMode="cover"
               />
             </View>
-            <View>
+            <View style={styles.titleContainer}>
               <View style={styles.titleWithBadge}>
                 <Text style={styles.appTitle}>BioStack</Text>
                 <View style={styles.proBadge}>
                   <Text style={styles.proBadgeText}>PRO</Text>
                 </View>
               </View>
-              <Text style={styles.appSubtitle}>Personal Tracker</Text>
+              <View style={styles.subtitleRow}>
+                <Text style={styles.appSubtitle}>Personal Tracker</Text>
+                <View style={styles.headerStatus}>
+                  <ShieldCheck size={10} color="#34d399" />
+                  <Text style={styles.headerStatusText}>LOCAL</Text>
+                </View>
+              </View>
             </View>
-          </View>
-
-          <View style={styles.headerStatus}>
-            <ShieldCheck size={13} color="#34d399" />
-            <Text style={styles.headerStatusText}>LOCAL</Text>
           </View>
 
           {/* Tombol Pemicu Izin Notifikasi Manual */}
@@ -348,7 +349,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#030712',
   },
   topHeader: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingTop: Platform.OS === 'android' ? 12 : 6,
     paddingBottom: 10,
     borderBottomWidth: 1,
@@ -359,12 +360,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 8,
   },
   brandingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    flex: 1,
+    gap: 9,
+    flexShrink: 1,
   },
   brandIconBox: {
     width: 36,
@@ -379,6 +381,9 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  titleContainer: {
+    justifyContent: 'center',
+  },
   titleWithBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -388,51 +393,55 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '900',
     color: COLORS.text,
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
   proBadge: {
     backgroundColor: 'rgba(16, 185, 129, 0.2)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
+    paddingHorizontal: 5,
+    paddingVertical: 1.5,
+    borderRadius: 5,
   },
   proBadgeText: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '800',
     color: '#10b981',
+  },
+  subtitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 2,
   },
   appSubtitle: {
     fontSize: 9,
     color: COLORS.muted,
-    marginTop: 2,
   },
   headerStatus: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 7,
-    paddingVertical: 5,
-    borderRadius: 8,
+    gap: 3,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: 4,
     backgroundColor: 'rgba(16, 185, 129, 0.08)',
     borderWidth: 1,
     borderColor: 'rgba(16, 185, 129, 0.2)',
-    marginRight: 6,
   },
   headerStatusText: {
-    fontSize: 8,
-    fontWeight: '900',
-    letterSpacing: 0.8,
+    fontSize: 7.5,
+    fontWeight: '800',
+    letterSpacing: 0.5,
     color: '#34d399',
   },
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
   },
   notificationBtn: {
-    padding: 8,
+    padding: 7,
     backgroundColor: '#090d16',
-    borderRadius: 10,
+    borderRadius: 9,
     borderWidth: 1,
     borderColor: '#1e293b',
   },
