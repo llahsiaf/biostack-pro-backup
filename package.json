@@ -6,7 +6,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "node --stack-size=8192 ./node_modules/typescript/bin/tsc --noEmit",
     "audit-syntax": "node scripts/audit-syntax.js",
     "verify-phase5": "node scripts/verify-phase5.js",
     "verify-phase7": "node scripts/verify-phase7.js",

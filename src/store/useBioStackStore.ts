@@ -168,28 +168,9 @@ interface BioStackState {
 export const useBioStackStore = create<BioStackState>()(
   persist(
     (set, get) => ({
-      inventory: [
-        {
-          id: 'inv-1', name: 'Retatrutide', category: 'GLP-1 / GIP / GCG Tri-Agonist',
-          vialSize: 10, unit: 'mg', bacWater: 1.0, targetDose: 2.0, doseUnit: 'mg',
-          frequency: 'weekly', frequencyLabel: 'Mingguan (Weekly)', halfLifeDays: 6.0,
-          maxFridgeDays: 56, activeDays: ['Sen'], injectionTime: '08:00',
-          reconstitutedDate: '2026-08-28', estimatedDaysLeft: 34,
-          isCycleActive: false, isReminderActive: true, currentVolumeMl: 1.0, initialVolumeMl: 1.0, lifecycleStatus: 'active', activatedAt: '2026-08-28T00:00:00',
-          notificationIds: [],
-        },
-        {
-          id: 'inv-2', name: 'Kisspeptin', category: 'Hormonal Axis Support',
-          vialSize: 10, unit: 'mg', bacWater: 2.0, targetDose: 0.2, doseUnit: 'mg',
-          frequency: '3x_week', frequencyLabel: '3x Seminggu', halfLifeDays: 1.0,
-          maxFridgeDays: 28, activeDays: ['Sen','Rab','Jum'], injectionTime: '17:15',
-          reconstitutedDate: '2026-08-29', estimatedDaysLeft: 22,
-          isCycleActive: false, isReminderActive: true, currentVolumeMl: 2.0, initialVolumeMl: 2.0, lifecycleStatus: 'active', activatedAt: '2026-08-29T00:00:00',
-          notificationIds: [],
-        },
-      ],
-      freezerStock: INITIAL_FREEZER_PEPTIDES,
-      injectionHistory: [],
+      inventory: [] as InventoryItem[],
+      freezerStock: [] as FreezerItem[],
+      injectionHistory: [] as InjectionLog[],
       currentSite: 'KA',
       settings: {
         allowAiNetwork: false,

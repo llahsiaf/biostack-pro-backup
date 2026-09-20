@@ -410,11 +410,20 @@ export const FreezerScreen: React.FC = () => {
                 <TouchableOpacity
                   activeOpacity={0.7}
                   onPress={() => {
+                    const confirmMsg = language === 'en'
+                      ? `Delete ${item.name} from freezer?`
+                      : `Hapus ${item.name} dari freezer?`;
+
+                    if (Platform.OS === 'web') {
+                      // window.confirm works correctly on web; Alert.alert 2-button does not
+                      // eslint-disable-next-line no-alert
+                      if (window.confirm(confirmMsg)) removeFreezerItem(item.id);
+                      return;
+                    }
+
                     Alert.alert(
                       language === 'en' ? 'Delete Compound' : 'Hapus Senyawa',
-                      language === 'en'
-                        ? `Delete ${item.name} from freezer?`
-                        : `Hapus ${item.name} dari freezer?`,
+                      confirmMsg,
                       [
                         {
                           text: t('app.cancel'),
