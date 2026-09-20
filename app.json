@@ -6,14 +6,25 @@
     "orientation": "portrait",
     "icon": "./icon.png",
     "userInterfaceStyle": "dark",
+
     "splash": {
       "backgroundColor": "#030712"
     },
+
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.biostack.pro",
       "icon": "./icon.png"
     },
+
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./icon.png",
+      "name": "BioStack PRO",
+      "shortName": "BioStack"
+    },
+
     "plugins": [
       [
         "expo-notifications",
