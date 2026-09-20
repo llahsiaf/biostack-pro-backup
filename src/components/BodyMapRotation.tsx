@@ -19,11 +19,18 @@ interface BodyMapRotationProps {
   onSelectSite: (index: number) => void;
 }
 
+const SITE_CODE_EN: Record<string, string> = {
+  KA: 'RU',
+  KiA: 'LU',
+  KB: 'RL',
+  KiB: 'LL',
+};
+
 const SITE_LABEL_EN: Record<string, string> = {
-  KA: 'Upper Right',
-  KiA: 'Upper Left',
-  KB: 'Lower Right',
-  KiB: 'Lower Left',
+  KA: 'Right Upper (RU)',
+  KiA: 'Left Upper (LU)',
+  KB: 'Right Lower (RL)',
+  KiB: 'Left Lower (LL)',
 };
 
 export const BodyMapRotation: React.FC<BodyMapRotationProps> = ({
@@ -91,6 +98,7 @@ export const BodyMapRotation: React.FC<BodyMapRotationProps> = ({
         {/* 4 Quadrants Interactive Targets */}
         {INJECTION_SITES.map((site, idx) => {
           const isCurrent = idx === currentSiteIndex;
+          const displayCode = language === 'en' ? (SITE_CODE_EN[site.code] || site.code) : site.code;
           const displayLabel = language === 'en'
             ? (SITE_LABEL_EN[site.code] || site.name)
             : `${site.name.split(' ')[0]} ${site.name.split(' ')[1]}`;
@@ -124,7 +132,7 @@ export const BodyMapRotation: React.FC<BodyMapRotationProps> = ({
                 fontWeight="900"
                 fontFamily="monospace"
               >
-                {site.code}
+                {displayCode}
               </SvgText>
 
               <SvgText

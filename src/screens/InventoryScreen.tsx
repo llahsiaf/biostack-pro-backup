@@ -54,6 +54,7 @@ import {
 } from '../utils/scheduleUtils';
 import { getTrackerSuggestedSite } from '../utils/rotationUtils';
 import { cancelNotificationIds } from '../utils/notificationUtils';
+import { SyringeVisualizer } from '../components/SyringeVisualizer';
 import { useLanguage } from '../i18n/LanguageContext';
 
 const DAYS_OF_WEEK = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
@@ -488,7 +489,7 @@ export const InventoryScreen: React.FC = () => {
             color="#022c22"
           />
 
-          <Text style={styles.takeFreezerBtnText}>{language === 'en' ? '+ Take Vial' : '+ Ambil Vial'}</Text>
+          <Text style={styles.takeFreezerBtnText}>{language === 'en' ? 'Take Vial' : 'Ambil Vial'}</Text>
         </TouchableOpacity>
       </View>
 
@@ -1403,199 +1404,11 @@ export const InventoryScreen: React.FC = () => {
                       </View>
                     )}
 
-                    <View
-                      style={styles.svgCardBox}
-                    >
-                      <View
-                        style={
-                          styles.svgCardHeader
-                        }
-                      >
-                        <Text
-                          style={
-                            styles.svgCardTitle
-                          }
-                        >
-                          {language === 'en' ? 'U-100 SYRINGE SIMULATION' : 'SIMULASI SPUIT U-100'}
-                        </Text>
-
-                        <Text
-                          style={
-                            styles.svgCardVal
-                          }
-                        >
-                          {liveMetrics.iu} IU (
-                          {liveMetrics.volumeMl}{' '}
-                          mL)
-                        </Text>
-                      </View>
-
-                      <View
-                        style={
-                          styles.svgWrapper
-                        }
-                      >
-                        <Svg
-                          height="80"
-                          width={svgWidth}
-                          viewBox={`0 0 ${svgWidth} 80`}
-                        >
-                          <Defs>
-                            <LinearGradient
-                              id="liquidGrad"
-                              x1="0"
-                              y1="0"
-                              x2="1"
-                              y2="0"
-                            >
-                              <Stop
-                                offset="0"
-                                stopColor="#10b981"
-                                stopOpacity="0.4"
-                              />
-
-                              <Stop
-                                offset="1"
-                                stopColor="#10b981"
-                                stopOpacity="0.85"
-                              />
-                            </LinearGradient>
-                          </Defs>
-
-                          <Rect
-                            x="30"
-                            y="20"
-                            width="190"
-                            height="40"
-                            fill="#0f172a"
-                            stroke="#334155"
-                            strokeWidth="2"
-                            rx="4"
-                          />
-
-                          <Rect
-                            x="220"
-                            y="25"
-                            width="10"
-                            height="30"
-                            fill="#1e293b"
-                          />
-
-                          <Line
-                            x1="230"
-                            y1="40"
-                            x2="260"
-                            y2="40"
-                            stroke="#475569"
-                            strokeWidth="2"
-                          />
-
-                          <Rect
-                            x="20"
-                            y="15"
-                            width="20"
-                            height="50"
-                            fill="#1e293b"
-                            rx="2"
-                          />
-
-                          <Line
-                            x1="10"
-                            y1="40"
-                            x2="20"
-                            y2="40"
-                            stroke="#475569"
-                            strokeWidth="4"
-                          />
-
-                          {[0, 20, 40, 60, 80, 100].map(
-                            (tick, i) => (
-                              <G key={i}>
-                                <Line
-                                  x1={
-                                    40 +
-                                    i * 36
-                                  }
-                                  y1="20"
-                                  x2={
-                                    40 +
-                                    i * 36
-                                  }
-                                  y2="30"
-                                  stroke="#64748b"
-                                  strokeWidth="1.5"
-                                />
-
-                                <SvgText
-                                  x={
-                                    40 +
-                                    i * 36
-                                  }
-                                  y="45"
-                                  fill="#64748b"
-                                  fontSize="9"
-                                  textAnchor="middle"
-                                >
-                                  {tick}
-                                </SvgText>
-                              </G>
-                            ),
-                          )}
-
-                          {liveMetrics.iu >
-                            0 && (
-                            <Rect
-                              x="40"
-                              y="22"
-                              width={
-                                fillWidth
-                              }
-                              height="36"
-                              fill="url(#liquidGrad)"
-                              rx="2"
-                            />
-                          )}
-
-                          {liveMetrics.iu >
-                            0 && (
-                            <G>
-                              <Line
-                                x1={
-                                  40 +
-                                  fillWidth
-                                }
-                                y1="15"
-                                x2={
-                                  40 +
-                                  fillWidth
-                                }
-                                y2="65"
-                                stroke="#10b981"
-                                strokeWidth="2.5"
-                              />
-
-                              <SvgText
-                                x={
-                                  40 +
-                                  fillWidth
-                                }
-                                y="75"
-                                fill="#10b981"
-                                fontSize="10"
-                                fontWeight="bold"
-                                textAnchor="middle"
-                              >
-                                {language === 'en' ? 'Mark' : 'Garis'}{' '}
-                                {
-                                  liveMetrics.iu
-                                }{' '}
-                                IU
-                              </SvgText>
-                            </G>
-                          )}
-                        </Svg>
-                      </View>
-                    </View>
+                    <SyringeVisualizer
+                      u100Units={liveMetrics.iu}
+                      volMl={liveMetrics.volumeMlNumber}
+                      showHeader={true}
+                    />
 
                     <View
                       style={
@@ -1668,7 +1481,7 @@ export const InventoryScreen: React.FC = () => {
                               styles.calcBoxLabelGreen
                             }
                           >
-                            Spuit U-100
+                            {language === 'en' ? 'U-100 Syringe' : 'Spuit U-100'}
                           </Text>
 
                           <Text
@@ -2485,63 +2298,55 @@ const styles = StyleSheet.create({
 
   doseMetricsGrid: {
     flexDirection: 'row',
-    gap: 4,
-    marginVertical: 2,
+    flexWrap: 'wrap',
+    gap: 6,
+    marginVertical: 4,
     alignItems: 'center',
   },
 
   metricChipDose: {
-    flex: 0.9,
-    minWidth: 0,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(245, 158, 11, 0.1)',
     borderWidth: 1,
     borderColor: 'rgba(245, 158, 11, 0.3)',
-    paddingHorizontal: 5,
-    paddingVertical: 3,
-    minHeight: 26,
-    borderRadius: 7,
+    paddingHorizontal: 8,
+    paddingVertical: 2.5,
+    borderRadius: 6,
   },
 
   metricChipDoseText: {
-    fontSize: 8,
+    fontSize: 9,
     fontWeight: '800',
     color: '#f59e0b',
   },
 
   metricChipSpuit: {
-    flex: 1.35,
-    minWidth: 0,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(6, 182, 212, 0.1)',
     borderWidth: 1,
     borderColor: 'rgba(6, 182, 212, 0.3)',
-    paddingHorizontal: 5,
-    paddingVertical: 3,
-    minHeight: 26,
-    borderRadius: 7,
+    paddingHorizontal: 8,
+    paddingVertical: 2.5,
+    borderRadius: 6,
   },
 
   metricChipSpuitText: {
-    fontSize: 8,
+    fontSize: 9,
     fontWeight: '800',
     color: '#06b6d4',
   },
 
   metricChipDial: {
-    flex: 0.9,
-    minWidth: 0,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(56, 189, 248, 0.1)',
     borderWidth: 1,
     borderColor: 'rgba(56, 189, 248, 0.3)',
-    paddingHorizontal: 5,
-    paddingVertical: 3,
-    minHeight: 26,
-    borderRadius: 7,
+    paddingHorizontal: 8,
+    paddingVertical: 2.5,
+    borderRadius: 6,
   },
 
   metricChipDialText: {

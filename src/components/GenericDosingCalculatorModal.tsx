@@ -14,6 +14,7 @@ import { Calculator, X, Sparkles, Droplet, Syringe, RotateCcw } from 'lucide-rea
 import Svg, { Rect, Line, Text as SvgText, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { useLanguage } from '../i18n/LanguageContext';
 import { calculateGenericDosing } from '../utils/injectionCalculations';
+import { SyringeVisualizer } from './SyringeVisualizer';
 import { COLORS, RADIUS, SHADOWS } from '../theme';
 
 interface GenericDosingCalculatorModalProps {
@@ -253,54 +254,11 @@ export const GenericDosingCalculatorModal: React.FC<GenericDosingCalculatorModal
               {/* Visualisasi Spuit SVG Interaktif */}
               <View style={styles.visualizerContainer}>
                 <Text style={styles.visualizerLabel}>{t('calculator.syringeVisualizerLabel')}</Text>
-                <Svg width={svgWidth} height={52} viewBox={`0 0 ${svgWidth} 52`}>
-                  <Defs>
-                    <LinearGradient id="genericLiquidGrad" x1="0" y1="0" x2="1" y2="0">
-                      <Stop offset="0" stopColor="#059669" stopOpacity="0.8" />
-                      <Stop offset="1" stopColor="#10b981" stopOpacity="1" />
-                    </LinearGradient>
-                  </Defs>
-
-                  {/* Laras Spuit */}
-                  <Rect
-                    x={20}
-                    y={10}
-                    width={200}
-                    height={32}
-                    rx={4}
-                    fill="#0f172a"
-                    stroke="#334155"
-                    strokeWidth={1.5}
-                  />
-
-                  {/* Cairan Injeksi */}
-                  {result.valid && fillWidth > 0 && (
-                    <Rect
-                      x={20}
-                      y={10}
-                      width={Math.min(200, fillWidth)}
-                      height={32}
-                      rx={2}
-                      fill="url(#genericLiquidGrad)"
-                    />
-                  )}
-
-                  {/* Garis Skala 10 IU s/d 100 IU */}
-                  {[0, 20, 40, 60, 80, 100].map((unit) => {
-                    const lineX = 20 + (unit / 100) * 180;
-                    return (
-                      <React.Fragment key={unit}>
-                        <Line x1={lineX} y1={10} x2={lineX} y2={22} stroke="#64748b" strokeWidth={1} />
-                        <SvgText x={lineX} y={38} fill="#94a3b8" fontSize={8} fontWeight="bold" textAnchor="middle">
-                          {unit}
-                        </SvgText>
-                      </React.Fragment>
-                    );
-                  })}
-
-                  {/* Ujung Jarum */}
-                  <Line x1={220} y1={26} x2={270} y2={26} stroke="#cbd5e1" strokeWidth={2} strokeLinecap="round" />
-                </Svg>
+                <SyringeVisualizer
+                  u100Units={result.valid ? result.iu : 0}
+                  volMl={result.valid ? result.volumeMl : 0}
+                  showHeader={false}
+                />
               </View>
 
               {/* Sekunder: Konsentrasi & Dosis per Vial */}

@@ -503,6 +503,9 @@ export const ID_TRANSLATIONS = {
 
     history:
       'Riwayat Rotasi',
+
+    noLog:
+      'Belum pernah disuntik',
   },
 
 
@@ -1197,6 +1200,9 @@ export const EN_TRANSLATIONS = {
 
     history:
       'Rotation History',
+
+    noLog:
+      'Never injected',
   },
 
 

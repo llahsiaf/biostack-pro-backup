@@ -133,75 +133,95 @@ const ALL_SITES: SitePoint[] = [
 const ALL_SITES_EN: SitePoint[] = [
   {
     id: 'KA',
-    code: 'KA',
-    name: 'Right Upper (KA)',
+    code: 'RU',
+    name: 'Right Upper (RU)',
     subText: 'Right upper abdomen (2-3 cm from navel)',
     zone: 'perut',
   },
   {
     id: 'KiA',
-    code: 'KiA',
-    name: 'Left Upper (KiA)',
+    code: 'LU',
+    name: 'Left Upper (LU)',
     subText: 'Left upper abdomen (2-3 cm from navel)',
     zone: 'perut',
   },
   {
     id: 'KB',
-    code: 'KB',
-    name: 'Right Lower (KB)',
+    code: 'RL',
+    name: 'Right Lower (RL)',
     subText: 'Right lower abdomen (2-3 cm from navel)',
     zone: 'perut',
   },
   {
     id: 'KiB',
-    code: 'KiB',
-    name: 'Left Lower (KiB)',
+    code: 'LL',
+    name: 'Left Lower (LL)',
     subText: 'Left lower abdomen (2-3 cm from navel)',
     zone: 'perut',
   },
   {
     id: 'PKi',
-    code: 'PKi',
-    name: 'Left Thigh (PKi)',
+    code: 'LT',
+    name: 'Left Thigh (LT)',
     subText: 'Outer side of upper left thigh',
     zone: 'paha',
   },
   {
     id: 'PKn',
-    code: 'PKn',
-    name: 'Right Thigh (PKn)',
+    code: 'RT',
+    name: 'Right Thigh (RT)',
     subText: 'Outer side of upper right thigh',
     zone: 'paha',
   },
   {
     id: 'LKi',
-    code: 'LKi',
-    name: 'Left Arm (LKi)',
+    code: 'LA',
+    name: 'Left Arm (LA)',
     subText: 'Triceps / back of left upper arm',
     zone: 'lengan',
   },
   {
     id: 'LKn',
-    code: 'LKn',
-    name: 'Right Arm (LKn)',
+    code: 'RA',
+    name: 'Right Arm (RA)',
     subText: 'Triceps / back of right upper arm',
     zone: 'lengan',
   },
   {
     id: 'BKi',
-    code: 'BKi',
-    name: 'Left Glute (BKi)',
+    code: 'LG',
+    name: 'Left Glute (LG)',
     subText: 'Upper outer quadrant of left glute',
     zone: 'bokong',
   },
   {
     id: 'BKn',
-    code: 'BKn',
-    name: 'Right Glute (BKn)',
+    code: 'RG',
+    name: 'Right Glute (RG)',
     subText: 'Upper outer quadrant of right glute',
     zone: 'bokong',
   },
 ];
+
+export const SITE_CODE_EN: Record<string, string> = {
+  KA: 'RU',
+  KiA: 'LU',
+  KB: 'RL',
+  KiB: 'LL',
+  PKi: 'LT',
+  PKn: 'RT',
+  LKi: 'LA',
+  LKn: 'RA',
+  BKi: 'LG',
+  BKn: 'RG',
+};
+
+export const getSiteDisplayCode = (siteId: string, language: 'id' | 'en') => {
+  if (language === 'en') {
+    return SITE_CODE_EN[siteId] || siteId;
+  }
+  return siteId;
+};
 
 export const RotationScreen: React.FC = () => {
   const { language, t } = useLanguage();
@@ -257,7 +277,11 @@ export const RotationScreen: React.FC = () => {
     );
 
     if (!log) {
-      return t('rotation.noLog') || (language === 'en' ? 'No logs yet' : 'Belum ada log');
+      const trans = t('rotation.noLog');
+      if (trans && trans !== 'rotation.noLog') {
+        return trans;
+      }
+      return language === 'en' ? 'Never injected' : 'Belum pernah disuntik';
     }
 
     return log.timestamp || (language === 'en' ? 'Just now' : 'Baru saja');
@@ -477,35 +501,32 @@ export const RotationScreen: React.FC = () => {
             {/* =====================================================
                 PERUT
                 ===================================================== */}
-            {selectedZone ===
-              'perut' && (
+            {selectedZone === 'perut' && (
               <G>
-                {/* Leher */}
+                {/* Leher & Clavicle */}
                 <Path
-                  d="
-                    M137 30
-                    L137 17
-                    Q150 10 163 17
-                    L163 30
-                  "
+                  d="M138 28 L138 18 Q150 14 162 18 L162 28"
                   fill="#090d16"
                   stroke="#334155"
-                  strokeWidth="2"
+                  strokeWidth="1.5"
                 />
 
-                {/* Torso */}
+                {/* Torso Kontur Alami Tubuh Manusia */}
                 <Path
                   d="
-                    M119 29
-                    Q150 16 181 29
-                    Q192 39 196 61
-                    Q200 83 200 109
-                    Q199 139 190 169
-                    Q176 181 150 182
-                    Q124 181 110 169
-                    Q101 139 100 109
-                    Q100 83 104 61
-                    Q108 39 119 29
+                    M138 28
+                    Q115 30 96 44
+                    Q92 56 94 72
+                    Q98 94 102 110
+                    Q100 134 94 154
+                    Q98 174 122 178
+                    Q136 180 150 174
+                    Q164 180 178 178
+                    Q202 174 206 154
+                    Q200 134 198 110
+                    Q202 94 206 72
+                    Q208 56 204 44
+                    Q185 30 162 28
                     Z
                   "
                   fill="#090d16"
@@ -513,55 +534,86 @@ export const RotationScreen: React.FC = () => {
                   strokeWidth="2"
                 />
 
-                {/* Bahu kiri */}
+                {/* Garis Klavikula / Tulang Selangka */}
                 <Path
-                  d="
-                    M116 34
-                    Q102 36 94 48
-                    L84 78
-                  "
-                  fill="none"
-                  stroke="#334155"
-                  strokeWidth="7"
+                  d="M102 46 Q130 42 142 46 M158 46 Q170 42 198 46"
+                  stroke="#1e293b"
+                  strokeWidth="1.5"
                   strokeLinecap="round"
                 />
 
-                {/* Bahu kanan */}
+                {/* Arkus Tulang Rusuk (Subcostal Arch) */}
                 <Path
-                  d="
-                    M184 34
-                    Q198 36 206 48
-                    L216 78
-                  "
-                  fill="none"
-                  stroke="#334155"
-                  strokeWidth="7"
+                  d="M112 80 Q132 60 150 62 Q168 60 188 80"
+                  stroke="#1e293b"
+                  strokeWidth="1.5"
+                  strokeDasharray="3 3"
                   strokeLinecap="round"
+                  fill="none"
                 />
 
-                {/* Garis tengah abdomen */}
+                {/* Garis Lipatan Inguinal / Pinggul */}
+                <Path
+                  d="M102 154 Q124 172 146 172 M198 154 Q176 172 154 172"
+                  stroke="#1e293b"
+                  strokeWidth="1.5"
+                  strokeDasharray="3 3"
+                  fill="none"
+                />
+
+                {/* Garis Tengah (Linea Alba) */}
                 <Line
                   x1="150"
-                  y1="50"
+                  y1="46"
                   x2="150"
-                  y2="160"
+                  y2="170"
                   stroke="#1e293b"
                   strokeWidth="1"
+                  strokeDasharray="3 3"
+                />
+
+                {/* Garis Horizontal Transumbilikal */}
+                <Line
+                  x1="104"
+                  y1="106"
+                  x2="196"
+                  y2="106"
+                  stroke="#162035"
+                  strokeWidth="1"
+                  strokeDasharray="3 3"
+                />
+
+                {/* Zona Aman Pusar (Buffer Ring) */}
+                <Circle
+                  cx="150"
+                  cy="106"
+                  r="22"
+                  fill="none"
+                  stroke="#38bdf8"
+                  strokeWidth="1"
+                  strokeDasharray="2 3"
+                  opacity={0.35}
                 />
 
                 {/* Pusar */}
                 <Circle
                   cx="150"
-                  cy="105"
-                  r="8"
+                  cy="106"
+                  r="6"
                   fill="#030712"
                   stroke="#38bdf8"
                   strokeWidth="1.5"
                 />
+                <Circle
+                  cx="150"
+                  cy="106"
+                  r="2"
+                  fill="#38bdf8"
+                />
 
                 <SvgText
                   x="150"
-                  y="108"
+                  y="95"
                   fill="#38bdf8"
                   fontSize="7"
                   fontWeight="bold"
@@ -571,142 +623,90 @@ export const RotationScreen: React.FC = () => {
                 </SvgText>
 
                 {/* KA */}
-                <G
-                  onPress={() =>
-                    setSite('KA')
-                  }
-                >
+                <G onPress={() => setSite('KA')}>
                   <Circle
                     cx="125"
                     cy="76"
                     r="20"
-                    fill={siteFill(
-                      'KA',
-                    )}
-                    stroke={siteStroke(
-                      'KA',
-                    )}
-                    strokeWidth={siteStrokeWidth(
-                      'KA',
-                    )}
+                    fill={siteFill('KA')}
+                    stroke={siteStroke('KA')}
+                    strokeWidth={siteStrokeWidth('KA')}
                   />
-
                   <SvgText
                     x="125"
                     y="80"
-                    fill={siteText(
-                      'KA',
-                    )}
+                    fill={siteText('KA')}
                     fontSize="11"
                     fontWeight="bold"
                     textAnchor="middle"
                   >
-                    KA
+                    {getSiteDisplayCode('KA', language)}
                   </SvgText>
                 </G>
 
                 {/* KiA */}
-                <G
-                  onPress={() =>
-                    setSite('KiA')
-                  }
-                >
+                <G onPress={() => setSite('KiA')}>
                   <Circle
                     cx="175"
                     cy="76"
                     r="20"
-                    fill={siteFill(
-                      'KiA',
-                    )}
-                    stroke={siteStroke(
-                      'KiA',
-                    )}
-                    strokeWidth={siteStrokeWidth(
-                      'KiA',
-                    )}
+                    fill={siteFill('KiA')}
+                    stroke={siteStroke('KiA')}
+                    strokeWidth={siteStrokeWidth('KiA')}
                   />
-
                   <SvgText
                     x="175"
                     y="80"
-                    fill={siteText(
-                      'KiA',
-                    )}
+                    fill={siteText('KiA')}
                     fontSize="11"
                     fontWeight="bold"
                     textAnchor="middle"
                   >
-                    KiA
+                    {getSiteDisplayCode('KiA', language)}
                   </SvgText>
                 </G>
 
                 {/* KB */}
-                <G
-                  onPress={() =>
-                    setSite('KB')
-                  }
-                >
+                <G onPress={() => setSite('KB')}>
                   <Circle
                     cx="125"
                     cy="136"
                     r="20"
-                    fill={siteFill(
-                      'KB',
-                    )}
-                    stroke={siteStroke(
-                      'KB',
-                    )}
-                    strokeWidth={siteStrokeWidth(
-                      'KB',
-                    )}
+                    fill={siteFill('KB')}
+                    stroke={siteStroke('KB')}
+                    strokeWidth={siteStrokeWidth('KB')}
                   />
-
                   <SvgText
                     x="125"
                     y="140"
-                    fill={siteText(
-                      'KB',
-                    )}
+                    fill={siteText('KB')}
                     fontSize="11"
                     fontWeight="bold"
                     textAnchor="middle"
                   >
-                    KB
+                    {getSiteDisplayCode('KB', language)}
                   </SvgText>
                 </G>
 
                 {/* KiB */}
-                <G
-                  onPress={() =>
-                    setSite('KiB')
-                  }
-                >
+                <G onPress={() => setSite('KiB')}>
                   <Circle
                     cx="175"
                     cy="136"
                     r="20"
-                    fill={siteFill(
-                      'KiB',
-                    )}
-                    stroke={siteStroke(
-                      'KiB',
-                    )}
-                    strokeWidth={siteStrokeWidth(
-                      'KiB',
-                    )}
+                    fill={siteFill('KiB')}
+                    stroke={siteStroke('KiB')}
+                    strokeWidth={siteStrokeWidth('KiB')}
                   />
-
                   <SvgText
                     x="175"
                     y="140"
-                    fill={siteText(
-                      'KiB',
-                    )}
+                    fill={siteText('KiB')}
                     fontSize="11"
                     fontWeight="bold"
                     textAnchor="middle"
                   >
-                    KiB
+                    {getSiteDisplayCode('KiB', language)}
                   </SvgText>
                 </G>
 
@@ -717,7 +717,7 @@ export const RotationScreen: React.FC = () => {
                   fontSize="8"
                   textAnchor="middle"
                 >
-                  DEPAN · ABDOMEN
+                  {language === 'en' ? 'ANTERIOR · ABDOMEN' : 'DEPAN · ABDOMEN'}
                 </SvgText>
               </G>
             )}
@@ -725,17 +725,16 @@ export const RotationScreen: React.FC = () => {
             {/* =====================================================
                 PAHA
                 ===================================================== */}
-            {selectedZone ===
-              'paha' && (
+            {selectedZone === 'paha' && (
               <G>
-                {/* Pelvis */}
+                {/* Pelvis & Panggul */}
                 <Path
                   d="
-                    M116 25
-                    Q150 10 184 25
-                    Q192 40 186 59
-                    Q150 72 114 59
-                    Q108 40 116 25
+                    M98 24
+                    Q150 14 202 24
+                    Q210 42 208 58
+                    Q150 68 92 58
+                    Q90 42 98 24
                     Z
                   "
                   fill="#090d16"
@@ -743,17 +742,17 @@ export const RotationScreen: React.FC = () => {
                   strokeWidth="2"
                 />
 
-                {/* Kaki kiri */}
+                {/* Kaki kiri (Anterior) */}
                 <Path
                   d="
-                    M122 54
-                    Q105 58 101 78
-                    Q98 101 96 125
-                    L91 173
-                    Q90 192 105 198
-                    Q121 201 129 184
-                    L143 91
-                    Q146 68 122 54
+                    M96 56
+                    Q86 78 88 112
+                    Q90 148 96 176
+                    Q100 196 112 198
+                    Q124 198 128 178
+                    Q134 148 138 108
+                    Q142 76 138 60
+                    Q116 66 96 56
                     Z
                   "
                   fill="#090d16"
@@ -761,91 +760,95 @@ export const RotationScreen: React.FC = () => {
                   strokeWidth="2"
                 />
 
-                {/* Kaki kanan */}
+                {/* Kaki kanan (Anterior) */}
                 <Path
                   d="
-                    M178 54
-                    Q195 58 199 78
-                    Q202 101 204 125
-                    L209 173
-                    Q210 192 195 198
-                    Q179 201 171 184
-                    L157 91
-                    Q154 68 178 54
+                    M204 56
+                    Q214 78 212 112
+                    Q210 148 204 176
+                    Q200 196 188 198
+                    Q176 198 172 178
+                    Q166 148 162 108
+                    Q158 76 162 60
+                    Q184 66 204 56
                     Z
                   "
                   fill="#090d16"
                   stroke="#334155"
                   strokeWidth="2"
+                />
+
+                {/* Garis Otot Kuadrisep / Vastus Lateralis */}
+                <Path
+                  d="M106 72 Q102 114 108 162"
+                  stroke="#1e293b"
+                  strokeWidth="1.5"
+                  strokeDasharray="3 3"
+                  fill="none"
+                />
+                <Path
+                  d="M194 72 Q198 114 192 162"
+                  stroke="#1e293b"
+                  strokeWidth="1.5"
+                  strokeDasharray="3 3"
+                  fill="none"
+                />
+
+                {/* Indikator Patella / Lutut */}
+                <Path
+                  d="M106 182 Q112 186 118 182"
+                  stroke="#334155"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+                <Path
+                  d="M182 182 Q188 186 194 182"
+                  stroke="#334155"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
                 />
 
                 {/* Titik PKi */}
-                <G
-                  onPress={() =>
-                    setSite('PKi')
-                  }
-                >
+                <G onPress={() => setSite('PKi')}>
                   <Circle
                     cx="116"
                     cy="105"
                     r="21"
-                    fill={siteFill(
-                      'PKi',
-                    )}
-                    stroke={siteStroke(
-                      'PKi',
-                    )}
-                    strokeWidth={siteStrokeWidth(
-                      'PKi',
-                    )}
+                    fill={siteFill('PKi')}
+                    stroke={siteStroke('PKi')}
+                    strokeWidth={siteStrokeWidth('PKi')}
                   />
-
                   <SvgText
                     x="116"
                     y="109"
-                    fill={siteText(
-                      'PKi',
-                    )}
+                    fill={siteText('PKi')}
                     fontSize="11"
                     fontWeight="bold"
                     textAnchor="middle"
                   >
-                    PKi
+                    {getSiteDisplayCode('PKi', language)}
                   </SvgText>
                 </G>
 
                 {/* Titik PKn */}
-                <G
-                  onPress={() =>
-                    setSite('PKn')
-                  }
-                >
+                <G onPress={() => setSite('PKn')}>
                   <Circle
                     cx="184"
                     cy="105"
                     r="21"
-                    fill={siteFill(
-                      'PKn',
-                    )}
-                    stroke={siteStroke(
-                      'PKn',
-                    )}
-                    strokeWidth={siteStrokeWidth(
-                      'PKn',
-                    )}
+                    fill={siteFill('PKn')}
+                    stroke={siteStroke('PKn')}
+                    strokeWidth={siteStrokeWidth('PKn')}
                   />
-
                   <SvgText
                     x="184"
                     y="109"
-                    fill={siteText(
-                      'PKn',
-                    )}
+                    fill={siteText('PKn')}
                     fontSize="11"
                     fontWeight="bold"
                     textAnchor="middle"
                   >
-                    PKn
+                    {getSiteDisplayCode('PKn', language)}
                   </SvgText>
                 </G>
 
@@ -856,7 +859,7 @@ export const RotationScreen: React.FC = () => {
                   fontSize="8"
                   textAnchor="middle"
                 >
-                  DEPAN · PAHA
+                  {language === 'en' ? 'ANTERIOR · THIGH' : 'DEPAN · PAHA'}
                 </SvgText>
               </G>
             )}
@@ -864,17 +867,18 @@ export const RotationScreen: React.FC = () => {
             {/* =====================================================
                 LENGAN
                 ===================================================== */}
-            {selectedZone ===
-              'lengan' && (
+            {selectedZone === 'lengan' && (
               <G>
-                {/* Bahu dan torso orientasi */}
+                {/* Torso & Punggung / Bahu */}
                 <Path
                   d="
-                    M126 36
-                    Q150 25 174 36
-                    L181 120
-                    Q177 146 150 151
-                    Q123 146 119 120
+                    M136 28
+                    Q150 18 164 28
+                    L174 38
+                    Q178 78 174 130
+                    Q168 152 150 154
+                    Q132 152 126 130
+                    Q122 78 126 38
                     Z
                   "
                   fill="#090d16"
@@ -882,17 +886,17 @@ export const RotationScreen: React.FC = () => {
                   strokeWidth="2"
                 />
 
-                {/* Lengan kiri */}
+                {/* Lengan kiri (Anatomi Deltoid & Trisep) */}
                 <Path
                   d="
-                    M121 39
-                    Q102 38 91 51
-                    Q82 63 81 80
-                    L83 148
-                    Q84 169 99 173
-                    Q113 175 119 158
-                    L116 96
-                    Q116 72 130 58
+                    M126 38
+                    Q102 36 88 52
+                    Q78 68 78 94
+                    Q80 126 84 156
+                    Q88 178 100 178
+                    Q110 178 114 158
+                    Q116 128 116 92
+                    Q118 68 126 48
                     Z
                   "
                   fill="#090d16"
@@ -900,91 +904,106 @@ export const RotationScreen: React.FC = () => {
                   strokeWidth="2"
                 />
 
-                {/* Lengan kanan */}
+                {/* Lengan kanan (Anatomi Deltoid & Trisep) */}
                 <Path
                   d="
-                    M179 39
-                    Q198 38 209 51
-                    Q218 63 219 80
-                    L217 148
-                    Q216 169 201 173
-                    Q187 175 181 158
-                    L184 96
-                    Q184 72 170 58
+                    M174 38
+                    Q198 36 212 52
+                    Q222 68 222 94
+                    Q220 126 216 156
+                    Q212 178 200 178
+                    Q190 178 186 158
+                    Q184 128 184 92
+                    Q182 68 174 48
                     Z
                   "
                   fill="#090d16"
                   stroke="#334155"
                   strokeWidth="2"
+                />
+
+                {/* Batas Otot Deltoid / Zona Injeksi Subkutan */}
+                <Path
+                  d="M82 72 Q98 84 116 76"
+                  stroke="#1e293b"
+                  strokeWidth="1.5"
+                  strokeDasharray="3 3"
+                  fill="none"
+                />
+                <Path
+                  d="M218 72 Q202 84 184 76"
+                  stroke="#1e293b"
+                  strokeWidth="1.5"
+                  strokeDasharray="3 3"
+                  fill="none"
+                />
+
+                {/* Lipatan Siku / Olecranon */}
+                <Path
+                  d="M86 158 Q98 162 112 158"
+                  stroke="#334155"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+                <Path
+                  d="M188 158 Q202 162 214 158"
+                  stroke="#334155"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+
+                {/* Garis Tengah Tulang Belakang */}
+                <Line
+                  x1="150"
+                  y1="34"
+                  x2="150"
+                  y2="140"
+                  stroke="#1e293b"
+                  strokeWidth="1"
+                  strokeDasharray="3 3"
                 />
 
                 {/* LKi */}
-                <G
-                  onPress={() =>
-                    setSite('LKi')
-                  }
-                >
+                <G onPress={() => setSite('LKi')}>
                   <Circle
                     cx="100"
                     cy="103"
                     r="21"
-                    fill={siteFill(
-                      'LKi',
-                    )}
-                    stroke={siteStroke(
-                      'LKi',
-                    )}
-                    strokeWidth={siteStrokeWidth(
-                      'LKi',
-                    )}
+                    fill={siteFill('LKi')}
+                    stroke={siteStroke('LKi')}
+                    strokeWidth={siteStrokeWidth('LKi')}
                   />
-
                   <SvgText
                     x="100"
                     y="107"
-                    fill={siteText(
-                      'LKi',
-                    )}
+                    fill={siteText('LKi')}
                     fontSize="11"
                     fontWeight="bold"
                     textAnchor="middle"
                   >
-                    LKi
+                    {getSiteDisplayCode('LKi', language)}
                   </SvgText>
                 </G>
 
                 {/* LKn */}
-                <G
-                  onPress={() =>
-                    setSite('LKn')
-                  }
-                >
+                <G onPress={() => setSite('LKn')}>
                   <Circle
                     cx="200"
                     cy="103"
                     r="21"
-                    fill={siteFill(
-                      'LKn',
-                    )}
-                    stroke={siteStroke(
-                      'LKn',
-                    )}
-                    strokeWidth={siteStrokeWidth(
-                      'LKn',
-                    )}
+                    fill={siteFill('LKn')}
+                    stroke={siteStroke('LKn')}
+                    strokeWidth={siteStrokeWidth('LKn')}
                   />
-
                   <SvgText
                     x="200"
                     y="107"
-                    fill={siteText(
-                      'LKn',
-                    )}
+                    fill={siteText('LKn')}
                     fontSize="11"
                     fontWeight="bold"
                     textAnchor="middle"
                   >
-                    LKn
+                    {getSiteDisplayCode('LKn', language)}
                   </SvgText>
                 </G>
 
@@ -1003,17 +1022,16 @@ export const RotationScreen: React.FC = () => {
             {/* =====================================================
                 BOKONG
                 ===================================================== */}
-            {selectedZone ===
-              'bokong' && (
+            {selectedZone === 'bokong' && (
               <G>
-                {/* Lower back / pelvis */}
+                {/* Pinggang Bawah / Pelvis Posterior */}
                 <Path
                   d="
-                    M114 26
-                    Q150 10 186 26
-                    Q194 44 188 67
-                    Q150 83 112 67
-                    Q106 44 114 26
+                    M112 24
+                    Q150 12 188 24
+                    Q196 42 192 62
+                    Q150 74 108 62
+                    Q104 42 112 24
                     Z
                   "
                   fill="#090d16"
@@ -1021,16 +1039,16 @@ export const RotationScreen: React.FC = () => {
                   strokeWidth="2"
                 />
 
-                {/* Bokong kiri */}
+                {/* Bokong kiri (Anatomi Gluteus) */}
                 <Path
                   d="
-                    M113 55
-                    Q94 59 90 81
-                    Q87 107 95 139
-                    Q100 165 119 171
-                    Q137 171 145 151
-                    L145 91
-                    Q141 64 113 55
+                    M110 54
+                    Q90 58 84 82
+                    Q78 114 86 142
+                    Q94 168 116 172
+                    Q136 172 146 154
+                    L146 88
+                    Q140 62 110 54
                     Z
                   "
                   fill="#090d16"
@@ -1038,102 +1056,129 @@ export const RotationScreen: React.FC = () => {
                   strokeWidth="2"
                 />
 
-                {/* Bokong kanan */}
+                {/* Bokong kanan (Anatomi Gluteus) */}
                 <Path
                   d="
-                    M187 55
-                    Q206 59 210 81
-                    Q213 107 205 139
-                    Q200 165 181 171
-                    Q163 171 155 151
-                    L155 91
-                    Q159 64 187 55
+                    M190 54
+                    Q210 58 216 82
+                    Q222 114 214 142
+                    Q206 168 184 172
+                    Q164 172 154 154
+                    L154 88
+                    Q160 62 190 54
                     Z
                   "
                   fill="#090d16"
                   stroke="#334155"
                   strokeWidth="2"
+                />
+
+                {/* Garis Tengah Lipatan Bokong (Intergluteal Cleft) */}
+                <Line
+                  x1="150"
+                  y1="56"
+                  x2="150"
+                  y2="164"
+                  stroke="#1e293b"
+                  strokeWidth="2"
+                />
+
+                {/* Lipatan Gluteal Bawah (Infragluteal Fold) */}
+                <Path
+                  d="M96 164 Q118 174 144 164"
+                  stroke="#334155"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+                <Path
+                  d="M156 164 Q182 174 204 164"
+                  stroke="#334155"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+
+                {/* Kuadran Kuadran Bantuan Medis (Safe Upper Outer Quadrant) */}
+                <Line
+                  x1="117"
+                  y1="76"
+                  x2="117"
+                  y2="152"
+                  stroke="#1e293b"
+                  strokeWidth="1"
+                  strokeDasharray="2 3"
+                />
+                <Line
+                  x1="90"
+                  y1="112"
+                  x2="144"
+                  y2="112"
+                  stroke="#1e293b"
+                  strokeWidth="1"
+                  strokeDasharray="2 3"
+                />
+
+                <Line
+                  x1="183"
+                  y1="76"
+                  x2="183"
+                  y2="152"
+                  stroke="#1e293b"
+                  strokeWidth="1"
+                  strokeDasharray="2 3"
+                />
+                <Line
+                  x1="156"
+                  y1="112"
+                  x2="210"
+                  y2="112"
+                  stroke="#1e293b"
+                  strokeWidth="1"
+                  strokeDasharray="2 3"
                 />
 
                 {/* BKi */}
-                <G
-                  onPress={() =>
-                    setSite('BKi')
-                  }
-                >
+                <G onPress={() => setSite('BKi')}>
                   <Circle
                     cx="117"
                     cy="112"
                     r="21"
-                    fill={siteFill(
-                      'BKi',
-                    )}
-                    stroke={siteStroke(
-                      'BKi',
-                    )}
-                    strokeWidth={siteStrokeWidth(
-                      'BKi',
-                    )}
+                    fill={siteFill('BKi')}
+                    stroke={siteStroke('BKi')}
+                    strokeWidth={siteStrokeWidth('BKi')}
                   />
-
                   <SvgText
                     x="117"
                     y="116"
-                    fill={siteText(
-                      'BKi',
-                    )}
+                    fill={siteText('BKi')}
                     fontSize="11"
                     fontWeight="bold"
                     textAnchor="middle"
                   >
-                    BKi
+                    {getSiteDisplayCode('BKi', language)}
                   </SvgText>
                 </G>
 
                 {/* BKn */}
-                <G
-                  onPress={() =>
-                    setSite('BKn')
-                  }
-                >
+                <G onPress={() => setSite('BKn')}>
                   <Circle
                     cx="183"
                     cy="112"
                     r="21"
-                    fill={siteFill(
-                      'BKn',
-                    )}
-                    stroke={siteStroke(
-                      'BKn',
-                    )}
-                    strokeWidth={siteStrokeWidth(
-                      'BKn',
-                    )}
+                    fill={siteFill('BKn')}
+                    stroke={siteStroke('BKn')}
+                    strokeWidth={siteStrokeWidth('BKn')}
                   />
-
                   <SvgText
                     x="183"
                     y="116"
-                    fill={siteText(
-                      'BKn',
-                    )}
+                    fill={siteText('BKn')}
                     fontSize="11"
                     fontWeight="bold"
                     textAnchor="middle"
                   >
-                    BKn
+                    {getSiteDisplayCode('BKn', language)}
                   </SvgText>
                 </G>
-
-                {/* Garis tengah punggung */}
-                <Line
-                  x1="150"
-                  y1="70"
-                  x2="150"
-                  y2="158"
-                  stroke="#1e293b"
-                  strokeWidth="1"
-                />
 
                 <SvgText
                   x="150"
@@ -1142,7 +1187,7 @@ export const RotationScreen: React.FC = () => {
                   fontSize="8"
                   textAnchor="middle"
                 >
-                  {language === 'en' ? 'POSTERIOR · GLUTE' : 'BELAKANG · GLUTE'}
+                  {language === 'en' ? 'POSTERIOR · GLUTE' : 'BELAKANG · BOKONG'}
                 </SvgText>
               </G>
             )}
