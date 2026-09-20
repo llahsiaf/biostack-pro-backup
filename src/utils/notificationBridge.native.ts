@@ -2,7 +2,9 @@ import * as Notifications from 'expo-notifications';
 import {
   getNotificationPermission as getPermission,
   requestNotificationPermission as requestPermission,
+  rebuildScheduleReminders,
 } from './notificationUtils';
+import type { InjectionLog, InventoryItem } from '../types';
 
 export type NotificationTarget = {
   inventoryId?: string;
@@ -27,6 +29,23 @@ export const configureNotifications = (): void => {
 export const getNotificationPermission = getPermission;
 
 export const requestNotificationPermission = requestPermission;
+
+export const syncScheduleReminders = async (
+  inventory: InventoryItem[],
+  injectionHistory: InjectionLog[],
+): Promise<Map<string, string[]>> => {
+  const permission = await getPermission();
+
+  if (permission.status !== 'granted') {
+    return new Map<string, string[]>();
+  }
+
+  return rebuildScheduleReminders(
+    inventory,
+    30,
+    injectionHistory,
+  );
+};
 
 export const subscribeToNotificationResponse = (
   handler: NotificationResponseHandler,
