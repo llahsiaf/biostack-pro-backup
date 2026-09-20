@@ -655,13 +655,27 @@ export const InventoryScreen: React.FC = () => {
                         item.schedulePaused,
                       );
 
+                      const title = paused
+                        ? (language === 'en' ? 'Resume Schedule' : 'Lanjutkan Jadwal')
+                        : (language === 'en' ? 'Pause Schedule' : 'Jeda Jadwal');
+                      const msg = paused
+                        ? (language === 'en' ? `Resume schedule for ${item.name}?` : `Lanjutkan jadwal ${item.name}?`)
+                        : (language === 'en' ? `Temporarily pause schedule for ${item.name}?` : `Jeda sementara jadwal ${item.name}?`);
+
+                      if (Platform.OS === 'web') {
+                        // eslint-disable-next-line no-alert
+                        if (window.confirm(`${title}\n\n${msg}`)) {
+                          setSchedulePaused(
+                            item.id,
+                            !paused,
+                          );
+                        }
+                        return;
+                      }
+
                       Alert.alert(
-                        paused
-                          ? (language === 'en' ? 'Resume Schedule' : 'Lanjutkan Jadwal')
-                          : (language === 'en' ? 'Pause Schedule' : 'Jeda Jadwal'),
-                        paused
-                          ? (language === 'en' ? `Resume schedule for ${item.name}?` : `Lanjutkan jadwal ${item.name}?`)
-                          : (language === 'en' ? `Temporarily pause schedule for ${item.name}?` : `Jeda sementara jadwal ${item.name}?`),
+                        title,
+                        msg,
                         [
                           {
                             text: language === 'en' ? 'Cancel' : 'Batal',
@@ -712,11 +726,34 @@ export const InventoryScreen: React.FC = () => {
                   {/* HAPUS VIAL */}
                   <TouchableOpacity
                     onPress={() => {
+                      const title = language === 'en' ? 'Delete Vial' : 'Hapus Vial';
+                      const msg = language === 'en'
+                        ? `Delete ${item.name} from Inventory? History logs will be preserved.`
+                        : `Hapus ${item.name} dari Inventory? Riwayat pencatatan tetap disimpan.`;
+
+                      const executeDelete = async () => {
+                        // Hapus juga reminder lokal yang masih terkait
+                        // dengan vial agar tidak muncul setelah vial dihapus.
+                        if (item.notificationIds?.length) {
+                          await cancelNotificationIds(
+                            item.notificationIds,
+                          );
+                        }
+
+                        removeInventoryItem(item.id);
+                      };
+
+                      if (Platform.OS === 'web') {
+                        // eslint-disable-next-line no-alert
+                        if (window.confirm(`${title}\n\n${msg}`)) {
+                          void executeDelete();
+                        }
+                        return;
+                      }
+
                       Alert.alert(
-                        language === 'en' ? 'Delete Vial' : 'Hapus Vial',
-                        language === 'en'
-                          ? `Delete ${item.name} from Inventory? History logs will be preserved.`
-                          : `Hapus ${item.name} dari Inventory? Riwayat pencatatan tetap disimpan.`,
+                        title,
+                        msg,
                         [
                           {
                             text: language === 'en' ? 'Cancel' : 'Batal',
@@ -725,16 +762,8 @@ export const InventoryScreen: React.FC = () => {
                           {
                             text: language === 'en' ? 'Delete' : 'Hapus',
                             style: 'destructive',
-                            onPress: async () => {
-                              // Hapus juga reminder lokal yang masih terkait
-                              // dengan vial agar tidak muncul setelah vial dihapus.
-                              if (item.notificationIds?.length) {
-                                await cancelNotificationIds(
-                                  item.notificationIds,
-                                );
-                              }
-
-                              removeInventoryItem(item.id);
+                            onPress: () => {
+                              void executeDelete();
                             },
                           },
                         ],

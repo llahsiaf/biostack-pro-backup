@@ -8,6 +8,7 @@ import {
   Modal,
   TextInput,
   Alert,
+  Platform,
 } from 'react-native';
 import {
   Activity,
@@ -252,52 +253,65 @@ export const TodayScreen: React.FC<{
 
     const suggestedSite = getTrackerSuggestedSite(safeLogs, item.id) || currentSite;
 
+    const title = occurrence.status === 'missed'
+      ? (language === 'en' ? 'Log missed activity' : 'Catat aktivitas terlewat')
+      : (language === 'en' ? 'Confirm entry' : 'Konfirmasi pencatatan');
+    const msg = `${item.name}\n${language === 'en' ? 'Schedule' : 'Jadwal'} ${occurrence.time}\nDial ${metrics.dialClicks} ${language === 'en' ? 'clicks' : 'klik'}`;
+
+    const executeRecord = () => {
+      const actual = new Date();
+      const recorded = recordInjection(
+        item.id,
+        {
+          id: `log-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          peptideName: item.name,
+          dose: item.targetDose,
+          unit: item.doseUnit,
+          volumeMl: metrics.volumeMl,
+          siteId: suggestedSite,
+          timestamp: actual.toISOString(),
+          inventoryId: item.id,
+          recordedAtLocal: actual.toLocaleString(language === 'en' ? 'en-US' : 'id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+          dateStr: formatLocalDate(actual),
+          timeStr: actual.toLocaleTimeString(language === 'en' ? 'en-US' : 'id-ID', { hour: '2-digit', minute: '2-digit' }),
+        },
+        metrics.volumeMlNumber,
+      );
+
+      if (!recorded) {
+        Alert.alert(
+          language === 'en' ? 'Failed to record' : 'Gagal mencatat',
+          language === 'en'
+            ? 'Vial data changed or volume is insufficient. Try again.'
+            : 'Data vial berubah atau volume tidak mencukupi. Coba ulangi.'
+        );
+        return;
+      }
+
+      Alert.alert(
+        language === 'en' ? 'Recorded' : 'Tercatat',
+        language === 'en'
+          ? `${item.name} successfully recorded at ${actual.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}.`
+          : `${item.name} berhasil dicatat pada ${actual.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}.`
+      );
+    };
+
+    if (Platform.OS === 'web') {
+      // eslint-disable-next-line no-alert
+      if (window.confirm(`${title}\n\n${msg}`)) {
+        executeRecord();
+      }
+      return;
+    }
+
     Alert.alert(
-      occurrence.status === 'missed'
-        ? (language === 'en' ? 'Log missed activity' : 'Catat aktivitas terlewat')
-        : (language === 'en' ? 'Confirm entry' : 'Konfirmasi pencatatan'),
-      `${item.name}\n${language === 'en' ? 'Schedule' : 'Jadwal'} ${occurrence.time}\nDial ${metrics.dialClicks} ${language === 'en' ? 'clicks' : 'klik'}`,
+      title,
+      msg,
       [
         { text: language === 'en' ? 'Cancel' : 'Batal', style: 'cancel' },
         {
           text: language === 'en' ? 'Confirm' : 'Konfirmasi',
-          onPress: () => {
-            const actual = new Date();
-            const recorded = recordInjection(
-              item.id,
-              {
-                id: `log-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-                peptideName: item.name,
-                dose: item.targetDose,
-                unit: item.doseUnit,
-                volumeMl: metrics.volumeMl,
-                siteId: suggestedSite,
-                timestamp: actual.toISOString(),
-                inventoryId: item.id,
-                recordedAtLocal: actual.toLocaleString(language === 'en' ? 'en-US' : 'id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-                dateStr: formatLocalDate(actual),
-                timeStr: actual.toLocaleTimeString(language === 'en' ? 'en-US' : 'id-ID', { hour: '2-digit', minute: '2-digit' }),
-              },
-              metrics.volumeMlNumber,
-            );
-
-            if (!recorded) {
-              Alert.alert(
-                language === 'en' ? 'Failed to record' : 'Gagal mencatat',
-                language === 'en'
-                  ? 'Vial data changed or volume is insufficient. Try again.'
-                  : 'Data vial berubah atau volume tidak mencukupi. Coba ulangi.'
-              );
-              return;
-            }
-
-            Alert.alert(
-              language === 'en' ? 'Recorded' : 'Tercatat',
-              language === 'en'
-                ? `${item.name} successfully recorded at ${actual.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}.`
-                : `${item.name} berhasil dicatat pada ${actual.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}.`
-            );
-          },
+          onPress: executeRecord,
         },
       ],
     );

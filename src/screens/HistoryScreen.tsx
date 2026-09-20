@@ -7,6 +7,7 @@ import {
   ScrollView,
   Alert,
   Share,
+  Platform,
 } from 'react-native';
 import {
   History,
@@ -190,11 +191,22 @@ export const HistoryScreen: React.FC = () => {
       )
         return;
 
+      const title = language === 'en' ? 'Clear All History' : 'Hapus Semua Riwayat';
+      const msg = language === 'en'
+        ? 'Are you sure you want to delete all injection history logs? This action cannot be undone.'
+        : 'Apakah Anda yakin ingin menghapus seluruh log riwayat injeksi? Tindakan ini tidak dapat dibatalkan.';
+
+      if (Platform.OS === 'web') {
+        // eslint-disable-next-line no-alert
+        if (window.confirm(`${title}\n\n${msg}`)) {
+          clearHistory();
+        }
+        return;
+      }
+
       Alert.alert(
-        language === 'en' ? 'Clear All History' : 'Hapus Semua Riwayat',
-        language === 'en'
-          ? 'Are you sure you want to delete all injection history logs? This action cannot be undone.'
-          : 'Apakah Anda yakin ingin menghapus seluruh log riwayat injeksi? Tindakan ini tidak dapat dibatalkan.',
+        title,
+        msg,
         [
           {
             text: t('app.cancel'),
@@ -760,11 +772,22 @@ export const HistoryScreen: React.FC = () => {
 
                     <TouchableOpacity
                       onPress={() => {
+                        const title = language === 'en' ? 'Delete Log' : 'Hapus Log';
+                        const msg = language === 'en'
+                          ? 'Delete this injection record?'
+                          : 'Hapus catatan injeksi ini?';
+
+                        if (Platform.OS === 'web') {
+                          // eslint-disable-next-line no-alert
+                          if (window.confirm(`${title}\n\n${msg}`)) {
+                            deleteInjectionLog(item.id);
+                          }
+                          return;
+                        }
+
                         Alert.alert(
-                          language === 'en' ? 'Delete Log' : 'Hapus Log',
-                          language === 'en'
-                            ? 'Delete this injection record?'
-                            : 'Hapus catatan injeksi ini?',
+                          title,
+                          msg,
                           [
                             {
                               text: t('app.cancel'),
