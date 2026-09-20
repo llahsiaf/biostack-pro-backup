@@ -21,6 +21,7 @@ import {
   Bell,
   Settings,
   ShieldCheck,
+  Calculator,
 } from 'lucide-react-native';
 
 import { InventoryScreen } from './src/screens/InventoryScreen';
@@ -31,6 +32,7 @@ import { FloatingAIChat } from './src/components/FloatingAIChat';
 import { TodayScreen } from './src/screens/TodayScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { AnalyticsScreen } from './src/screens/AnalyticsScreen';
+import { GenericDosingCalculatorModal } from './src/components/GenericDosingCalculatorModal';
 import { COLORS, RADIUS, SHADOWS } from './src/theme';
 import { useBioStackStore } from './src/store/useBioStackStore';
 import { getNotificationPermission, rebuildScheduleReminders } from './src/utils/notificationUtils';
@@ -49,6 +51,7 @@ function BioStackApp() {
   const { t } = useLanguage();
 
   const [activeTab, setActiveTab] = useState<'today' | 'inventory' | 'rotation' | 'history' | 'freezer' | 'analytics' | 'settings'>('today');
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   const [notificationTarget, setNotificationTarget] = useState<{ inventoryId?: string; date?: string } | null>(null);
   const injectionHistory = useBioStackStore((state) => state.injectionHistory || []);
   const inventory = useBioStackStore((state) => state.inventory || []);
@@ -223,6 +226,14 @@ function BioStackApp() {
           {/* Tombol Pemicu Izin Notifikasi Manual */}
           <View style={styles.headerActions}>
             <TouchableOpacity 
+              onPress={() => setIsCalculatorOpen(true)} 
+              style={styles.notificationBtn}
+              accessibilityLabel="Kalkulator dosis"
+            >
+              <Calculator size={18} color="#10b981" />
+            </TouchableOpacity>
+
+            <TouchableOpacity 
               onPress={handleManualNotificationRequest} 
               style={styles.notificationBtn}
               accessibilityLabel="Status notifikasi"
@@ -293,6 +304,12 @@ function BioStackApp() {
           );
         })}
       </View>
+
+      {/* Modal Kalkulator Dosis Presisi Generik Standalone */}
+      <GenericDosingCalculatorModal
+        visible={isCalculatorOpen}
+        onClose={() => setIsCalculatorOpen(false)}
+      />
 
       {/* Tombol AI Chat Assistant Melayang */}
       <FloatingAIChat />

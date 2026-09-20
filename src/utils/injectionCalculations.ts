@@ -17,6 +17,105 @@ const round = (value: number, digits = 3) => {
   return Math.round(value * factor) / factor;
 };
 
+export interface GenericDosingParams {
+  vialAmount: number;
+  vialUnit: 'mg' | 'mcg' | 'mL';
+  bacWaterMl: number;
+  doseAmount: number;
+  doseUnit: 'mg' | 'mcg' | 'mL';
+}
+
+export interface GenericDosingResult {
+  valid: boolean;
+  errorMessage?: string;
+  vialAmountInMg: number;
+  doseInMg: number;
+  concentrationMgPerMl: number;
+  concentrationMcgPerMl: number;
+  volumeMl: number;
+  volumeMlStr: string;
+  iu: number;
+  dialClicks: number;
+  dosesPerVial: number;
+}
+
+export function calculateGenericDosing(params: GenericDosingParams): GenericDosingResult {
+  const { vialAmount, vialUnit, bacWaterMl, doseAmount, doseUnit } = params;
+
+  if (vialAmount <= 0 || doseAmount <= 0) {
+    return {
+      valid: false,
+      errorMessage: 'Invalid amount',
+      vialAmountInMg: 0,
+      doseInMg: 0,
+      concentrationMgPerMl: 0,
+      concentrationMcgPerMl: 0,
+      volumeMl: 0,
+      volumeMlStr: '0.000',
+      iu: 0,
+      dialClicks: 0,
+      dosesPerVial: 0,
+    };
+  }
+
+  // Handle pure liquid mL
+  if (vialUnit === 'mL' || doseUnit === 'mL') {
+    const vol = doseAmount;
+    const iu = Math.round(vol * 100);
+    return {
+      valid: true,
+      vialAmountInMg: 0,
+      doseInMg: 0,
+      concentrationMgPerMl: 0,
+      concentrationMcgPerMl: 0,
+      volumeMl: vol,
+      volumeMlStr: vol.toFixed(3),
+      iu,
+      dialClicks: iu,
+      dosesPerVial: vol > 0 ? Math.floor(vialAmount / vol) : 0,
+    };
+  }
+
+  if (bacWaterMl <= 0) {
+    return {
+      valid: false,
+      errorMessage: 'BAC water must be > 0',
+      vialAmountInMg: 0,
+      doseInMg: 0,
+      concentrationMgPerMl: 0,
+      concentrationMcgPerMl: 0,
+      volumeMl: 0,
+      volumeMlStr: '0.000',
+      iu: 0,
+      dialClicks: 0,
+      dosesPerVial: 0,
+    };
+  }
+
+  const vialAmountInMg = vialUnit === 'mg' ? vialAmount : vialAmount / 1000;
+  const doseInMg = doseUnit === 'mg' ? doseAmount : doseAmount / 1000;
+
+  const concentrationMgPerMl = vialAmountInMg / bacWaterMl;
+  const concentrationMcgPerMl = concentrationMgPerMl * 1000;
+
+  const volume = doseInMg / concentrationMgPerMl;
+  const iu = Math.round(volume * 100);
+  const dosesPerVial = doseInMg > 0 ? Math.floor(vialAmountInMg / doseInMg) : 0;
+
+  return {
+    valid: Number.isFinite(volume) && volume > 0,
+    vialAmountInMg,
+    doseInMg,
+    concentrationMgPerMl: round(concentrationMgPerMl, 4),
+    concentrationMcgPerMl: round(concentrationMcgPerMl, 1),
+    volumeMl: volume,
+    volumeMlStr: volume.toFixed(3),
+    iu,
+    dialClicks: iu,
+    dosesPerVial,
+  };
+}
+
 /**
  * Calculates tracker-only volume/marking metrics from values already stored by the user.
  * It does not recommend or select a dose.
@@ -25,6 +124,7 @@ export function calculateInjectionMetrics(
   item: InventoryItem,
   overrideDose?: string,
   overrideBac?: string,
+  overrideDoseUnit?: InventoryItem['doseUnit'],
 ): InjectionMetrics {
   const dose = overrideDose !== undefined
     ? Number.parseFloat(overrideDose) || 0
@@ -32,11 +132,12 @@ export function calculateInjectionMetrics(
   const bac = overrideBac !== undefined
     ? Number.parseFloat(overrideBac) || 0
     : Number(item.bacWater) || 0;
+  const effectiveDoseUnit = overrideDoseUnit || item.doseUnit || item.unit;
 
   if (dose <= 0) {
     return {
       dose,
-      doseUnit: item.doseUnit,
+      doseUnit: effectiveDoseUnit,
       concentration: 0,
       concentrationUnit: item.unit,
       volumeMl: '0.000',
@@ -48,12 +149,12 @@ export function calculateInjectionMetrics(
   }
 
   if (item.unit === 'mL') {
-    const valid = item.doseUnit === 'mL';
+    const valid = effectiveDoseUnit === 'mL';
     const volume = valid ? dose : 0;
     const iu = Math.round(volume * 100);
     return {
       dose,
-      doseUnit: item.doseUnit,
+      doseUnit: effectiveDoseUnit,
       concentration: valid ? 1 : 0,
       concentrationUnit: 'mL',
       volumeMl: volume.toFixed(3),
@@ -64,10 +165,10 @@ export function calculateInjectionMetrics(
     };
   }
 
-  if ((item.unit !== 'mg' && item.unit !== 'mcg') || (item.doseUnit !== 'mg' && item.doseUnit !== 'mcg')) {
+  if ((item.unit !== 'mg' && item.unit !== 'mcg') || (effectiveDoseUnit !== 'mg' && effectiveDoseUnit !== 'mcg')) {
     return {
       dose,
-      doseUnit: item.doseUnit,
+      doseUnit: effectiveDoseUnit,
       concentration: 0,
       concentrationUnit: item.unit,
       volumeMl: '0.000',
@@ -81,7 +182,7 @@ export function calculateInjectionMetrics(
   if (bac <= 0 || item.vialSize <= 0) {
     return {
       dose,
-      doseUnit: item.doseUnit,
+      doseUnit: effectiveDoseUnit,
       concentration: 0,
       concentrationUnit: item.unit,
       volumeMl: '0.000',
@@ -93,14 +194,14 @@ export function calculateInjectionMetrics(
   }
 
   const vialAmountInMg = item.unit === 'mg' ? item.vialSize : item.vialSize / 1000;
-  const doseInMg = item.doseUnit === 'mg' ? dose : dose / 1000;
+  const doseInMg = effectiveDoseUnit === 'mg' ? dose : dose / 1000;
   const concentrationMgPerMl = vialAmountInMg / bac;
   const volume = doseInMg / concentrationMgPerMl;
   const iu = Math.round(volume * 100);
 
   return {
     dose,
-    doseUnit: item.doseUnit,
+    doseUnit: effectiveDoseUnit,
     concentration: round(concentrationMgPerMl, 6),
     concentrationUnit: item.unit,
     volumeMl: volume.toFixed(3),

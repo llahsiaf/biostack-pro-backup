@@ -39,6 +39,8 @@ import { getDashboardAnalytics, getLogsForLocalDate, getOccurrenceStatusLabel } 
 import { calculateInjectionMetrics } from '../utils/injectionCalculations';
 import { getSiteLabel, getTrackerSuggestedSite, ROTATION_SITE_ORDER } from '../utils/rotationUtils';
 import type { InventoryItem } from '../types';
+import { useLanguage } from '../i18n/LanguageContext';
+import { getLanguage } from '../i18n/translations';
 
 const addDays = (date: Date, amount: number) => {
   const next = new Date(date);
@@ -48,7 +50,7 @@ const addDays = (date: Date, amount: number) => {
 };
 
 const formatDateLong = (date: Date) =>
-  new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
+  new Intl.DateTimeFormat(getLanguage() === 'en' ? 'en-US' : 'id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
 
 const formatDayNumber = (date: Date) => String(date.getDate()).padStart(2, '0');
 
@@ -58,6 +60,7 @@ export const TodayScreen: React.FC<{
   onOpenInventory?: () => void;
   notificationTarget?: { inventoryId?: string; date?: string } | null;
 }> = ({ onOpenInventory, notificationTarget }) => {
+  const { language, t } = useLanguage();
   const { inventory, freezerStock, injectionHistory, currentSite, recordInjection } = useBioStackStore();
   const now = new Date();
   const [selectedDate, setSelectedDate] = useState<Date>(now);
@@ -267,19 +270,19 @@ export const TodayScreen: React.FC<{
           <View style={styles.heroIconBox}><Activity size={19} color="#10b981" /></View>
           <View style={styles.heroCopy}>
             <Text style={styles.eyebrow}>PERSONAL TRACKER</Text>
-            <Text style={styles.heroTitle}>{isToday ? 'Ringkasan Hari Ini' : formatDateLong(selectedDate)}</Text>
-            <Text style={styles.heroSubtitle}>{formatDateLong(now)} • Titik berikutnya {currentSite}</Text>
+            <Text style={styles.heroTitle}>{isToday ? (t('today.title') || 'Ringkasan Hari Ini') : formatDateLong(selectedDate)}</Text>
+            <Text style={styles.heroSubtitle}>{formatDateLong(now)} • {t('rotation.suggestedSite') || 'Titik berikutnya'} {currentSite}</Text>
           </View>
           <TouchableOpacity style={styles.quickLogBtn} onPress={openQuickLog}>
             <Syringe size={15} color="#022c22" />
-            <Text style={styles.quickLogText}>Log</Text>
+            <Text style={styles.quickLogText}>{t('today.quickLog') || 'Log'}</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.metricRow}>
-          <MetricCard icon={<CalendarDays size={14} color="#38bdf8" />} label="Jadwal" value={String(selectedOccurrences.length)} />
-          <MetricCard icon={<CheckCircle2 size={14} color="#10b981" />} label="Selesai" value={String(selectedOccurrences.filter((item) => item.status === 'completed').length)} />
-          <MetricCard icon={<AlertTriangle size={14} color="#f59e0b" />} label="Terlewat" value={String(isToday ? selectedOccurrences.filter((item) => item.status === 'missed').length : 0)} />
+          <MetricCard icon={<CalendarDays size={14} color="#38bdf8" />} label={t('inventory.todaySchedule') || "Jadwal"} value={String(selectedOccurrences.length)} />
+          <MetricCard icon={<CheckCircle2 size={14} color="#10b981" />} label={t('status.completed') || "Selesai"} value={String(selectedOccurrences.filter((item) => item.status === 'completed').length)} />
+          <MetricCard icon={<AlertTriangle size={14} color="#f59e0b" />} label={t('status.missed') || "Terlewat"} value={String(isToday ? selectedOccurrences.filter((item) => item.status === 'missed').length : 0)} />
         </View>
       </View>
 
@@ -365,7 +368,7 @@ export const TodayScreen: React.FC<{
                     >
                       <Syringe size={12} color="#022c22" />
                       <Text style={styles.activityActionText}>
-                        {occurrence.status === 'missed' ? 'Catat' : 'Suntik Sekarang'}
+                        {occurrence.status === 'missed' ? (t('today.quickLog') || 'Catat') : (t('today.injectNow') || 'Suntik Sekarang')}
                       </Text>
                     </TouchableOpacity>
                   ) : (
@@ -449,15 +452,15 @@ export const TodayScreen: React.FC<{
           <View style={styles.quickLogModal}>
             <View style={styles.modalHeader}>
               <View>
-                <Text style={styles.modalEyebrow}>QUICK LOG</Text>
-                <Text style={styles.modalTitle}>Catat Injeksi</Text>
+                <Text style={styles.modalEyebrow}>{t('today.quickLogModal') || 'QUICK LOG'}</Text>
+                <Text style={styles.modalTitle}>{t('today.quickLogSubtitle') || 'Catat Injeksi'}</Text>
               </View>
               <TouchableOpacity style={styles.modalClose} onPress={() => setIsQuickLogOpen(false)}>
                 <Text style={styles.modalCloseText}>×</Text>
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.inputLabel}>VIAL AKTIF</Text>
+            <Text style={styles.inputLabel}>{t('inventory.activeVial') || 'VIAL AKTIF'}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.vialPickerRow}>
               {activeVials.map((vial) => {
                 const selected = vial.id === selectedQuickVial?.id;
@@ -468,30 +471,30 @@ export const TodayScreen: React.FC<{
                     style={[styles.vialChip, selected && styles.vialChipActive]}
                   >
                     <Text style={[styles.vialChipName, selected && styles.vialChipNameActive]}>{vial.name}</Text>
-                    <Text style={styles.vialChipMeta}>{vial.currentVolumeMl?.toFixed(2) ?? '—'} mL tersisa</Text>
+                    <Text style={styles.vialChipMeta}>{vial.currentVolumeMl?.toFixed(2) ?? '—'} mL</Text>
                   </TouchableOpacity>
                 );
               })}
             </ScrollView>
 
             <View style={styles.inputCard}>
-              <Text style={styles.inputLabel}>NILAI DOSIS YANG DICATAT</Text>
+              <Text style={styles.inputLabel}>{t('inventory.injectionDose') || 'NILAI DOSIS YANG DICATAT'}</Text>
               <TextInput
                 style={styles.modalInput}
                 keyboardType="numeric"
                 value={quickLogDose}
                 onChangeText={setQuickLogDose}
-                placeholder="Masukkan nilai dosis"
+                placeholder="0.0"
                 placeholderTextColor="#475569"
               />
               {quickLogMetrics && (
                 <Text style={styles.calculatedText}>
-                  {quickLogMetrics.valid ? `${quickLogMetrics.volumeMl} mL • ${quickLogMetrics.iu} IU (perhitungan tracker)` : 'Perhitungan belum valid'}
+                  {quickLogMetrics.valid ? `${quickLogMetrics.volumeMl} mL • ${quickLogMetrics.iu} IU` : (t('alerts.invalidCalculation') || 'Perhitungan belum valid')}
                 </Text>
               )}
             </View>
 
-            <Text style={styles.inputLabel}>TITIK LOG</Text>
+            <Text style={styles.inputLabel}>{t('today.selectSite') || 'PILIH TITIK ROTASI'}</Text>
             <View style={styles.siteGrid}>
               {ROTATION_SITE_ORDER.map((site) => (
                 <TouchableOpacity
@@ -506,24 +509,24 @@ export const TodayScreen: React.FC<{
             </View>
 
             <View style={styles.inputCard}>
-              <Text style={styles.inputLabel}>CATATAN (OPSIONAL)</Text>
+              <Text style={styles.inputLabel}>{t('today.optionalNote') || 'CATATAN (OPSIONAL)'}</Text>
               <TextInput
                 style={[styles.modalInput, styles.notesInput]}
                 multiline
                 value={quickLogNotes}
                 onChangeText={setQuickLogNotes}
-                placeholder="Contoh: catatan pribadi..."
+                placeholder="..."
                 placeholderTextColor="#475569"
               />
             </View>
 
             <View style={styles.modalActions}>
               <TouchableOpacity style={styles.cancelBtn} onPress={() => setIsQuickLogOpen(false)}>
-                <Text style={styles.cancelBtnText}>Batal</Text>
+                <Text style={styles.cancelBtnText}>{t('app.cancel') || 'Batal'}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.saveBtn} onPress={saveQuickLog}>
                 <CheckCircle2 size={16} color="#022c22" />
-                <Text style={styles.saveBtnText}>Simpan Log</Text>
+                <Text style={styles.saveBtnText}>{t('today.confirmLog') || 'Simpan Log'}</Text>
               </TouchableOpacity>
             </View>
             <Text style={styles.disclaimerText}>Quick Log hanya mencatat data yang kamu masukkan dan menghitung volume dari parameter vial yang tersimpan.</Text>

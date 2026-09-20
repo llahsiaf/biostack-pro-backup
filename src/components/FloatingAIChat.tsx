@@ -24,6 +24,7 @@ import {
 } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useBioStackStore } from '../store/useBioStackStore';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface ChatMessage {
   id: string;
@@ -33,6 +34,7 @@ interface ChatMessage {
 }
 
 export const FloatingAIChat: React.FC = () => {
+  const { language, t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [activeView, setActiveView] = useState<'chat' | 'settings'>('chat');
   const [inputText, setInputText] = useState('');
@@ -143,16 +145,25 @@ export const FloatingAIChat: React.FC = () => {
           const data = await response.json();
           replyText = data?.choices?.[0]?.message?.content || 'Maaf, tidak mendapat respon dari OpenAI.';
         }
-      } else {
+            } else {
         const lower = userText.toLowerCase();
-        if (lower.includes('bac') || lower.includes('larut') || lower.includes('air')) {
-          replyText = 'Panduan BAC Water: Masukkan Bacteriostatic Water secara perlahan menyusuri dinding kaca vial (jangan disemprot langsung ke serbuk peptida untuk mencegah denaturasi rantai asam amino).';
-        } else if (lower.includes('rotasi') || lower.includes('titik') || lower.includes('suntik')) {
-          replyText = 'Protokol Rotasi: Rotasikan 4 kuadran perut (RUQ, LUQ, RLQ, LLQ) atau area paha/lengan/bokong minimal berjarak 2.5 cm dari bekas tusukan sebelumnya untuk menghindari penumpukan jaringan parut (lipohipertrofi).';
+        const isEn = language === 'en';
+        if (lower.includes('bac') || lower.includes('larut') || lower.includes('water') || lower.includes('air')) {
+          replyText = isEn
+            ? 'BAC Water Guide: Slowly introduce Bacteriostatic Water along the inner vial wall (avoid spraying directly onto peptide powder to prevent denaturing amino acid chains).'
+            : 'Panduan BAC Water: Masukkan Bacteriostatic Water secara perlahan menyusuri dinding kaca vial (jangan disemprot langsung ke serbuk peptida untuk mencegah denaturasi rantai asam amino).';
+        } else if (lower.includes('rotasi') || lower.includes('titik') || lower.includes('suntik') || lower.includes('rotation') || lower.includes('site') || lower.includes('inject')) {
+          replyText = isEn
+            ? 'Rotation Protocol: Rotate across the 4 abdominal quadrants or thigh/arm/glute areas at least 2.5 cm from previous injection sites to prevent scar tissue and lipohypertrophy.'
+            : 'Protokol Rotasi: Rotasikan 4 kuadran perut (RUQ, LUQ, RLQ, LLQ) atau area paha/lengan/bokong minimal berjarak 2.5 cm dari bekas tusukan sebelumnya untuk menghindari penumpukan jaringan parut (lipohipertrofi).';
         } else if (lower.includes('bpc') || lower.includes('tb500')) {
-          replyText = 'Protokol Regenerasi BPC-157: Dosis standar berkisar 250 - 500 mcg per hari via subkutan, sering dikombinasikan dengan TB-500 untuk pemulihan ligamen dan tendon.';
+          replyText = isEn
+            ? 'BPC-157 Protocol: Standard dose is 250 - 500 mcg per day subcutaneously, often combined with TB-500 for connective tissue, tendon, and ligament recovery.'
+            : 'Protokol Regenerasi BPC-157: Dosis standar berkisar 250 - 500 mcg per hari via subkutan, sering dikombinasikan dengan TB-500 untuk pemulihan ligamen dan tendon.';
         } else {
-          replyText = `Catatan Pintar: Anda dapat memasukkan Google Gemini API Key pada menu pengaturan di kanan atas untuk konsultasi AI interaktif daring. Stok aktif kulkas Anda saat ini: ${inventory.length} vial.`;
+          replyText = isEn
+            ? `Smart Assistant: You can configure a Google Gemini API Key in settings for live AI discussions. Active fridge stock: ${inventory.length} vials.`
+            : `Catatan Pintar: Anda dapat memasukkan Google Gemini API Key pada menu pengaturan di kanan atas untuk konsultasi AI interaktif daring. Stok aktif kulkas Anda saat ini: ${inventory.length} vial.`;
         }
       }
 

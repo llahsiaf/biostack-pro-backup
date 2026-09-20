@@ -645,6 +645,97 @@ export const ID_TRANSLATIONS = {
       'Terlewat',
   },
 
+
+  // ----------------------------------------------------------
+  // CALCULATOR
+  // ----------------------------------------------------------
+
+  calculator: {
+    title: 'Kalkulator Dosis Presisi',
+    subtitle: 'Simulasi dosis, pelarut BAC, dan spuit U-100 secara generik',
+    vialSizeLabel: 'Ukuran Vial',
+    bacWaterLabel: 'Volume Pelarut (BAC Water)',
+    targetDoseLabel: 'Target Dosis',
+    resultTitle: 'Hasil Kalkulasi Presisi',
+    volumeToInject: 'Volume Injeksi',
+    volumeSub: 'Cairan yang disedot',
+    syringeMarking: 'Garis Spuit U-100',
+    syringeSub: 'Tanda unit spuit insulin',
+    syringeVisualizerLabel: 'Visualisasi Spuit U-100',
+    concentration: 'Konsentrasi Larutan',
+    totalDosesInVial: 'Total Dosis per Vial',
+    dosesUnit: 'dosis',
+    summaryFormula: 'Vial {{vial}} dilarutkan {{bac}} → Dosis {{dose}} butuh {{vol}} ({{iu}})',
+    resetValues: 'Reset ke Default',
+  },
+
+
+  // ----------------------------------------------------------
+  // ROTATION SITES
+  // ----------------------------------------------------------
+
+  rotationSites: {
+    KA: 'Kanan Atas',
+    KiA: 'Kiri Atas',
+    KB: 'Kanan Bawah',
+    KiB: 'Kiri Bawah',
+    PKi: 'Paha Kiri',
+    PKn: 'Paha Kanan',
+    LKi: 'Lengan Kiri',
+    LKn: 'Lengan Kanan',
+    BKi: 'Bokong Kiri',
+    BKn: 'Bokong Kanan',
+    abdomen: 'Perut (Abdomen)',
+    thigh: 'Paha Depan',
+    arm: 'Lengan Atas',
+    glute: 'Bokong Luar',
+  },
+
+
+  // ----------------------------------------------------------
+  // TODAY
+  // ----------------------------------------------------------
+
+  today: {
+    title: 'Jadwal Hari Ini',
+    subtitle: 'Pantau dan catat jadwal injeksi harian Anda',
+    noSchedule: 'Belum Ada Jadwal Hari Ini',
+    noScheduleSub: 'Semua injeksi terjadwal sudah dicatat atau hari ini adalah hari istirahat (Rest Day).',
+    goToInventory: 'Buka Inventory Kulkas',
+    quickLog: 'Quick Log',
+    quickLogModal: 'QUICK LOG',
+    quickLogSubtitle: 'Catat injeksi cepat dan perbarui sisa vial',
+    selectSite: 'Pilih Lokasi Injeksi',
+    currentRotation: 'Rekomendasi Rotasi',
+    optionalNote: 'Catatan Opsional (cth: reaksi, waktu tidur)',
+    confirmLog: 'Konfirmasi Injeksi',
+    completedToday: 'Selesai Hari Ini',
+    missedSchedule: 'Jadwal Terlewat',
+    dueSchedule: 'Jadwal Hari Ini',
+    injectNow: 'Suntik Sekarang',
+    restDay: 'Hari Istirahat',
+    scheduledTime: 'Waktu Jadwal',
+    dosesLeft: 'Sisa Dosis',
+    daysLeft: 'Hari Tersisa',
+    successRecord: 'Injeksi Berhasil Dicatat',
+    liquidUpdated: 'Sisa cairan vial otomatis diperbarui.',
+  },
+
+
+  // ----------------------------------------------------------
+  // CHAT ASSISTANT
+  // ----------------------------------------------------------
+
+  chat: {
+    title: 'BioStack AI Assistant',
+    subtitle: 'Asisten cerdas kalkulasi peptida & protokol lokal',
+    offlineMode: 'Mode Offline (Lokal)',
+    onlineMode: 'Mode Online (Gemini AI)',
+    inputPlaceholder: 'Tanyakan tentang dosis, kalkulasi, spuit...',
+    welcomeMessage: 'Halo! Saya asisten BioStack Anda. Tanyakan kalkulasi spuit, konversi mg ke mcg, atau panduan rotasi injeksi.',
+    disclaimer: 'Catatan: Informasi kalkulasi ini untuk pencatatan pribadi dan bukan saran medis formal.',
+  },
+
 } as const;
 
 
@@ -1204,6 +1295,97 @@ export const EN_TRANSLATIONS = {
 
     missed:
       'Missed',
+  },
+
+
+  // ----------------------------------------------------------
+  // CALCULATOR
+  // ----------------------------------------------------------
+
+  calculator: {
+    title: 'Precision Dosing Calculator',
+    subtitle: 'Generic simulation of peptide dose, BAC water, and U-100 syringe',
+    vialSizeLabel: 'Vial Size',
+    bacWaterLabel: 'Solvent Volume (BAC Water)',
+    targetDoseLabel: 'Target Dose',
+    resultTitle: 'Precision Calculation Result',
+    volumeToInject: 'Volume to Inject',
+    volumeSub: 'Liquid volume to draw',
+    syringeMarking: 'U-100 Syringe Marking',
+    syringeSub: 'Insulin syringe unit mark',
+    syringeVisualizerLabel: 'U-100 Syringe Visualizer',
+    concentration: 'Solution Concentration',
+    totalDosesInVial: 'Total Doses per Vial',
+    dosesUnit: 'doses',
+    summaryFormula: 'Vial {{vial}} dissolved with {{bac}} → Dose {{dose}} requires {{vol}} ({{iu}})',
+    resetValues: 'Reset to Default',
+  },
+
+
+  // ----------------------------------------------------------
+  // ROTATION SITES
+  // ----------------------------------------------------------
+
+  rotationSites: {
+    KA: 'Right Upper',
+    KiA: 'Left Upper',
+    KB: 'Right Lower',
+    KiB: 'Left Lower',
+    PKi: 'Left Thigh',
+    PKn: 'Right Thigh',
+    LKi: 'Left Arm',
+    LKn: 'Right Arm',
+    BKi: 'Left Glute',
+    BKn: 'Right Glute',
+    abdomen: 'Abdomen',
+    thigh: 'Anterior Thigh',
+    arm: 'Outer Tricep',
+    glute: 'Upper Outer Glute',
+  },
+
+
+  // ----------------------------------------------------------
+  // TODAY
+  // ----------------------------------------------------------
+
+  today: {
+    title: "Today's Schedule",
+    subtitle: 'Track and record your daily peptide injections',
+    noSchedule: 'No Scheduled Injections Today',
+    noScheduleSub: 'All scheduled injections are completed or today is a Rest Day.',
+    goToInventory: 'Open Fridge Inventory',
+    quickLog: 'Quick Log',
+    quickLogModal: 'QUICK LOG',
+    quickLogSubtitle: 'Quickly record an injection and update vial liquid',
+    selectSite: 'Select Injection Site',
+    currentRotation: 'Recommended Rotation',
+    optionalNote: 'Optional Note (e.g., reaction, sleep timing)',
+    confirmLog: 'Confirm Injection',
+    completedToday: 'Completed Today',
+    missedSchedule: 'Missed Schedule',
+    dueSchedule: "Today's Schedule",
+    injectNow: 'Inject Now',
+    restDay: 'Rest Day',
+    scheduledTime: 'Scheduled Time',
+    dosesLeft: 'Doses Left',
+    daysLeft: 'Days Left',
+    successRecord: 'Injection Recorded',
+    liquidUpdated: 'Vial remaining liquid automatically updated.',
+  },
+
+
+  // ----------------------------------------------------------
+  // CHAT ASSISTANT
+  // ----------------------------------------------------------
+
+  chat: {
+    title: 'BioStack AI Assistant',
+    subtitle: 'Smart peptide calculation & local protocol assistant',
+    offlineMode: 'Offline Mode (Local)',
+    onlineMode: 'Online Mode (Gemini AI)',
+    inputPlaceholder: 'Ask about dosing, calculation, syringe...',
+    welcomeMessage: 'Hello! I am your BioStack assistant. Ask about syringe markings, mg to mcg conversions, or injection rotation guidelines.',
+    disclaimer: 'Note: These calculation metrics are for personal logging and not formal medical advice.',
   },
 
 } as const;

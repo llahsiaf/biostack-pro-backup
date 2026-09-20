@@ -54,6 +54,7 @@ import {
 } from '../utils/scheduleUtils';
 import { getTrackerSuggestedSite } from '../utils/rotationUtils';
 import { cancelNotificationIds } from '../utils/notificationUtils';
+import { useLanguage } from '../i18n/LanguageContext';
 
 const DAYS_OF_WEEK = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 
@@ -87,6 +88,7 @@ const FREQUENCY_PRESETS = [
 // V5 INVENTORY FINAL: compact card hierarchy + slim dose metrics.
 // Schedule & Pengaturan Suntik logic/UI is intentionally preserved.
 export const InventoryScreen: React.FC = () => {
+  const { t } = useLanguage();
   const {
     inventory,
     freezerStock,
@@ -114,6 +116,7 @@ export const InventoryScreen: React.FC = () => {
     useState<InventoryItem | null>(null);
   const [editTargetDose, setEditTargetDose] = useState('');
   const [editBacWater, setEditBacWater] = useState('');
+  const [editDoseUnit, setEditDoseUnit] = useState<'mg' | 'mcg' | 'mL'>('mg');
 
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [lifecycleFilter, setLifecycleFilter] =
@@ -270,12 +273,9 @@ export const InventoryScreen: React.FC = () => {
 
   const openEditDoseModal = (item: InventoryItem) => {
     setEditingItem(item);
-    setEditTargetDose(
-      (item.targetDose || 0).toString(),
-    );
-    setEditBacWater(
-      (item.bacWater || 0).toString(),
-    );
+    setEditTargetDose((item.targetDose || 0).toString());
+    setEditBacWater((item.bacWater || 0).toString());
+    setEditDoseUnit((item.doseUnit || item.unit || 'mg') as 'mg' | 'mcg' | 'mL');
     setIsEditDoseModalOpen(true);
   };
 
@@ -292,20 +292,13 @@ export const InventoryScreen: React.FC = () => {
   const handleSaveDose = () => {
     if (!editingItem) return;
 
-    const newTarget =
-      parseFloat(editTargetDose) ||
-      editingItem.targetDose;
-
-    const newBac =
-      parseFloat(editBacWater) ||
-      editingItem.bacWater;
+    const newTarget = parseFloat(editTargetDose) || editingItem.targetDose;
+    const newBac = parseFloat(editBacWater) || editingItem.bacWater;
 
     updateInventoryItem(editingItem.id, {
       targetDose: newTarget,
-      bacWater:
-        editingItem.unit === 'mL'
-          ? 0
-          : newBac,
+      doseUnit: editDoseUnit,
+      bacWater: editingItem.unit === 'mL' ? 0 : newBac,
     });
 
     setIsEditDoseModalOpen(false);
@@ -830,7 +823,7 @@ export const InventoryScreen: React.FC = () => {
                       }
                       numberOfLines={1}
                     >
-                      Dosis: {item.targetDose} {item.doseUnit}
+                      {t('inventory.dose') || 'Dosis'}: {item.targetDose} {item.doseUnit || item.unit}
                     </Text>
                   </View>
 
@@ -846,7 +839,7 @@ export const InventoryScreen: React.FC = () => {
                       numberOfLines={1}
                       ellipsizeMode="tail"
                     >
-                      Spuit: {metrics.iu} IU ({metrics.volumeMl} mL)
+                      {t('inventory.syringe') || 'Spuit'}: {metrics.iu} IU ({metrics.volumeMl} mL)
                     </Text>
                   </View>
 
@@ -1133,12 +1126,7 @@ export const InventoryScreen: React.FC = () => {
           >
             {editingItem &&
               (() => {
-                const liveMetrics =
-                  calculateInjectionMetrics(
-                    editingItem,
-                    editTargetDose,
-                    editBacWater,
-                  );
+                const liveMetrics = calculateInjectionMetrics(editingItem, editTargetDose, editBacWater, editDoseUnit);
 
                 const iuPercent = Math.min(
                   100,
@@ -1314,43 +1302,56 @@ export const InventoryScreen: React.FC = () => {
                       </TouchableOpacity>
                     </View>
 
-                    <View
-                      style={
-                        styles.fancyInputContainer
-                      }
-                    >
-                      <View
-                        style={
-                          styles.fancyInputHeader
-                        }
-                      >
-                        <Text
-                          style={
-                            styles.fancyInputTitle
-                          }
-                        >
-                          Target Dosis Injeksi
+                    <View style={styles.fancyInputContainer}>
+                      <View style={styles.fancyInputHeader}>
+                        <Text style={styles.fancyInputTitle}>
+                          {t('inventory.injectionDose') || 'Target Dosis Injeksi'}
                         </Text>
 
-                        <Text
-                          style={
-                            styles.fancyInputTitleVal
-                          }
-                        >
-                          {editTargetDose || 0}{' '}
-                          {editingItem.unit}
-                        </Text>
+                        {editingItem.unit !== 'mL' ? (
+                          <View style={styles.unitToggleGroupModal}>
+                            {(['mg', 'mcg'] as const).map((u) => (
+                              <TouchableOpacity
+                                key={u}
+                                onPress={() => {
+                                  if (u !== editDoseUnit) {
+                                    const cur = parseFloat(editTargetDose) || 0;
+                                    if (u === 'mcg' && editDoseUnit === 'mg') {
+                                      setEditTargetDose((cur * 1000).toString());
+                                    } else if (u === 'mg' && editDoseUnit === 'mcg') {
+                                      setEditTargetDose((cur / 1000).toString());
+                                    }
+                                    setEditDoseUnit(u);
+                                  }
+                                }}
+                                style={[
+                                  styles.unitToggleBtnModal,
+                                  editDoseUnit === u && styles.unitToggleBtnModalActive,
+                                ]}
+                              >
+                                <Text
+                                  style={[
+                                    styles.unitToggleTextModal,
+                                    editDoseUnit === u && styles.unitToggleTextModalActive,
+                                  ]}
+                                >
+                                  {u}
+                                </Text>
+                              </TouchableOpacity>
+                            ))}
+                          </View>
+                        ) : (
+                          <Text style={styles.fancyInputTitleVal}>
+                            {editTargetDose || 0} mL
+                          </Text>
+                        )}
                       </View>
 
                       <TextInput
-                        style={
-                          styles.fancyTextInput
-                        }
+                        style={styles.fancyTextInput}
                         keyboardType="numeric"
                         value={editTargetDose}
-                        onChangeText={
-                          setEditTargetDose
-                        }
+                        onChangeText={setEditTargetDose}
                         textAlign="center"
                       />
                     </View>
@@ -3658,6 +3659,31 @@ const styles = StyleSheet.create({
     backgroundColor: '#10b981',
   },
 
+  unitToggleGroupModal: {
+    flexDirection: 'row',
+    backgroundColor: '#030712',
+    borderRadius: 8,
+    padding: 2,
+    gap: 2,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  unitToggleBtnModal: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  unitToggleBtnModalActive: {
+    backgroundColor: '#10b981',
+  },
+  unitToggleTextModal: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#64748b',
+  },
+  unitToggleTextModalActive: {
+    color: '#022c22',
+  },
   reconBtnSubmitTextV1: {
     fontSize: 10,
     fontWeight: '900',

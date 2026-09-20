@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLanguage } from '../i18n/LanguageContext';
 import {
   View,
   Text,
@@ -130,6 +131,7 @@ const ALL_SITES: SitePoint[] = [
 ];
 
 export const RotationScreen: React.FC = () => {
+  const { language, t } = useLanguage();
   const {
     currentSite,
     setSite,
@@ -164,7 +166,7 @@ export const RotationScreen: React.FC = () => {
     );
 
     if (!log) {
-      return 'Belum ada log';
+      return t('rotation.noLog') || 'Belum ada log';
     }
 
     return log.timestamp || 'Baru saja';

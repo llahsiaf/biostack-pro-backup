@@ -21,6 +21,7 @@ import {
 } from 'lucide-react-native';
 import { useBioStackStore } from '../store/useBioStackStore';
 import { getVialJourneys, getPeptideUsageStats } from '../utils/analyticsUtils';
+import { useLanguage } from '../i18n/LanguageContext';
 
 // Pemetaan Nama Titik Anatomi Indonesia
 const SITE_LABEL_MAP: Record<string, string> = {
@@ -48,6 +49,7 @@ const SITE_LABEL_MAP: Record<string, string> = {
 };
 
 export const HistoryScreen: React.FC = () => {
+  const { language, t } = useLanguage();
   const { injectionHistory, deleteInjectionLog, clearHistory } =
     useBioStackStore();
   const [filterPeptide, setFilterPeptide] =

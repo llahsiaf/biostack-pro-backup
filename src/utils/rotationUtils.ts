@@ -1,10 +1,15 @@
 import type { InjectionLog } from '../types';
+import { t } from '../i18n/translations';
 
 export const ROTATION_SITE_ORDER = [
   'KA', 'KiA', 'KB', 'KiB', 'PKi', 'PKn', 'LKi', 'LKn', 'BKi', 'BKn',
 ] as const;
 
 export function getSiteLabel(siteId: string) {
+  const key = `rotationSites.${siteId}`;
+  const translated = t(key);
+  if (translated && translated !== key) return translated;
+
   const labels: Record<string, string> = {
     KA: 'Perut kanan atas',
     KiA: 'Perut kiri atas',
