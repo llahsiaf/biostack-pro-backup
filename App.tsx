@@ -48,7 +48,7 @@ Notifications.setNotificationHandler({
 });
 
 function BioStackApp() {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
 
   const [activeTab, setActiveTab] = useState<'today' | 'inventory' | 'rotation' | 'history' | 'freezer' | 'analytics' | 'settings'>('today');
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
@@ -179,15 +179,27 @@ function BioStackApp() {
       }
 
       if (finalStatus === 'granted') {
-        Alert.alert('Status Notifikasi', 'Izin notifikasi sudah AKTIF. BioStack akan mengirimkan pengingat jadwal injeksi Anda.');
+        Alert.alert(
+          language === 'en' ? 'Notification Status' : 'Status Notifikasi',
+          language === 'en'
+            ? 'Notification permissions are ACTIVE. BioStack will send reminders for your injection schedule.'
+            : 'Izin notifikasi sudah AKTIF. BioStack akan mengirimkan pengingat jadwal injeksi Anda.'
+        );
       } else {
         Alert.alert(
-          'Izin Ditolak', 
-          'Notifikasi terblokir oleh iOS. Silakan buka Pengaturan > BioStack > izinkan Notifikasi secara manual.'
+          language === 'en' ? 'Permission Denied' : 'Izin Ditolak',
+          language === 'en'
+            ? 'Notifications are blocked by iOS. Please open Settings > BioStack > allow Notifications manually.'
+            : 'Notifikasi terblokir oleh iOS. Silakan buka Pengaturan > BioStack > izinkan Notifikasi secara manual.'
         );
       }
     } catch (error) {
-      Alert.alert('Gagal', 'Sistem tidak dapat memproses permintaan izin saat ini.');
+      Alert.alert(
+        language === 'en' ? 'Failed' : 'Gagal',
+        language === 'en'
+          ? 'System could not process permission request at this time.'
+          : 'Sistem tidak dapat memproses permintaan izin saat ini.'
+      );
     }
   };
 
@@ -228,7 +240,7 @@ function BioStackApp() {
             <TouchableOpacity 
               onPress={() => setIsCalculatorOpen(true)} 
               style={styles.notificationBtn}
-              accessibilityLabel="Kalkulator dosis"
+              accessibilityLabel={language === 'en' ? 'Dose calculator' : 'Kalkulator dosis'}
             >
               <Calculator size={18} color="#10b981" />
             </TouchableOpacity>
@@ -236,7 +248,7 @@ function BioStackApp() {
             <TouchableOpacity 
               onPress={handleManualNotificationRequest} 
               style={styles.notificationBtn}
-              accessibilityLabel="Status notifikasi"
+              accessibilityLabel={language === 'en' ? 'Notification status' : 'Status notifikasi'}
             >
               <Bell size={18} color="#94a3b8" />
             </TouchableOpacity>
@@ -244,7 +256,8 @@ function BioStackApp() {
             <TouchableOpacity
               onPress={() => setActiveTab('analytics')}
               style={styles.notificationBtn}
-              accessibilityLabel="Buka analytics"
+              accessibilityLabel={language === 'en' ? 'Open analytics' : 'Buka analytics'}
+              /* Buka analytics */
             >
               <TrendingUp size={18} color={activeTab === 'analytics' ? '#10b981' : '#94a3b8'} />
             </TouchableOpacity>
@@ -252,7 +265,7 @@ function BioStackApp() {
             <TouchableOpacity 
               onPress={() => setActiveTab('settings')} 
               style={styles.notificationBtn}
-              accessibilityLabel="Buka pengaturan"
+              accessibilityLabel={language === 'en' ? 'Open settings' : 'Buka pengaturan'}
             >
               <Settings size={18} color={activeTab === 'settings' ? '#10b981' : '#94a3b8'} />
             </TouchableOpacity>

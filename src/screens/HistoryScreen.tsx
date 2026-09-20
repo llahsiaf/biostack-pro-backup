@@ -48,6 +48,29 @@ const SITE_LABEL_MAP: Record<string, string> = {
   RG: 'Bokong Kanan',
 };
 
+const SITE_LABEL_MAP_EN: Record<string, string> = {
+  KA: 'Right Upper Abdomen',
+  KiA: 'Left Upper Abdomen',
+  KB: 'Right Lower Abdomen',
+  KiB: 'Left Lower Abdomen',
+  PKi: 'Left Outer Thigh',
+  PKn: 'Right Outer Thigh',
+  LKi: 'Left Arm',
+  LKn: 'Right Arm',
+  BKi: 'Left Glute',
+  BKn: 'Right Glute',
+  TR: 'Right Upper Abdomen',
+  TL: 'Left Upper Abdomen',
+  BR: 'Right Lower Abdomen',
+  BL: 'Left Lower Abdomen',
+  LT: 'Left Outer Thigh',
+  RT: 'Right Outer Thigh',
+  LA: 'Left Arm',
+  RA: 'Right Arm',
+  LG: 'Left Glute',
+  RG: 'Right Glute',
+};
+
 export const HistoryScreen: React.FC = () => {
   const { language, t } = useLanguage();
   const { injectionHistory, deleteInjectionLog, clearHistory } =
@@ -122,14 +145,16 @@ export const HistoryScreen: React.FC = () => {
       ) {
         Alert.alert(
           'Info',
-          'Belum ada data riwayat untuk diekspor.',
+          language === 'en'
+            ? 'No history data to export.'
+            : 'Belum ada data riwayat untuk diekspor.',
         );
         return;
       }
 
       try {
         const header =
-          'ID,Peptida,Dosis,Satuan,Volume(mL),Titik_Injeksi,Waktu,Catatan\n';
+          'ID,Peptide,Dose,Unit,Volume_mL,Injection_Site,Timestamp,Notes\n';
 
         const rows = safeHistory
           .map(
@@ -143,13 +168,17 @@ export const HistoryScreen: React.FC = () => {
 
         await Share.share({
           title:
-            'Riwayat Injeksi BioStack PRO',
+            language === 'en'
+              ? 'BioStack PRO Injection History'
+              : 'Riwayat Injeksi BioStack PRO',
           message: csvData,
         });
       } catch (e) {
         Alert.alert(
-          'Gagal',
-          'Tidak dapat mengekspor riwayat.',
+          language === 'en' ? 'Error' : 'Gagal',
+          language === 'en'
+            ? 'Unable to export history.'
+            : 'Tidak dapat mengekspor riwayat.',
         );
       }
     };
@@ -162,15 +191,17 @@ export const HistoryScreen: React.FC = () => {
         return;
 
       Alert.alert(
-        'Hapus Semua Riwayat',
-        'Apakah Anda yakin ingin menghapus seluruh log riwayat injeksi? Tindakan ini tidak dapat dibatalkan.',
+        language === 'en' ? 'Clear All History' : 'Hapus Semua Riwayat',
+        language === 'en'
+          ? 'Are you sure you want to delete all injection history logs? This action cannot be undone.'
+          : 'Apakah Anda yakin ingin menghapus seluruh log riwayat injeksi? Tindakan ini tidak dapat dibatalkan.',
         [
           {
-            text: 'Batal',
+            text: t('app.cancel'),
             style: 'cancel',
           },
           {
-            text: 'Hapus Semua',
+            text: language === 'en' ? 'Clear All' : 'Hapus Semua',
             style: 'destructive',
             onPress: () =>
               clearHistory(),
@@ -184,10 +215,9 @@ export const HistoryScreen: React.FC = () => {
   ) => {
     if (!siteId) return 'KA';
 
-    return SITE_LABEL_MAP[
-      siteId
-    ]
-      ? `${siteId} (${SITE_LABEL_MAP[siteId]})`
+    const map = language === 'en' ? SITE_LABEL_MAP_EN : SITE_LABEL_MAP;
+    return map[siteId]
+      ? `${siteId} (${map[siteId]})`
       : siteId;
   };
 
@@ -226,7 +256,9 @@ export const HistoryScreen: React.FC = () => {
               styles.summaryTitle
             }
           >
-            Log Administrasi Peptida
+            {language === 'en'
+              ? 'Peptide Administration Logs'
+              : 'Log Administrasi Peptida'}
           </Text>
 
           <Text
@@ -234,9 +266,9 @@ export const HistoryScreen: React.FC = () => {
               styles.summarySubtitle
             }
           >
-            Total {safeHistory.length}{' '}
-            tindakan penyuntikan
-            tercatat
+            {language === 'en'
+              ? `Total ${safeHistory.length} injection records`
+              : `Total ${safeHistory.length} tindakan penyuntikan tercatat`}
           </Text>
         </View>
 
@@ -297,7 +329,9 @@ export const HistoryScreen: React.FC = () => {
                 styles.insightTitle
               }
             >
-              Ringkasan Penggunaan
+              {language === 'en'
+                ? 'Usage Summary'
+                : 'Ringkasan Penggunaan' /* Ringkasan Penggunaan */}
             </Text>
           </View>
 
@@ -307,7 +341,9 @@ export const HistoryScreen: React.FC = () => {
             }
           >
             {activeJourneyCount}{' '}
-            vial aktif
+            {language === 'en'
+              ? 'active vials'
+              : 'vial aktif'}
           </Text>
         </View>
 
@@ -332,7 +368,9 @@ export const HistoryScreen: React.FC = () => {
                 styles.insightLabel
               }
             >
-              Total log
+              {language === 'en'
+                ? 'Total logs'
+                : 'Total log'}
             </Text>
           </View>
 
@@ -356,7 +394,9 @@ export const HistoryScreen: React.FC = () => {
                 styles.insightLabel
               }
             >
-              mL tercatat
+              {language === 'en'
+                ? 'mL logged'
+                : 'mL tercatat'}
             </Text>
           </View>
 
@@ -378,7 +418,9 @@ export const HistoryScreen: React.FC = () => {
                 styles.insightLabel
               }
             >
-              Vial tercatat
+              {language === 'en'
+                ? 'Vials logged'
+                : 'Vial tercatat'}
             </Text>
           </View>
         </View>
@@ -399,7 +441,9 @@ export const HistoryScreen: React.FC = () => {
                 styles.mostUsedText
               }
             >
-              Paling sering:{' '}
+              {language === 'en'
+                ? 'Most frequent: '
+                : 'Paling sering: '}
               <Text
                 style={
                   styles.mostUsedStrong
@@ -407,7 +451,10 @@ export const HistoryScreen: React.FC = () => {
               >
                 {mostUsed.name}
               </Text>{' '}
-              · {mostUsed.count} log
+              · {mostUsed.count}{' '}
+              {language === 'en'
+                ? 'logs'
+                : 'log'}
             </Text>
           </View>
         ) : null}
@@ -435,7 +482,9 @@ export const HistoryScreen: React.FC = () => {
                 styles.insightTitle
               }
             >
-              Perjalanan Vial
+              {language === 'en'
+                ? 'Vial Journey'
+                : 'Perjalanan Vial' /* Perjalanan Vial */}
             </Text>
           </View>
 
@@ -455,8 +504,9 @@ export const HistoryScreen: React.FC = () => {
               styles.vialEmpty
             }
           >
-            Belum ada vial yang
-            tercatat.
+            {language === 'en'
+              ? 'No vials recorded yet.'
+              : 'Belum ada vial yang tercatat.'}
           </Text>
         ) : (
           vialJourneys
@@ -494,11 +544,11 @@ export const HistoryScreen: React.FC = () => {
                       {
                         vial.injectionCount
                       }{' '}
-                      log ·{' '}
+                      {language === 'en' ? 'logs' : 'log'} ·{' '}
                       {
                         vial.notesCount
                       }{' '}
-                      catatan
+                      {language === 'en' ? 'notes' : 'catatan'}
                     </Text>
                   </View>
 
@@ -546,7 +596,7 @@ export const HistoryScreen: React.FC = () => {
                     {vial.initialVolumeMl.toFixed(
                       2,
                     )}{' '}
-                    mL tercatat
+                    {language === 'en' ? 'mL logged' : 'mL tercatat'}
                   </Text>
 
                   <Text
@@ -556,7 +606,7 @@ export const HistoryScreen: React.FC = () => {
                   >
                     {vial.nextScheduledDate
                       ? `Next ${vial.nextScheduledDate} ${vial.nextScheduledTime || ''}`
-                      : 'Tidak ada jadwal'}
+                      : (language === 'en' ? 'No schedule' : 'Tidak ada jadwal')}
                   </Text>
                 </View>
               </View>
@@ -593,7 +643,7 @@ export const HistoryScreen: React.FC = () => {
                   styles.filterChipTextActive,
               ]}
             >
-              Semua (
+              {language === 'en' ? 'All' : 'Semua'} (
               {
                 safeHistory.length
               }
@@ -652,7 +702,9 @@ export const HistoryScreen: React.FC = () => {
                 styles.emptyTitle
               }
             >
-              Belum Ada Log Injeksi
+              {language === 'en'
+                ? 'No Injection Logs'
+                : 'Belum Ada Log Injeksi'}
             </Text>
 
             <Text
@@ -660,11 +712,9 @@ export const HistoryScreen: React.FC = () => {
                 styles.emptySub
               }
             >
-              Tekan tombol Suntik
-              Sekarang pada tab
-              Inventory untuk
-              mencatat log
-              penyuntikan baru.
+              {language === 'en'
+                ? 'Tap Inject Now on the Fridge tab to record a new injection.'
+                : 'Tekan tombol Suntik Sekarang pada tab Inventory untuk mencatat log penyuntikan baru.'}
             </Text>
           </View>
         ) : (
@@ -704,23 +754,25 @@ export const HistoryScreen: React.FC = () => {
                         }
                       >
                         {item.peptideName ||
-                          'Senyawa Peptida'}
+                          (language === 'en' ? 'Peptide Compound' : 'Senyawa Peptida')}
                       </Text>
                     </View>
 
                     <TouchableOpacity
                       onPress={() => {
                         Alert.alert(
-                          'Hapus Log',
-                          'Hapus catatan injeksi ini?',
+                          language === 'en' ? 'Delete Log' : 'Hapus Log',
+                          language === 'en'
+                            ? 'Delete this injection record?'
+                            : 'Hapus catatan injeksi ini?',
                           [
                             {
-                              text: 'Batal',
+                              text: t('app.cancel'),
                               style:
                                 'cancel',
                             },
                             {
-                              text: 'Hapus',
+                              text: language === 'en' ? 'Delete' : 'Hapus',
                               style:
                                 'destructive',
                               onPress:
@@ -840,7 +892,7 @@ export const HistoryScreen: React.FC = () => {
                           styles.notesLabel
                         }
                       >
-                        Catatan:
+                        {language === 'en' ? 'Notes:' : 'Catatan:'}
                       </Text>
 
                       <Text

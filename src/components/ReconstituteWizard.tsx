@@ -3,6 +3,7 @@ import { Modal, View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput 
 import { X, FlaskConical, ChevronRight, Check, Info, ShieldAlert } from 'lucide-react-native';
 import { FreezerStockItem, ActiveInventoryItem } from '../types';
 import { DEFAULT_PEPTIDES } from '../database/defaultPeptides';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface ReconstituteWizardProps {
   visible: boolean;
@@ -17,6 +18,7 @@ export const ReconstituteWizard: React.FC<ReconstituteWizardProps> = ({
   onClose,
   onComplete,
 }) => {
+  const { language } = useLanguage();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [bacWater, setBacWater] = useState(2.0);
   const [selectedDose, setSelectedDose] = useState(1.0);
@@ -36,9 +38,9 @@ export const ReconstituteWizard: React.FC<ReconstituteWizardProps> = ({
     setStep(1);
     setBacWater(freezerItem.bacWaterMl || def?.defaultBacWater || 2.0);
     setSelectedDose(freezerItem.defaultDose || def?.targetDose || 1.0);
-    setSchedule(freezerItem.schedule || def?.frequencyLabel || 'Mingguan (Weekly)');
+    setSchedule(freezerItem.schedule || def?.frequencyLabel || (language === 'en' ? 'Weekly' : 'Mingguan (Weekly)'));
     setInjectionTime(def?.injectionTime || '08:00');
-  }, [freezerItem]);
+  }, [freezerItem, language]);
 
   if (!freezerItem) return null;
 
@@ -80,7 +82,9 @@ export const ReconstituteWizard: React.FC<ReconstituteWizardProps> = ({
           <View style={styles.header}>
             <View style={styles.headerTitleWrap}>
               <FlaskConical size={18} color="#10b981" />
-              <Text style={styles.headerTitle}>Pelarutan & Penyetelan Dosis</Text>
+              <Text style={styles.headerTitle}>
+                {language === 'en' ? 'Reconstitution & Dose Setup' : 'Pelarutan & Penyetelan Dosis'}
+              </Text>
             </View>
             <TouchableOpacity onPress={onClose}>
               <X size={18} color="#94a3b8" />
@@ -104,13 +108,19 @@ export const ReconstituteWizard: React.FC<ReconstituteWizardProps> = ({
           <ScrollView contentContainerStyle={styles.bodyScroll}>
             {step === 1 && (
               <View style={styles.stepContent}>
-                <Text style={styles.stepHeader}>Langkah 1: Rasio Pelarut (BAC Water)</Text>
+                <Text style={styles.stepHeader}>
+                  {language === 'en' ? 'Step 1: Diluent Ratio (BAC Water)' : 'Langkah 1: Rasio Pelarut (BAC Water)'}
+                </Text>
                 <Text style={styles.stepDesc}>
-                  Masukkan volume Bacteriostatic Water yang akan Anda injeksikan ke dalam vial {freezerItem.name} ({freezerItem.vialSizeMg}{freezerItem.unit}).
+                  {language === 'en'
+                    ? `Enter the volume of Bacteriostatic Water to inject into the vial of ${freezerItem.name} (${freezerItem.vialSizeMg} ${freezerItem.unit}).`
+                    : `Masukkan volume Bacteriostatic Water yang akan Anda injeksikan ke dalam vial ${freezerItem.name} (${freezerItem.vialSizeMg}${freezerItem.unit}).`}
                 </Text>
 
                 <View style={styles.cardBox}>
-                  <Text style={styles.fieldLabel}>Volume BAC Water (mL):</Text>
+                  <Text style={styles.fieldLabel}>
+                    {language === 'en' ? 'BAC Water Volume (mL):' : 'Volume BAC Water (mL):'}
+                  </Text>
                   <TextInput
                     style={styles.inputField}
                     keyboardType="numeric"
@@ -118,7 +128,8 @@ export const ReconstituteWizard: React.FC<ReconstituteWizardProps> = ({
                     onChangeText={(v) => setBacWater(parseFloat(v) || 1.0)}
                   />
                   <Text style={styles.calcSubtext}>
-                    Konsentrasi Akhir: {((freezerItem.vialSizeMg / (bacWater || 1))).toFixed(2)} {freezerItem.unit}/mL
+                    {language === 'en' ? 'Final Concentration:' : 'Konsentrasi Akhir:'}{' '}
+                    {((freezerItem.vialSizeMg / (bacWater || 1))).toFixed(2)} {freezerItem.unit}/mL
                   </Text>
                 </View>
               </View>
@@ -126,11 +137,19 @@ export const ReconstituteWizard: React.FC<ReconstituteWizardProps> = ({
 
             {step === 2 && (
               <View style={styles.stepContent}>
-                <Text style={styles.stepHeader}>Langkah 2: Dosis Awal & Jadwal</Text>
-                <Text style={styles.stepDesc}>Tentukan takaran suntik per sesi dan jadwal injeksi rutin Anda.</Text>
+                <Text style={styles.stepHeader}>
+                  {language === 'en' ? 'Step 2: Initial Dose & Schedule' : 'Langkah 2: Dosis Awal & Jadwal'}
+                </Text>
+                <Text style={styles.stepDesc}>
+                  {language === 'en'
+                    ? 'Determine target injection dose per session and your routine schedule.'
+                    : 'Tentukan takaran suntik per sesi dan jadwal injeksi rutin Anda.'}
+                </Text>
 
                 <View style={styles.cardBox}>
-                  <Text style={styles.fieldLabel}>Target Dosis ({freezerItem.unit}):</Text>
+                  <Text style={styles.fieldLabel}>
+                    {language === 'en' ? `Target Dose (${freezerItem.unit}):` : `Target Dosis (${freezerItem.unit}):`}
+                  </Text>
                   <TextInput
                     style={styles.inputField}
                     keyboardType="numeric"
@@ -138,7 +157,9 @@ export const ReconstituteWizard: React.FC<ReconstituteWizardProps> = ({
                     onChangeText={(v) => setSelectedDose(parseFloat(v) || 0)}
                   />
 
-                  <Text style={[styles.fieldLabel, { marginTop: 12 }]}>Jam Penyuntikan Rutin:</Text>
+                  <Text style={[styles.fieldLabel, { marginTop: 12 }]}>
+                    {language === 'en' ? 'Routine Injection Time:' : 'Jam Penyuntikan Rutin:'}
+                  </Text>
                   <TextInput
                     style={styles.inputField}
                     value={injectionTime}
@@ -151,24 +172,32 @@ export const ReconstituteWizard: React.FC<ReconstituteWizardProps> = ({
 
             {step === 3 && (
               <View style={styles.stepContent}>
-                <Text style={styles.stepHeader}>Langkah 3: Panduan & Tips Klinis Pelarutan</Text>
+                <Text style={styles.stepHeader}>
+                  {language === 'en' ? 'Step 3: Clinical Reconstitution Guidelines' : 'Langkah 3: Panduan & Tips Klinis Pelarutan'}
+                </Text>
                 <View style={styles.tipsBox}>
                   <View style={styles.tipRow}>
                     <Info size={16} color="#06b6d4" />
                     <Text style={styles.tipText}>
-                      Alirkan air BAC perlahan menuruni dinding kaca vial, jangan semprotkan langsung ke bubuk.
+                      {language === 'en'
+                        ? 'Trickle BAC water slowly down the vial wall; do not spray directly onto the powder.'
+                        : 'Alirkan air BAC perlahan menuruni dinding kaca vial, jangan semprotkan langsung ke bubuk.'}
                     </Text>
                   </View>
                   <View style={styles.tipRow}>
                     <ShieldAlert size={16} color="#f59e0b" />
                     <Text style={styles.tipText}>
-                      Putar melingkar secara perlahan (gentle swirl). Jangan mengocok vial agar rantai peptida tidak rusak.
+                      {language === 'en'
+                        ? 'Gently swirl the vial. Do not shake to prevent damaging peptide molecular chains.'
+                        : 'Putar melingkar secara perlahan (gentle swirl). Jangan mengocok vial agar rantai peptida tidak rusak.'}
                     </Text>
                   </View>
                   <View style={styles.tipRow}>
                     <Check size={16} color="#10b981" />
                     <Text style={styles.tipText}>
-                      Simpan segera di kulkas suhu 2°C - 8°C dan jauhkan dari paparan sinar lampu langsung.
+                      {language === 'en'
+                        ? 'Store immediately in fridge at 2°C - 8°C and keep away from direct light.'
+                        : 'Simpan segera di kulkas suhu 2°C - 8°C dan jauhkan dari paparan sinar lampu langsung.'}
                     </Text>
                   </View>
                 </View>
@@ -180,18 +209,24 @@ export const ReconstituteWizard: React.FC<ReconstituteWizardProps> = ({
           <View style={styles.footerRow}>
             {step > 1 && (
               <TouchableOpacity onPress={() => setStep((s) => (s - 1) as any)} style={styles.prevBtn}>
-                <Text style={styles.prevBtnText}>Kembali</Text>
+                <Text style={styles.prevBtnText}>
+                  {language === 'en' ? 'Back' : 'Kembali'}
+                </Text>
               </TouchableOpacity>
             )}
             {step < 3 ? (
               <TouchableOpacity onPress={() => setStep((s) => (s + 1) as any)} style={styles.nextBtn}>
-                <Text style={styles.nextBtnText}>Lanjut</Text>
+                <Text style={styles.nextBtnText}>
+                  {language === 'en' ? 'Next' : 'Lanjut'}
+                </Text>
                 <ChevronRight size={16} color="#022c22" />
               </TouchableOpacity>
             ) : (
               <TouchableOpacity onPress={handleFinish} style={styles.finishBtn}>
                 <Check size={16} color="#022c22" />
-                <Text style={styles.finishBtnText}>Pindahkan ke Kulkas</Text>
+                <Text style={styles.finishBtnText}>
+                  {language === 'en' ? 'Move to Fridge' : 'Pindahkan ke Kulkas'}
+                </Text>
               </TouchableOpacity>
             )}
           </View>

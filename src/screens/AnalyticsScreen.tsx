@@ -18,6 +18,7 @@ import {
 } from 'lucide-react-native';
 
 import { useBioStackStore } from '../store/useBioStackStore';
+import { useLanguage } from '../i18n/LanguageContext';
 
 import {
   getAnalyticsDateRange,
@@ -45,20 +46,22 @@ import {
 
 const RANGE_OPTIONS = [14, 30, 60] as const;
 
-const formatDateLabel = (value: string) => {
-  const date = new Date(`${value}T12:00:00`);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat('id-ID', {
-    day: '2-digit',
-    month: 'short',
-  }).format(date);
-};
-
 export const AnalyticsScreen: React.FC = () => {
+  const { language, t } = useLanguage();
+
+  const formatDateLabel = (value: string) => {
+    const date = new Date(`${value}T12:00:00`);
+
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+
+    return new Intl.DateTimeFormat(language === 'en' ? 'en-US' : 'id-ID', {
+      day: '2-digit',
+      month: 'short',
+    }).format(date);
+  };
+
   const {
     inventory,
     injectionHistory,
@@ -67,7 +70,7 @@ export const AnalyticsScreen: React.FC = () => {
 
   const [range, setRange] = useState<number>(30);
   const [selectedPeptide, setSelectedPeptide] =
-    useState<string>('Semua');
+    useState<string>('all');
   const [showAllVials, setShowAllVials] =
     useState(false);
 
@@ -162,19 +165,25 @@ export const AnalyticsScreen: React.FC = () => {
   /*
    * Filter peptide.
    */
-  const peptideNames = useMemo(
+  const peptideOptions = useMemo(
     () => [
-      'Semua',
-      ...usageStats.map(
-        (item) => item.name,
-      ),
+      { id: 'all', label: language === 'en' ? 'All' : 'Semua' },
+      ...usageStats.map((item) => ({
+        id: item.name,
+        label: item.name,
+      })),
     ],
-    [usageStats],
+    [usageStats, language],
   );
+
+  const isAllPeptides =
+    selectedPeptide === 'all' ||
+    selectedPeptide === 'Semua' ||
+    selectedPeptide === 'All';
 
   const filteredLogs = useMemo(
     () =>
-      selectedPeptide === 'Semua'
+      isAllPeptides
         ? safeLogs
         : safeLogs.filter(
             (log) =>
@@ -184,6 +193,7 @@ export const AnalyticsScreen: React.FC = () => {
     [
       safeLogs,
       selectedPeptide,
+      isAllPeptides,
     ],
   );
 
@@ -193,7 +203,7 @@ export const AnalyticsScreen: React.FC = () => {
    */
   const filteredDaily = useMemo(
     () =>
-      selectedPeptide === 'Semua'
+      isAllPeptides
         ? dailyActivity
         : getPeptideDailyActivity(
             safeLogs,
@@ -205,6 +215,7 @@ export const AnalyticsScreen: React.FC = () => {
       selectedPeptide,
       range,
       dailyActivity,
+      isAllPeptides,
     ],
   );
 
@@ -306,7 +317,7 @@ export const AnalyticsScreen: React.FC = () => {
           </Text>
 
           <Text style={styles.heroTitle}>
-            Pola Tracker
+            {language === 'en' ? 'Tracker Patterns' : 'Pola Tracker'}
           </Text>
 
           <Text
@@ -321,7 +332,7 @@ export const AnalyticsScreen: React.FC = () => {
             {formatDateLabel(
               rangeInfo.end,
             )}{' '}
-            · data deskriptif
+            · {language === 'en' ? 'descriptive data' : 'data deskriptif'}
           </Text>
         </View>
       </View>
@@ -350,7 +361,7 @@ export const AnalyticsScreen: React.FC = () => {
                     styles.rangeTextActive,
                 ]}
               >
-                {option} hari
+                {option} {language === 'en' ? 'days' : 'hari'}
               </Text>
             </TouchableOpacity>
           ),
@@ -361,19 +372,19 @@ export const AnalyticsScreen: React.FC = () => {
           PEPTIDE FILTER
       ========================== */}
       <View style={styles.filterScroll}>
-        {peptideNames.map(
-          (name) => (
+        {peptideOptions.map(
+          (item) => (
             <TouchableOpacity
-              key={name}
+              key={item.id}
               onPress={() =>
                 setSelectedPeptide(
-                  name,
+                  item.id,
                 )
               }
               style={[
                 styles.filterChip,
                 selectedPeptide ===
-                  name &&
+                  item.id &&
                   styles.filterChipActive,
               ]}
             >
@@ -381,11 +392,11 @@ export const AnalyticsScreen: React.FC = () => {
                 style={[
                   styles.filterChipText,
                   selectedPeptide ===
-                    name &&
+                    item.id &&
                     styles.filterChipTextActive,
                 ]}
               >
-                {name}
+                {item.label}
               </Text>
             </TouchableOpacity>
           ),
@@ -405,7 +416,7 @@ export const AnalyticsScreen: React.FC = () => {
               }
             />
           }
-          label="Log"
+          label={language === 'en' ? 'Logs' : 'Log'}
           value={String(
             filteredLogs.length,
           )}
@@ -418,7 +429,7 @@ export const AnalyticsScreen: React.FC = () => {
               color={COLORS.cyan}
             />
           }
-          label="mL tercatat"
+          label={language === 'en' ? 'mL logged' : 'mL tercatat'}
           value={totalVolume.toFixed(
             2,
           )}
@@ -433,7 +444,7 @@ export const AnalyticsScreen: React.FC = () => {
               }
             />
           }
-          label="Vial aktif"
+          label={language === 'en' ? 'Active vials' : 'Vial aktif'}
           value={String(
             activeVials,
           )}
@@ -475,7 +486,9 @@ export const AnalyticsScreen: React.FC = () => {
                 styles.sectionTitle
               }
             >
-              Kepatuhan Jadwal
+              {language === 'en'
+                ? 'Schedule Compliance'
+                : 'Kepatuhan Jadwal'}
             </Text>
           </View>
 
@@ -484,7 +497,7 @@ export const AnalyticsScreen: React.FC = () => {
               styles.sectionMeta
             }
           >
-            {completionRate}% selesai
+            {completionRate}% {language === 'en' ? 'completed' : 'selesai'}
           </Text>
         </View>
 
@@ -507,8 +520,9 @@ export const AnalyticsScreen: React.FC = () => {
                 styles.metricLabel
               }
             >
-              selesai dari {scheduled}{' '}
-              jadwal
+              {language === 'en'
+                ? `completed of ${scheduled} scheduled`
+                : `selesai dari ${scheduled} jadwal`}
             </Text>
           </View>
 
@@ -532,9 +546,9 @@ export const AnalyticsScreen: React.FC = () => {
             styles.helperText
           }
         >
-          Persentase ini hanya
-          membandingkan jadwal yang
-          tercatat dengan log yang ada.
+          {language === 'en'
+            ? 'This percentage compares recorded schedules with logged entries.'
+            : 'Persentase ini hanya membandingkan jadwal yang tercatat dengan log yang ada.'}
         </Text>
       </View>
 
@@ -560,7 +574,9 @@ export const AnalyticsScreen: React.FC = () => {
                 styles.sectionTitle
               }
             >
-              Aktivitas Harian
+              {language === 'en'
+                ? 'Daily Activity'
+                : 'Aktivitas Harian' /* Aktivitas Harian */}
             </Text>
           </View>
 
@@ -569,7 +585,7 @@ export const AnalyticsScreen: React.FC = () => {
               styles.sectionMeta
             }
           >
-            {range} hari
+            {range} {language === 'en' ? 'days' : 'hari'}
           </Text>
         </View>
 
@@ -643,7 +659,7 @@ export const AnalyticsScreen: React.FC = () => {
                 styles.legendText
               }
             >
-              Log per hari
+              {language === 'en' ? 'Logs per day' : 'Log per hari'}
             </Text>
           </View>
         </View>
@@ -673,7 +689,9 @@ export const AnalyticsScreen: React.FC = () => {
                 styles.sectionTitle
               }
             >
-              Penggunaan per Peptida
+              {language === 'en'
+                ? 'Usage by Peptide'
+                : 'Penggunaan per Peptida'}
             </Text>
           </View>
         </View>
@@ -685,7 +703,7 @@ export const AnalyticsScreen: React.FC = () => {
               styles.emptyText
             }
           >
-            Belum ada history.
+            {language === 'en' ? 'No history yet.' : 'Belum ada history.'}
           </Text>
         ) : (
           usageStats
@@ -734,7 +752,7 @@ export const AnalyticsScreen: React.FC = () => {
                         2,
                       )}{' '}
                       mL · {item.notes}{' '}
-                      catatan
+                      {language === 'en' ? 'notes' : 'catatan'}
                     </Text>
                   </View>
 
@@ -773,7 +791,9 @@ export const AnalyticsScreen: React.FC = () => {
                 styles.sectionTitle
               }
             >
-              Timeline Vial
+              {language === 'en'
+                ? 'Vial Timeline'
+                : 'Timeline Vial' /* Timeline Vial */}
             </Text>
           </View>
 
@@ -783,7 +803,7 @@ export const AnalyticsScreen: React.FC = () => {
             }
           >
             {vialJourneys.length}{' '}
-            vial
+            {language === 'en' ? 'vials' : 'vial'}
           </Text>
         </View>
 
@@ -794,8 +814,9 @@ export const AnalyticsScreen: React.FC = () => {
               styles.emptyText
             }
           >
-            Belum ada vial di
-            inventory.
+            {language === 'en'
+              ? 'No vials in inventory.'
+              : 'Belum ada vial di inventory.'}
           </Text>
         ) : (
           visibleVials.map(
@@ -832,11 +853,11 @@ export const AnalyticsScreen: React.FC = () => {
                       {
                         vial.injectionCount
                       }{' '}
-                      log ·{' '}
+                      {language === 'en' ? 'logs' : 'log'} ·{' '}
                       {vial.currentVolumeMl.toFixed(
                         2,
                       )}{' '}
-                      mL tersisa
+                      {language === 'en' ? 'mL remaining' : 'mL tersisa'}
                     </Text>
                   </View>
 
@@ -870,16 +891,16 @@ export const AnalyticsScreen: React.FC = () => {
                   }
                 >
                   {vial.lastInjectedAt
-                    ? `Terakhir: ${new Date(
+                    ? `${language === 'en' ? 'Last: ' : 'Terakhir: '}${new Date(
                         vial.lastInjectedAt,
                       ).toLocaleString(
-                        'id-ID',
+                        language === 'en' ? 'en-US' : 'id-ID',
                         {
                           day: '2-digit',
                           month: 'short',
                         },
                       )}`
-                    : 'Belum ada log'}
+                    : (language === 'en' ? 'No logs yet' : 'Belum ada log')}
                 </Text>
               </View>
             ),
@@ -904,8 +925,8 @@ export const AnalyticsScreen: React.FC = () => {
               }
             >
               {showAllVials
-                ? 'Tampilkan lebih sedikit'
-                : 'Tampilkan semua vial'}
+                ? (language === 'en' ? 'Show less' : 'Tampilkan lebih sedikit')
+                : (language === 'en' ? 'Show all vials' : 'Tampilkan semua vial')}
             </Text>
 
             <ChevronDown
@@ -941,10 +962,9 @@ export const AnalyticsScreen: React.FC = () => {
             styles.footerText
           }
         >
-          Analytics adalah ringkasan
-          data yang kamu catat sendiri
-          dan tidak dimaksudkan sebagai
-          rekomendasi terapi.
+          {language === 'en'
+            ? 'Analytics is a summary of data you logged yourself and is not intended as medical advice.'
+            : 'Analytics adalah ringkasan data yang kamu catat sendiri dan tidak dimaksudkan sebagai rekomendasi terapi.'}
         </Text>
       </View>
     </ScrollView>

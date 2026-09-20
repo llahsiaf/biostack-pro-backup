@@ -12,16 +12,25 @@ import Svg, {
   Text as SvgText,
 } from 'react-native-svg';
 import { INJECTION_SITES } from '../database/defaultPeptides';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface BodyMapRotationProps {
   currentSiteIndex: number;
   onSelectSite: (index: number) => void;
 }
 
+const SITE_LABEL_EN: Record<string, string> = {
+  KA: 'Upper Right',
+  KiA: 'Upper Left',
+  KB: 'Lower Right',
+  KiB: 'Lower Left',
+};
+
 export const BodyMapRotation: React.FC<BodyMapRotationProps> = ({
   currentSiteIndex,
   onSelectSite,
 }) => {
+  const { language } = useLanguage();
   return (
     <View style={styles.container}>
       <Svg width="100%" height={260} viewBox="0 0 320 320">
@@ -76,12 +85,16 @@ export const BodyMapRotation: React.FC<BodyMapRotationProps> = ({
         <Circle cx="160" cy="160" r="10" fill="#090d16" stroke="#06b6d4" strokeWidth="2" />
         <Circle cx="160" cy="160" r="4" fill="#06b6d4" />
         <SvgText x="160" y="145" textAnchor="middle" fill="#64748b" fontSize="8" fontWeight="800">
-          PUSAR
+          {language === 'en' ? 'NAVEL' : 'PUSAR'}
         </SvgText>
 
         {/* 4 Quadrants Interactive Targets */}
         {INJECTION_SITES.map((site, idx) => {
           const isCurrent = idx === currentSiteIndex;
+          const displayLabel = language === 'en'
+            ? (SITE_LABEL_EN[site.code] || site.name)
+            : `${site.name.split(' ')[0]} ${site.name.split(' ')[1]}`;
+
           return (
             <G key={site.id} onPress={() => onSelectSite(idx)}>
               {isCurrent && (
@@ -122,7 +135,7 @@ export const BodyMapRotation: React.FC<BodyMapRotationProps> = ({
                 fontSize="8"
                 fontWeight="700"
               >
-                {site.name.split(' ')[0]} {site.name.split(' ')[1]}
+                {displayLabel}
               </SvgText>
             </G>
           );

@@ -25,7 +25,7 @@ export const GenericDosingCalculatorModal: React.FC<GenericDosingCalculatorModal
   visible,
   onClose,
 }) => {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
 
   const [vialSize, setVialSize] = useState('10');
   const [vialUnit, setVialUnit] = useState<'mg' | 'mcg' | 'mL'>('mg');
@@ -116,7 +116,7 @@ export const GenericDosingCalculatorModal: React.FC<GenericDosingCalculatorModal
                 keyboardType="numeric"
                 value={vialSize}
                 onChangeText={setVialSize}
-                placeholder="Contoh: 10"
+                placeholder={language === 'en' ? 'e.g. 10' : 'Contoh: 10'}
                 placeholderTextColor="#64748b"
               />
 
@@ -149,7 +149,7 @@ export const GenericDosingCalculatorModal: React.FC<GenericDosingCalculatorModal
                   keyboardType="numeric"
                   value={bacWater}
                   onChangeText={setBacWater}
-                  placeholder="Contoh: 2.0"
+                  placeholder={language === 'en' ? 'e.g. 2.0' : 'Contoh: 2.0'}
                   placeholderTextColor="#64748b"
                 />
 
@@ -203,7 +203,11 @@ export const GenericDosingCalculatorModal: React.FC<GenericDosingCalculatorModal
                 keyboardType="numeric"
                 value={targetDose}
                 onChangeText={setTargetDose}
-                placeholder={doseUnit === 'mcg' ? 'Contoh: 250' : 'Contoh: 0.5'}
+                placeholder={
+                  doseUnit === 'mcg'
+                    ? (language === 'en' ? 'e.g. 250' : 'Contoh: 250')
+                    : (language === 'en' ? 'e.g. 0.5' : 'Contoh: 0.5')
+                }
                 placeholderTextColor="#64748b"
               />
 

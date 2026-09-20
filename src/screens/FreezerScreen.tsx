@@ -141,7 +141,9 @@ export const FreezerScreen: React.FC = () => {
     if (item.unit === 'mL') {
       Alert.alert(
         t('freezer.moveToFridge'),
-        `${item.name} adalah senyawa cairan siap pakai (${item.vialSize} mL). Pindahkan 1 vial langsung ke kulkas aktif tanpa pelarutan BAC Water?`,
+        language === 'en'
+          ? `${item.name} is a ready-to-use liquid compound (${item.vialSize} mL). Move 1 vial directly to active fridge without BAC Water reconstitution?`
+          : `${item.name} adalah senyawa cairan siap pakai (${item.vialSize} mL). Pindahkan 1 vial langsung ke kulkas aktif tanpa pelarutan BAC Water?`,
         [
           {
             text: t('app.cancel'),
@@ -154,7 +156,10 @@ export const FreezerScreen: React.FC = () => {
 
               Alert.alert(
                 t('freezer.transferTitle'),
-                t('freezer.transferSuccess', { name: item.name }) || `${item.name} berhasil dipindahkan ke kulkas aktif.`
+                t('freezer.transferSuccess', { name: item.name }) ||
+                  (language === 'en'
+                    ? `${item.name} successfully moved to active fridge.`
+                    : `${item.name} berhasil dipindahkan ke kulkas aktif.`)
               );
             },
           },
@@ -190,7 +195,9 @@ export const FreezerScreen: React.FC = () => {
     Alert.alert(
       t('freezer.reconstitutionSuccess'),
       t('freezer.reconstitutionSuccessDescription', { name: selectedFreezerItem.name }) ||
-        `1 vial ${selectedFreezerItem.name} berhasil dilarutkan dengan ${bac} mL BAC Water dan dimasukkan ke kulkas aktif.`
+        (language === 'en'
+          ? `1 vial of ${selectedFreezerItem.name} successfully reconstituted with ${bac} mL BAC Water and added to active fridge.`
+          : `1 vial ${selectedFreezerItem.name} berhasil dilarutkan dengan ${bac} mL BAC Water dan dimasukkan ke kulkas aktif.`)
     );
   };
 
@@ -201,7 +208,7 @@ export const FreezerScreen: React.FC = () => {
     if (!newName.trim()) {
       Alert.alert(
         t('app.confirm'),
-        'Harap masukkan nama peptida.'
+        language === 'en' ? 'Please enter peptide name.' : 'Harap masukkan nama peptida.'
       );
       return;
     }
@@ -209,7 +216,7 @@ export const FreezerScreen: React.FC = () => {
     if (!newVialSize.trim()) {
       Alert.alert(
         t('app.confirm'),
-        'Harap masukkan ukuran vial.'
+        language === 'en' ? 'Please enter vial size.' : 'Harap masukkan ukuran vial.'
       );
       return;
     }
@@ -217,7 +224,7 @@ export const FreezerScreen: React.FC = () => {
     if (!newQuantity.trim()) {
       Alert.alert(
         t('app.confirm'),
-        'Harap masukkan jumlah stok.'
+        language === 'en' ? 'Please enter stock quantity.' : 'Harap masukkan jumlah stok.'
       );
       return;
     }
@@ -266,8 +273,10 @@ export const FreezerScreen: React.FC = () => {
     resetAddForm();
 
     Alert.alert(
-      'Sukses',
-      `${newItem.name} berhasil ditambahkan ke Freezer.`
+      language === 'en' ? 'Success' : 'Sukses',
+      language === 'en'
+        ? `${newItem.name} successfully added to Freezer.`
+        : `${newItem.name} berhasil ditambahkan ke Freezer.`
     );
   };
 
@@ -362,12 +371,13 @@ export const FreezerScreen: React.FC = () => {
             />
 
             <Text style={styles.emptyTitle}>
-              Tidak Ditemukan Peptida
+              {language === 'en' ? 'No Peptides Found' : 'Tidak Ditemukan Peptida'}
             </Text>
 
             <Text style={styles.emptySub}>
-              Tidak ada stok freezer yang cocok
-              dengan pencarian.
+              {language === 'en'
+                ? 'No freezer stock matches your search.'
+                : 'Tidak ada stok freezer yang cocok dengan pencarian.'}
             </Text>
           </View>
         }
@@ -401,15 +411,17 @@ export const FreezerScreen: React.FC = () => {
                   activeOpacity={0.7}
                   onPress={() => {
                     Alert.alert(
-                      'Hapus Senyawa',
-                      `Hapus ${item.name} dari freezer?`,
+                      language === 'en' ? 'Delete Compound' : 'Hapus Senyawa',
+                      language === 'en'
+                        ? `Delete ${item.name} from freezer?`
+                        : `Hapus ${item.name} dari freezer?`,
                       [
                         {
-                          text: 'Batal',
+                          text: t('app.cancel'),
                           style: 'cancel',
                         },
                         {
-                          text: 'Hapus',
+                          text: language === 'en' ? 'Delete' : 'Hapus',
                           style: 'destructive',
                           onPress: () =>
                             removeFreezerItem(item.id),
@@ -599,7 +611,7 @@ export const FreezerScreen: React.FC = () => {
 
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>
-                    Volume BAC Water (mL):
+                    {language === 'en' ? 'BAC Water Volume (mL):' : 'Volume BAC Water (mL):'}
                   </Text>
 
                   <TextInput
@@ -607,7 +619,7 @@ export const FreezerScreen: React.FC = () => {
                     keyboardType="numeric"
                     value={bacWaterInput}
                     onChangeText={setBacWaterInput}
-                    placeholder="Contoh: 2.0"
+                    placeholder={language === 'en' ? 'Example: 2.0' : 'Contoh: 2.0'}
                     placeholderTextColor="#64748b"
                   />
                 </View>
@@ -616,7 +628,7 @@ export const FreezerScreen: React.FC = () => {
                   <View style={styles.reconPreviewBox}>
 
                     <Text style={styles.reconPreviewTitle}>
-                      Hasil Konsentrasi Larutan:
+                      {language === 'en' ? 'Resulting Solution Concentration:' : 'Hasil Konsentrasi Larutan:'}
                     </Text>
 
                     <Text style={styles.reconPreviewVal}>
@@ -628,19 +640,9 @@ export const FreezerScreen: React.FC = () => {
                     </Text>
 
                     <Text style={styles.reconPreviewSub}>
-                      Target dosis{' '}
-                      {selectedFreezerItem.targetDose}{' '}
-                      {selectedFreezerItem.unit} ={' '}
-                      {(
-                        (
-                          selectedFreezerItem.targetDose /
-                          (
-                            selectedFreezerItem.vialSize /
-                            parseFloat(bacWaterInput)
-                          )
-                        ) * 100
-                      ).toFixed(0)}{' '}
-                      IU pada spuit U-100.
+                      {language === 'en'
+                        ? `Target dose ${selectedFreezerItem.targetDose} ${selectedFreezerItem.unit} = ${((selectedFreezerItem.targetDose / (selectedFreezerItem.vialSize / parseFloat(bacWaterInput))) * 100).toFixed(0)} IU on U-100 syringe.`
+                        : `Target dosis ${selectedFreezerItem.targetDose} ${selectedFreezerItem.unit} = ${((selectedFreezerItem.targetDose / (selectedFreezerItem.vialSize / parseFloat(bacWaterInput))) * 100).toFixed(0)} IU pada spuit U-100.`}
                     </Text>
 
                   </View>

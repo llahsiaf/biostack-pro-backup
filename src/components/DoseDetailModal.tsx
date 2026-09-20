@@ -3,6 +3,7 @@ import { Modal, View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView 
 import { X, Activity, Check } from 'lucide-react-native';
 import { ActiveInventoryItem } from '../types';
 import { SyringeVisualizer } from './SyringeVisualizer';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface DoseDetailModalProps {
   visible: boolean;
@@ -12,6 +13,7 @@ interface DoseDetailModalProps {
 }
 
 export const DoseDetailModal: React.FC<DoseDetailModalProps> = ({ visible, item, onClose, onSave }) => {
+  const { language } = useLanguage();
   const [dose, setDose] = useState<number>(item?.selectedDose ?? 0);
   const [bacWater, setBacWater] = useState<number>(item?.bacWaterMl || 2.0);
 
@@ -54,7 +56,9 @@ export const DoseDetailModal: React.FC<DoseDetailModalProps> = ({ visible, item,
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollBody}>
             {/* Quick Presets */}
-            <Text style={styles.sectionLabel}>Preset Dosis Cepat</Text>
+            <Text style={styles.sectionLabel}>
+              {language === 'en' ? 'Quick Dose Presets' : 'Preset Dosis Cepat'}
+            </Text>
             <View style={styles.presetRow}>
               {(['low', 'standard', 'high'] as const).map((type) => {
                 const presetVal = item.presetDoses?.[type] || 1.0;
@@ -79,7 +83,9 @@ export const DoseDetailModal: React.FC<DoseDetailModalProps> = ({ visible, item,
             {/* Target Dose Input */}
             <View style={styles.inputGroup}>
               <View style={styles.inputHeader}>
-                <Text style={styles.inputLabel}>Target Dosis Injeksi</Text>
+                <Text style={styles.inputLabel}>
+                  {language === 'en' ? 'Target Injection Dose' : 'Target Dosis Injeksi'}
+                </Text>
                 <Text style={styles.inputValueHighlight}>{dose} {item.unit}</Text>
               </View>
               <TextInput
@@ -94,7 +100,9 @@ export const DoseDetailModal: React.FC<DoseDetailModalProps> = ({ visible, item,
             {!isLiquidMl && (
               <View style={styles.inputGroup}>
                 <View style={styles.inputHeader}>
-                  <Text style={styles.inputLabel}>Volume Pelarut (BAC Water)</Text>
+                  <Text style={styles.inputLabel}>
+                    {language === 'en' ? 'Reconstitution Volume (BAC Water)' : 'Volume Pelarut (BAC Water)'}
+                  </Text>
                   <Text style={styles.inputValueHighlightCyan}>{bacWater} mL</Text>
                 </View>
                 <TextInput
@@ -113,7 +121,9 @@ export const DoseDetailModal: React.FC<DoseDetailModalProps> = ({ visible, item,
             <View style={styles.metricsBox}>
               <View style={styles.metricsHeader}>
                 <Activity size={14} color="#10b981" />
-                <Text style={styles.metricsTitle}>Hasil Kalkulasi Presisi</Text>
+                <Text style={styles.metricsTitle}>
+                  {language === 'en' ? 'Precision Calculation Results' : 'Hasil Kalkulasi Presisi'}
+                </Text>
               </View>
               <View style={styles.metricsGrid}>
                 <View style={styles.metricCol}>
@@ -122,14 +132,18 @@ export const DoseDetailModal: React.FC<DoseDetailModalProps> = ({ visible, item,
                   <Text style={styles.metricUnit}>mL</Text>
                 </View>
                 <View style={[styles.metricCol, styles.metricColHighlightEmerald]}>
-                  <Text style={styles.metricLabelEmerald}>Spuit U-100</Text>
+                  <Text style={styles.metricLabelEmerald}>
+                    {language === 'en' ? 'U-100 Syringe' : 'Spuit U-100'}
+                  </Text>
                   <Text style={styles.metricValueEmerald}>{u100Units}</Text>
                   <Text style={styles.metricUnitEmerald}>IU</Text>
                 </View>
                 <View style={[styles.metricCol, styles.metricColHighlightCyan]}>
                   <Text style={styles.metricLabelCyan}>Dial Pen</Text>
                   <Text style={styles.metricValueCyan}>{dialClicks}</Text>
-                  <Text style={styles.metricUnitCyan}>Klik</Text>
+                  <Text style={styles.metricUnitCyan}>
+                    {language === 'en' ? 'Clicks' : 'Klik'}
+                  </Text>
                 </View>
               </View>
             </View>
@@ -138,7 +152,9 @@ export const DoseDetailModal: React.FC<DoseDetailModalProps> = ({ visible, item,
           {/* Action Button */}
           <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
             <Check size={16} color="#022c22" />
-            <Text style={styles.saveButtonText}>Terapkan & Simpan Dosis</Text>
+            <Text style={styles.saveButtonText}>
+              {language === 'en' ? 'Apply & Save Dose' : 'Terapkan & Simpan Dosis'}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>

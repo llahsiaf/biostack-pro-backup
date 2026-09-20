@@ -130,6 +130,79 @@ const ALL_SITES: SitePoint[] = [
   },
 ];
 
+const ALL_SITES_EN: SitePoint[] = [
+  {
+    id: 'KA',
+    code: 'KA',
+    name: 'Right Upper (KA)',
+    subText: 'Right upper abdomen (2-3 cm from navel)',
+    zone: 'perut',
+  },
+  {
+    id: 'KiA',
+    code: 'KiA',
+    name: 'Left Upper (KiA)',
+    subText: 'Left upper abdomen (2-3 cm from navel)',
+    zone: 'perut',
+  },
+  {
+    id: 'KB',
+    code: 'KB',
+    name: 'Right Lower (KB)',
+    subText: 'Right lower abdomen (2-3 cm from navel)',
+    zone: 'perut',
+  },
+  {
+    id: 'KiB',
+    code: 'KiB',
+    name: 'Left Lower (KiB)',
+    subText: 'Left lower abdomen (2-3 cm from navel)',
+    zone: 'perut',
+  },
+  {
+    id: 'PKi',
+    code: 'PKi',
+    name: 'Left Thigh (PKi)',
+    subText: 'Outer side of upper left thigh',
+    zone: 'paha',
+  },
+  {
+    id: 'PKn',
+    code: 'PKn',
+    name: 'Right Thigh (PKn)',
+    subText: 'Outer side of upper right thigh',
+    zone: 'paha',
+  },
+  {
+    id: 'LKi',
+    code: 'LKi',
+    name: 'Left Arm (LKi)',
+    subText: 'Triceps / back of left upper arm',
+    zone: 'lengan',
+  },
+  {
+    id: 'LKn',
+    code: 'LKn',
+    name: 'Right Arm (LKn)',
+    subText: 'Triceps / back of right upper arm',
+    zone: 'lengan',
+  },
+  {
+    id: 'BKi',
+    code: 'BKi',
+    name: 'Left Glute (BKi)',
+    subText: 'Upper outer quadrant of left glute',
+    zone: 'bokong',
+  },
+  {
+    id: 'BKn',
+    code: 'BKn',
+    name: 'Right Glute (BKn)',
+    subText: 'Upper outer quadrant of right glute',
+    zone: 'bokong',
+  },
+];
+
 export const RotationScreen: React.FC = () => {
   const { language, t } = useLanguage();
   const {
@@ -142,15 +215,33 @@ export const RotationScreen: React.FC = () => {
   const [selectedZone, setSelectedZone] =
     useState<BodyZone>('perut');
 
+  const sitesList = language === 'en' ? ALL_SITES_EN : ALL_SITES;
+
   const currentPoint =
-    ALL_SITES.find(
+    sitesList.find(
       (s) => s.id === currentSite,
-    ) || ALL_SITES[0];
+    ) || sitesList[0];
 
   const activeZoneSites =
-    ALL_SITES.filter(
+    sitesList.filter(
       (s) => s.zone === selectedZone,
     );
+
+  const getZoneLabel = (zone: BodyZone) => {
+    if (language === 'en') {
+      switch (zone) {
+        case 'perut':
+          return 'ABDOMEN';
+        case 'paha':
+          return 'THIGH';
+        case 'lengan':
+          return 'ARM';
+        case 'bokong':
+          return 'GLUTE';
+      }
+    }
+    return zone.toUpperCase();
+  };
 
   const getSiteLastUsed = (
     siteId: string,
@@ -166,10 +257,10 @@ export const RotationScreen: React.FC = () => {
     );
 
     if (!log) {
-      return t('rotation.noLog') || 'Belum ada log';
+      return t('rotation.noLog') || (language === 'en' ? 'No logs yet' : 'Belum ada log');
     }
 
-    return log.timestamp || 'Baru saja';
+    return log.timestamp || (language === 'en' ? 'Just now' : 'Baru saja');
   };
 
   const handleNextRotation = () => {
@@ -231,15 +322,17 @@ export const RotationScreen: React.FC = () => {
           <Text
             style={styles.bannerTitle}
           >
-            Protokol Rotasi Anatomi
+            {language === 'en'
+              ? 'Anatomical Rotation Protocol'
+              : 'Protokol Rotasi Anatomi'}
           </Text>
 
           <Text
             style={styles.bannerDesc}
           >
-            Mencegah lipohipertrofi dan
-            penumpukan jaringan parut
-            subkutan.
+            {language === 'en'
+              ? 'Prevents lipohypertrophy and subcutaneous scar tissue buildup.'
+              : 'Mencegah lipohipertrofi dan penumpukan jaringan parut subkutan.'}
           </Text>
         </View>
       </View>
@@ -261,7 +354,9 @@ export const RotationScreen: React.FC = () => {
                 styles.targetLabel
               }
             >
-              TARGET TITIK BERIKUTNYA
+              {language === 'en'
+                ? 'NEXT TARGET SITE'
+                : 'TARGET TITIK BERIKUTNYA'}
             </Text>
 
             <Text
@@ -310,8 +405,9 @@ export const RotationScreen: React.FC = () => {
               styles.rotateActionBtnText
             }
           >
-            Putar ke Titik
-            Selanjutnya
+            {language === 'en'
+              ? 'Rotate to Next Site'
+              : 'Putar ke Titik Selanjutnya'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -350,7 +446,7 @@ export const RotationScreen: React.FC = () => {
                   styles.zoneTabTextActive,
               ]}
             >
-              {zone.toUpperCase()}
+              {getZoneLabel(zone)}
             </Text>
           </TouchableOpacity>
         ))}
@@ -365,8 +461,8 @@ export const RotationScreen: React.FC = () => {
             styles.mapHeaderTitle
           }
         >
-          DIAGRAM ANATOMI (
-          {selectedZone.toUpperCase()}
+          {language === 'en' ? 'ANATOMY DIAGRAM' : 'DIAGRAM ANATOMI'} (
+          {getZoneLabel(selectedZone)}
           )
         </Text>
 
@@ -471,7 +567,7 @@ export const RotationScreen: React.FC = () => {
                   fontWeight="bold"
                   textAnchor="middle"
                 >
-                  PUSAR
+                  {language === 'en' ? 'NAVEL' : 'PUSAR'}
                 </SvgText>
 
                 {/* KA */}
@@ -899,7 +995,7 @@ export const RotationScreen: React.FC = () => {
                   fontSize="8"
                   textAnchor="middle"
                 >
-                  SISI · LENGAN ATAS
+                  {language === 'en' ? 'LATERAL · UPPER ARM' : 'SISI · LENGAN ATAS'}
                 </SvgText>
               </G>
             )}
@@ -1046,7 +1142,7 @@ export const RotationScreen: React.FC = () => {
                   fontSize="8"
                   textAnchor="middle"
                 >
-                  BELAKANG · GLUTE
+                  {language === 'en' ? 'POSTERIOR · GLUTE' : 'BELAKANG · GLUTE'}
                 </SvgText>
               </G>
             )}
@@ -1060,8 +1156,8 @@ export const RotationScreen: React.FC = () => {
           styles.sectionHeaderTitle
         }
       >
-        PILIH TITIK MANUAL (
-        {selectedZone.toUpperCase()}
+        {language === 'en' ? 'MANUAL SITE SELECTION' : 'PILIH TITIK MANUAL'} (
+        {getZoneLabel(selectedZone)}
         )
       </Text>
 
@@ -1150,11 +1246,9 @@ export const RotationScreen: React.FC = () => {
         <Text
           style={styles.safetyText}
         >
-          Jarak penyuntikan minimal
-          2.5 cm dari bekas tusukan
-          sebelumnya untuk menjaga
-          elastisitas jaringan lemak
-          subkutan.
+          {language === 'en'
+            ? 'Maintain at least 2.5 cm distance from previous injection sites to preserve subcutaneous tissue elasticity.'
+            : 'Jarak penyuntikan minimal 2.5 cm dari bekas tusukan sebelumnya untuk menjaga elastisitas jaringan lemak subkutan.'}
         </Text>
       </View>
     </ScrollView>

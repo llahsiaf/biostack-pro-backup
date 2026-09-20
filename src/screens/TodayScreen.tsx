@@ -133,7 +133,12 @@ export const TodayScreen: React.FC<{
 
   const openQuickLog = () => {
     if (activeVials.length === 0) {
-      Alert.alert('Tidak ada vial aktif', 'Tambahkan atau aktifkan vial di Inventory terlebih dahulu.');
+      Alert.alert(
+        language === 'en' ? 'No active vials' : 'Tidak ada vial aktif',
+        language === 'en'
+          ? 'Please add or activate a vial in Inventory first.'
+          : 'Tambahkan atau aktifkan vial di Inventory terlebih dahulu.'
+      );
       return;
     }
     const vial = activeVials.find((item) => item.id === quickLogVialId) || activeVials[0];
@@ -153,19 +158,29 @@ export const TodayScreen: React.FC<{
 
   const saveQuickLog = () => {
     if (!selectedQuickVial || !quickLogMetrics?.valid || quickLogMetrics.volumeMlNumber <= 0) {
-      Alert.alert('Data belum valid', 'Periksa vial dan nilai yang dimasukkan.');
+      Alert.alert(
+        language === 'en' ? 'Invalid data' : 'Data belum valid',
+        language === 'en'
+          ? 'Check vial and entered values.'
+          : 'Periksa vial dan nilai yang dimasukkan.'
+      );
       return;
     }
 
     const remaining = selectedQuickVial.currentVolumeMl ?? quickLogMetrics.volumeMlNumber;
     if (remaining < quickLogMetrics.volumeMlNumber) {
-      Alert.alert('Cairan tidak cukup', 'Volume log melebihi sisa cairan yang tercatat pada vial.');
+      Alert.alert(
+        language === 'en' ? 'Insufficient liquid' : 'Cairan tidak cukup',
+        language === 'en'
+          ? 'Log volume exceeds remaining liquid recorded on vial.'
+          : 'Volume log melebihi sisa cairan yang tercatat pada vial.'
+      );
       return;
     }
 
     const now = new Date();
     const localDate = formatLocalDate(now);
-    const localTime = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    const localTime = now.toLocaleTimeString(language === 'en' ? 'en-US' : 'id-ID', { hour: '2-digit', minute: '2-digit' });
     const recorded = recordInjection(
       selectedQuickVial.id,
       {
@@ -177,7 +192,7 @@ export const TodayScreen: React.FC<{
         siteId: quickLogSite,
         timestamp: now.toISOString(),
         inventoryId: selectedQuickVial.id,
-        recordedAtLocal: now.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+        recordedAtLocal: now.toLocaleString(language === 'en' ? 'en-US' : 'id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
         dateStr: localDate,
         timeStr: localTime,
         notes: quickLogNotes.trim() || undefined,
@@ -186,7 +201,12 @@ export const TodayScreen: React.FC<{
     );
 
     if (!recorded) {
-      Alert.alert('Gagal mencatat', 'Data vial berubah atau volume tidak mencukupi. Coba ulangi.');
+      Alert.alert(
+        language === 'en' ? 'Failed to record' : 'Gagal mencatat',
+        language === 'en'
+          ? 'Vial data changed or volume is insufficient. Try again.'
+          : 'Data vial berubah atau volume tidak mencukupi. Coba ulangi.'
+      );
       return;
     }
 
@@ -197,33 +217,50 @@ export const TodayScreen: React.FC<{
     const item = safeInventory.find((entry) => entry.id === occurrence.inventoryId);
 
     if (!item) {
-      Alert.alert('Peptide tidak ditemukan', 'Data peptide ini sudah tidak tersedia di Inventory.');
+      Alert.alert(
+        language === 'en' ? 'Peptide not found' : 'Peptide tidak ditemukan',
+        language === 'en'
+          ? 'This peptide data is no longer available in Inventory.'
+          : 'Data peptide ini sudah tidak tersedia di Inventory.'
+      );
       return;
     }
 
     const metrics = calculateInjectionMetrics(item);
 
     if (!metrics.valid || metrics.volumeMlNumber <= 0) {
-      Alert.alert('Data belum valid', 'Periksa konfigurasi dosis dan dial peptide di Inventory.');
+      Alert.alert(
+        language === 'en' ? 'Invalid data' : 'Data belum valid',
+        language === 'en'
+          ? 'Check dose and dial configuration in Inventory.'
+          : 'Periksa konfigurasi dosis dan dial peptide di Inventory.'
+      );
       return;
     }
 
     const currentVolume = item.currentVolumeMl ?? metrics.volumeMlNumber;
 
     if (currentVolume < metrics.volumeMlNumber) {
-      Alert.alert('Cairan tidak cukup', 'Sisa cairan pada vial tidak mencukupi untuk pencatatan ini.');
+      Alert.alert(
+        language === 'en' ? 'Insufficient liquid' : 'Cairan tidak cukup',
+        language === 'en'
+          ? 'Remaining liquid in vial is insufficient for this entry.'
+          : 'Sisa cairan pada vial tidak mencukupi untuk pencatatan ini.'
+      );
       return;
     }
 
     const suggestedSite = getTrackerSuggestedSite(safeLogs, item.id) || currentSite;
 
     Alert.alert(
-      occurrence.status === 'missed' ? 'Catat aktivitas terlewat' : 'Konfirmasi pencatatan',
-      `${item.name}\nJadwal ${occurrence.time}\nDial ${metrics.dialClicks} klik`,
+      occurrence.status === 'missed'
+        ? (language === 'en' ? 'Log missed activity' : 'Catat aktivitas terlewat')
+        : (language === 'en' ? 'Confirm entry' : 'Konfirmasi pencatatan'),
+      `${item.name}\n${language === 'en' ? 'Schedule' : 'Jadwal'} ${occurrence.time}\nDial ${metrics.dialClicks} ${language === 'en' ? 'clicks' : 'klik'}`,
       [
-        { text: 'Batal', style: 'cancel' },
+        { text: language === 'en' ? 'Cancel' : 'Batal', style: 'cancel' },
         {
-          text: 'Konfirmasi',
+          text: language === 'en' ? 'Confirm' : 'Konfirmasi',
           onPress: () => {
             const actual = new Date();
             const recorded = recordInjection(
@@ -237,19 +274,29 @@ export const TodayScreen: React.FC<{
                 siteId: suggestedSite,
                 timestamp: actual.toISOString(),
                 inventoryId: item.id,
-                recordedAtLocal: actual.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+                recordedAtLocal: actual.toLocaleString(language === 'en' ? 'en-US' : 'id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
                 dateStr: formatLocalDate(actual),
-                timeStr: actual.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+                timeStr: actual.toLocaleTimeString(language === 'en' ? 'en-US' : 'id-ID', { hour: '2-digit', minute: '2-digit' }),
               },
               metrics.volumeMlNumber,
             );
 
             if (!recorded) {
-              Alert.alert('Gagal mencatat', 'Data vial berubah atau volume tidak mencukupi. Coba ulangi.');
+              Alert.alert(
+                language === 'en' ? 'Failed to record' : 'Gagal mencatat',
+                language === 'en'
+                  ? 'Vial data changed or volume is insufficient. Try again.'
+                  : 'Data vial berubah atau volume tidak mencukupi. Coba ulangi.'
+              );
               return;
             }
 
-            Alert.alert('Tercatat', `${item.name} berhasil dicatat pada ${actual.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}.`);
+            Alert.alert(
+              language === 'en' ? 'Recorded' : 'Tercatat',
+              language === 'en'
+                ? `${item.name} successfully recorded at ${actual.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}.`
+                : `${item.name} berhasil dicatat pada ${actual.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}.`
+            );
           },
         },
       ],

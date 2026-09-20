@@ -221,18 +221,22 @@ export const InventoryScreen: React.FC = () => {
 
     if (!metrics.valid || injectVol <= 0) {
       Alert.alert(
-        'Kalkulasi Tidak Valid',
-        'Periksa satuan dosis, ukuran vial, dan volume pelarut pada item ini.',
+        language === 'en' ? 'Invalid Calculation' : 'Kalkulasi Tidak Valid',
+        language === 'en'
+          ? 'Check dose unit, vial size, and diluent volume on this item.'
+          : 'Periksa satuan dosis, ukuran vial, dan volume pelarut pada item ini.',
       );
       return;
     }
 
     if (liquid.currentVol < injectVol) {
       Alert.alert(
-        'Cairan Tidak Cukup',
-        `Sisa cairan (${liquid.currentVol.toFixed(
-          2,
-        )} mL) kurang dari dosis yang ditarik (${injectVol} mL). Siapkan vial baru.`,
+        language === 'en' ? 'Insufficient Liquid' : 'Cairan Tidak Cukup',
+        language === 'en'
+          ? `Remaining liquid (${liquid.currentVol.toFixed(2)} mL) is less than the dose drawn (${injectVol} mL). Prepare a new vial.`
+          : `Sisa cairan (${liquid.currentVol.toFixed(
+              2,
+            )} mL) kurang dari dosis yang ditarik (${injectVol} mL). Siapkan vial baru.`,
       );
       return;
     }
@@ -257,7 +261,7 @@ export const InventoryScreen: React.FC = () => {
         volumeMl: metrics.volumeMl,
         siteId: trackerSite,
         timestamp: now.toISOString(),
-        recordedAtLocal: now.toLocaleString('id-ID', {
+        recordedAtLocal: now.toLocaleString(language === 'en' ? 'en-US' : 'id-ID', {
           day: '2-digit',
           month: 'short',
           year: 'numeric',
@@ -270,15 +274,19 @@ export const InventoryScreen: React.FC = () => {
 
     if (!recorded) {
       Alert.alert(
-        'Gagal Mencatat',
-        'Data inventaris berubah sebelum pencatatan selesai. Coba lagi.',
+        language === 'en' ? 'Failed to Record' : 'Gagal Mencatat',
+        language === 'en'
+          ? 'Inventory data changed before recording finished. Try again.'
+          : 'Data inventaris berubah sebelum pencatatan selesai. Coba lagi.',
       );
       return;
     }
 
     Alert.alert(
-      'Injeksi Berhasil',
-      `${item.name} telah dicatat. Sisa cairan diperbarui otomatis.`,
+      language === 'en' ? 'Injection Recorded' : 'Injeksi Berhasil',
+      language === 'en'
+        ? `${item.name} has been logged. Remaining volume updated automatically.`
+        : `${item.name} telah dicatat. Sisa cairan diperbarui otomatis.`,
     );
   };
 
@@ -638,20 +646,20 @@ export const InventoryScreen: React.FC = () => {
 
                       Alert.alert(
                         paused
-                          ? 'Lanjutkan Jadwal'
-                          : 'Jeda Jadwal',
+                          ? (language === 'en' ? 'Resume Schedule' : 'Lanjutkan Jadwal')
+                          : (language === 'en' ? 'Pause Schedule' : 'Jeda Jadwal'),
                         paused
-                          ? `Lanjutkan jadwal ${item.name}?`
-                          : `Jeda sementara jadwal ${item.name}?`,
+                          ? (language === 'en' ? `Resume schedule for ${item.name}?` : `Lanjutkan jadwal ${item.name}?`)
+                          : (language === 'en' ? `Temporarily pause schedule for ${item.name}?` : `Jeda sementara jadwal ${item.name}?`),
                         [
                           {
-                            text: 'Batal',
+                            text: language === 'en' ? 'Cancel' : 'Batal',
                             style: 'cancel',
                           },
                           {
                             text: paused
-                              ? 'Lanjutkan'
-                              : 'Jeda',
+                              ? (language === 'en' ? 'Resume' : 'Lanjutkan')
+                              : (language === 'en' ? 'Pause' : 'Jeda'),
                             onPress: () =>
                               setSchedulePaused(
                                 item.id,
@@ -673,8 +681,8 @@ export const InventoryScreen: React.FC = () => {
                     }
                     accessibilityLabel={
                       item.schedulePaused
-                        ? 'Lanjutkan jadwal'
-                        : 'Jeda jadwal'
+                        ? (language === 'en' ? 'Resume schedule' : 'Lanjutkan jadwal')
+                        : (language === 'en' ? 'Pause schedule' : 'Jeda jadwal')
                     }
                   >
                     {item.schedulePaused ? (
@@ -694,15 +702,17 @@ export const InventoryScreen: React.FC = () => {
                   <TouchableOpacity
                     onPress={() => {
                       Alert.alert(
-                        'Hapus Vial',
-                        `Hapus ${item.name} dari Inventory? Riwayat pencatatan tetap disimpan.`,
+                        language === 'en' ? 'Delete Vial' : 'Hapus Vial',
+                        language === 'en'
+                          ? `Delete ${item.name} from Inventory? History logs will be preserved.`
+                          : `Hapus ${item.name} dari Inventory? Riwayat pencatatan tetap disimpan.`,
                         [
                           {
-                            text: 'Batal',
+                            text: language === 'en' ? 'Cancel' : 'Batal',
                             style: 'cancel',
                           },
                           {
-                            text: 'Hapus',
+                            text: language === 'en' ? 'Delete' : 'Hapus',
                             style: 'destructive',
                             onPress: async () => {
                               // Hapus juga reminder lokal yang masih terkait
@@ -720,7 +730,7 @@ export const InventoryScreen: React.FC = () => {
                       );
                     }}
                     style={styles.iconBtn}
-                    accessibilityLabel="Hapus vial"
+                    accessibilityLabel={language === 'en' ? 'Delete vial' : 'Hapus vial'}
                   >
                     <Trash2
                       size={16}

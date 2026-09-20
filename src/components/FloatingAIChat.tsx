@@ -44,14 +44,33 @@ export const FloatingAIChat: React.FC = () => {
 
   const { inventory, settings, updateSettings } = useBioStackStore();
 
+  const isEn = language === 'en';
+
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome',
       sender: 'ai',
-      text: 'Halo. Saya BioStack AI Assistant. Saya dapat membantu membaca jadwal, inventory, riwayat, dan statistik tracker Anda. Untuk privasi, mode online tetap OFF sampai Anda mengaktifkannya.',
+      text:
+        language === 'en'
+          ? 'Hello. I am BioStack AI Assistant. I can help you review your schedule, inventory, history, and tracker statistics. For privacy, online mode remains OFF until you enable it.'
+          : 'Halo. Saya BioStack AI Assistant. Saya dapat membantu membaca jadwal, inventory, riwayat, dan statistik tracker Anda. Untuk privasi, mode online tetap OFF sampai Anda mengaktifkannya.',
       time: '00:00',
     },
   ]);
+
+  useEffect(() => {
+    setMessages([
+      {
+        id: 'welcome',
+        sender: 'ai',
+        text:
+          language === 'en'
+            ? 'Hello. I am BioStack AI Assistant. I can help you review your schedule, inventory, history, and tracker statistics. For privacy, online mode remains OFF until you enable it.'
+            : 'Halo. Saya BioStack AI Assistant. Saya dapat membantu membaca jadwal, inventory, riwayat, dan statistik tracker Anda. Untuk privasi, mode online tetap OFF sampai Anda mengaktifkannya.',
+        time: '00:00',
+      },
+    ]);
+  }, [language]);
 
   useEffect(() => {
     AsyncStorage.getItem('@biostack_api_key').then((val) => {
@@ -67,7 +86,12 @@ export const FloatingAIChat: React.FC = () => {
     await AsyncStorage.setItem('@biostack_ai_provider', aiProvider);
     updateSettings({ aiProvider });
     setActiveView('chat');
-    Alert.alert('Sukses', 'Pengaturan API Key berhasil disimpan.');
+    Alert.alert(
+      language === 'en' ? 'Success' : 'Sukses',
+      language === 'en'
+        ? 'API Key settings saved successfully.'
+        : 'Pengaturan API Key berhasil disimpan.'
+    );
   };
 
   const handleSendMessage = async () => {
@@ -97,13 +121,21 @@ export const FloatingAIChat: React.FC = () => {
             {
               id: `ai-private-${Date.now()}`,
               sender: 'ai',
-              text: 'Mode AI online sedang OFF untuk menjaga privasi. Aktifkan “Izinkan koneksi AI online” di Pengaturan BioStack bila Anda ingin mengirim pertanyaan ke provider AI.',
+              text:
+                language === 'en'
+                  ? 'Online AI mode is OFF to preserve privacy. Enable "Allow online AI connection" in BioStack Settings if you wish to send queries to the AI provider.'
+                  : 'Mode AI online sedang OFF untuk menjaga privasi. Aktifkan “Izinkan koneksi AI online” di Pengaturan BioStack bila Anda ingin mengirim pertanyaan ke provider AI.',
               time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             },
           ]);
           return;
         }
         if (aiProvider === 'gemini') {
+          const geminiPrompt =
+            language === 'en'
+              ? `You are a professional biohacking and peptide pharmacology consultant for the BioStack PRO app. Answer concisely, based on clinical science, in English without emoji characters. User query: "${userText}"`
+              : `Anda adalah konsultan biohacking dan farmakologi peptida profesional untuk aplikasi BioStack PRO. Jawab secara ringkas, berbasis sains klinis, gunakan bahasa Indonesia formal tanpa karakter emoji. Pertanyaan pengguna: "${userText}"`;
+
           const response = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.trim()}`,
             {
@@ -114,7 +146,7 @@ export const FloatingAIChat: React.FC = () => {
                   {
                     parts: [
                       {
-                        text: `Anda adalah konsultan biohacking dan farmakologi peptida profesional untuk aplikasi BioStack PRO. Jawab secara ringkas, berbasis sains klinis, gunakan bahasa Indonesia formal tanpa karakter emoji. Pertanyaan pengguna: "${userText}"`,
+                        text: geminiPrompt,
                       },
                     ],
                   },
@@ -123,8 +155,17 @@ export const FloatingAIChat: React.FC = () => {
             }
           );
           const data = await response.json();
-          replyText = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Maaf, tidak mendapat respon dari Gemini API.';
+          replyText =
+            data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+            (language === 'en'
+              ? 'Sorry, received no response from Gemini API.'
+              : 'Maaf, tidak mendapat respon dari Gemini API.');
         } else {
+          const openaiSys =
+            language === 'en'
+              ? 'You are a smart peptide pharmacology assistant for BioStack PRO. Answer concisely, scientifically, and do not use emojis.'
+              : 'Anda adalah asisten cerdas farmakologi peptida BioStack PRO. Jawab ringkas, ilmiah, dan jangan gunakan karakter emoji sama sekali.';
+
           const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -136,16 +177,20 @@ export const FloatingAIChat: React.FC = () => {
               messages: [
                 {
                   role: 'system',
-                  content: 'Anda adalah asisten cerdas farmakologi peptida BioStack PRO. Jawab ringkas, ilmiah, dan jangan gunakan karakter emoji sama sekali.',
+                  content: openaiSys,
                 },
                 { role: 'user', content: userText },
               ],
             }),
           });
           const data = await response.json();
-          replyText = data?.choices?.[0]?.message?.content || 'Maaf, tidak mendapat respon dari OpenAI.';
+          replyText =
+            data?.choices?.[0]?.message?.content ||
+            (language === 'en'
+              ? 'Sorry, received no response from OpenAI.'
+              : 'Maaf, tidak mendapat respon dari OpenAI.');
         }
-            } else {
+      } else {
         const lower = userText.toLowerCase();
         const isEn = language === 'en';
         if (lower.includes('bac') || lower.includes('larut') || lower.includes('water') || lower.includes('air')) {
@@ -182,7 +227,10 @@ export const FloatingAIChat: React.FC = () => {
         {
           id: `ai-err-${Date.now()}`,
           sender: 'ai',
-          text: 'Gagal terhubung ke API. Pastikan API Key valid atau gunakan mode offline bawaan.',
+          text:
+            language === 'en'
+              ? 'Failed to connect to API. Please make sure the API Key is valid or use built-in offline mode.'
+              : 'Gagal terhubung ke API. Pastikan API Key valid atau gunakan mode offline bawaan.',
           time: timeNow,
         },
       ]);
@@ -273,7 +321,9 @@ export const FloatingAIChat: React.FC = () => {
                   {isLoading && (
                     <View style={styles.loadingBubble}>
                       <ActivityIndicator size="small" color="#10b981" />
-                      <Text style={styles.loadingText}>Menyiapkan respon klinis...</Text>
+                      <Text style={styles.loadingText}>
+                        {language === 'en' ? 'Preparing clinical response...' : 'Menyiapkan respon klinis...'}
+                      </Text>
                     </View>
                   )}
                 </ScrollView>
@@ -281,7 +331,7 @@ export const FloatingAIChat: React.FC = () => {
                 <View style={styles.inputBar}>
                   <TextInput
                     style={styles.textInput}
-                    placeholder="Tanya seputar dosis atau peptida..."
+                    placeholder={language === 'en' ? 'Ask about dosage or peptides...' : 'Tanya seputar dosis atau peptida...'}
                     placeholderTextColor="#64748b"
                     value={inputText}
                     onChangeText={setInputText}
@@ -313,8 +363,12 @@ export const FloatingAIChat: React.FC = () => {
                       <ChevronLeft size={20} color="#10b981" />
                     </TouchableOpacity>
                     <View>
-                      <Text style={styles.headerTitle}>Pengaturan API Key</Text>
-                      <Text style={styles.headerSubtitle}>Koneksi Engine AI</Text>
+                      <Text style={styles.headerTitle}>
+                        {language === 'en' ? 'API Key Settings' : 'Pengaturan API Key'}
+                      </Text>
+                      <Text style={styles.headerSubtitle}>
+                        {language === 'en' ? 'AI Engine Connection' : 'Koneksi Engine AI'}
+                      </Text>
                     </View>
                   </View>
                   <TouchableOpacity onPress={() => setIsOpen(false)} style={styles.iconBtn}>
@@ -326,11 +380,15 @@ export const FloatingAIChat: React.FC = () => {
                   <View style={styles.infoBox}>
                     <Key size={18} color="#10b981" />
                     <Text style={styles.settingsDesc}>
-                      Masukkan Google Gemini API Key (atau OpenAI). Kunci tersimpan secara lokal dan privat di perangkat Anda.
+                      {language === 'en'
+                        ? 'Enter Google Gemini API Key (or OpenAI). The key is stored locally and securely on your device.'
+                        : 'Masukkan Google Gemini API Key (atau OpenAI). Kunci tersimpan secara lokal dan privat di perangkat Anda.'}
                     </Text>
                   </View>
 
-                  <Text style={styles.fieldLabel}>Pilih Provider AI:</Text>
+                  <Text style={styles.fieldLabel}>
+                    {language === 'en' ? 'Select AI Provider:' : 'Pilih Provider AI:'}
+                  </Text>
                   <View style={styles.providerRow}>
                     <TouchableOpacity
                       onPress={() => setAiProvider('gemini')}
@@ -353,7 +411,7 @@ export const FloatingAIChat: React.FC = () => {
                   <Text style={styles.fieldLabel}>API Key:</Text>
                   <TextInput
                     style={styles.keyInput}
-                    placeholder="Tempel API Key di sini..."
+                    placeholder={language === 'en' ? 'Paste API Key here...' : 'Tempel API Key di sini...'}
                     placeholderTextColor="#475569"
                     value={apiKey}
                     onChangeText={setApiKey}
@@ -363,17 +421,23 @@ export const FloatingAIChat: React.FC = () => {
 
                   <View style={styles.settingsPrivacyNote}>
                     <Text style={styles.settingsPrivacyText}>
-                      Koneksi AI online hanya digunakan saat izin privasi di Pengaturan BioStack diaktifkan. API key tidak masuk ke backup data BioStack.
+                      {language === 'en'
+                        ? 'Online AI connection is only used when privacy permission in BioStack Settings is enabled. API key is not included in BioStack data backup.'
+                        : 'Koneksi AI online hanya digunakan saat izin privasi di Pengaturan BioStack diaktifkan. API key tidak masuk ke backup data BioStack.'}
                     </Text>
                   </View>
 
                   <TouchableOpacity onPress={saveSettings} style={styles.saveKeyBtn}>
                     <Check size={16} color="#022c22" />
-                    <Text style={styles.saveKeyBtnText}>Simpan Pengaturan</Text>
+                    <Text style={styles.saveKeyBtnText}>
+                      {language === 'en' ? 'Save Settings' : 'Simpan Pengaturan'}
+                    </Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity onPress={() => setActiveView('chat')} style={styles.cancelSettingsBtn}>
-                    <Text style={styles.cancelSettingsText}>Kembali ke Chat</Text>
+                    <Text style={styles.cancelSettingsText}>
+                      {language === 'en' ? 'Back to Chat' : 'Kembali ke Chat'}
+                    </Text>
                   </TouchableOpacity>
                 </ScrollView>
               </View>

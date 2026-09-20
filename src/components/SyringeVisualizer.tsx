@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Rect, Line, Text as SvgText, G, Defs, LinearGradient, Stop } from 'react-native-svg';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface SyringeVisualizerProps {
   u100Units: number;
@@ -8,6 +9,7 @@ interface SyringeVisualizerProps {
 }
 
 export const SyringeVisualizer: React.FC<SyringeVisualizerProps> = ({ u100Units, volMl }) => {
+  const { language } = useLanguage();
   const boundedUnits = Math.max(0, Math.min(100, u100Units));
   const barrelStartX = 40;
   const barrelWidth = 260;
@@ -20,7 +22,9 @@ export const SyringeVisualizer: React.FC<SyringeVisualizerProps> = ({ u100Units,
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
-        <Text style={styles.title}>Simulasi Spuit U-100</Text>
+        <Text style={styles.title}>
+          {language === 'en' ? 'U-100 Syringe Simulation' : 'Simulasi Spuit U-100'}
+        </Text>
         <Text style={styles.badgeText}>
           {boundedUnits} IU ({volMl.toFixed(3)} mL)
         </Text>
@@ -76,7 +80,7 @@ export const SyringeVisualizer: React.FC<SyringeVisualizerProps> = ({ u100Units,
         <G transform={`translate(${plungerX}, ${barrelY + barrelHeight + 4})`}>
           <Line x1="0" y1="0" x2="0" y2="8" stroke="#10b981" strokeWidth="2" />
           <SvgText x="0" y="19" fill="#10b981" fontSize="9" fontWeight="800" textAnchor="middle">
-            Garis {boundedUnits} IU
+            {language === 'en' ? `Line ${boundedUnits} IU` : `Garis ${boundedUnits} IU`}
           </SvgText>
         </G>
       </Svg>
