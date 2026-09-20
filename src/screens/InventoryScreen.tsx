@@ -70,32 +70,43 @@ const DAY_TRANSLATIONS: Record<string, string> = {
 };
 const formatDayChip = (d: string, lang?: string) => lang === 'en' ? (DAY_TRANSLATIONS[d] || d) : d;
 
-const FREQUENCY_PRESETS = [
+const getFrequencyPresets = (lang?: string) => [
   {
     id: 'daily',
-    label: 'Harian (Daily)',
-    sub: 'Setiap Hari',
+    label: lang === 'en' ? 'Daily' : 'Harian (Daily)',
+    sub: lang === 'en' ? 'Every Day' : 'Setiap Hari',
     days: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'],
   },
   {
     id: '2x_week',
-    label: '2x Seminggu',
-    sub: 'Sen, Kam',
+    label: lang === 'en' ? '2x / Week' : '2x Seminggu',
+    sub: lang === 'en' ? 'Mon, Thu' : 'Sen, Kam',
     days: ['Sen', 'Kam'],
   },
   {
     id: '3x_week',
-    label: '3x Seminggu',
-    sub: 'Sen, Rab, Jum',
+    label: lang === 'en' ? '3x / Week' : '3x Seminggu',
+    sub: lang === 'en' ? 'Mon, Wed, Fri' : 'Sen, Rab, Jum',
     days: ['Sen', 'Rab', 'Jum'],
   },
   {
     id: 'weekly',
-    label: 'Mingguan (Weekly)',
-    sub: 'Sen',
+    label: lang === 'en' ? 'Weekly' : 'Mingguan (Weekly)',
+    sub: lang === 'en' ? 'Mon' : 'Sen',
     days: ['Sen'],
   },
 ];
+
+const getFrequencyDisplayLabel = (presetId?: string, currentLabel?: string, lang?: string) => {
+  const match = getFrequencyPresets(lang).find((p) => p.id === presetId);
+  if (match) return match.label;
+  if (!currentLabel) return lang === 'en' ? 'Weekly' : 'Mingguan (Weekly)';
+  if (currentLabel.includes('Harian') || currentLabel.includes('Daily')) return lang === 'en' ? 'Daily' : 'Harian (Daily)';
+  if (currentLabel.includes('2x')) return lang === 'en' ? '2x / Week' : '2x Seminggu';
+  if (currentLabel.includes('3x')) return lang === 'en' ? '3x / Week' : '3x Seminggu';
+  if (currentLabel.includes('Mingguan') || currentLabel.includes('Weekly')) return lang === 'en' ? 'Weekly' : 'Mingguan (Weekly)';
+  return currentLabel;
+};
 
 // V5 INVENTORY FINAL: compact card hierarchy + slim dose metrics.
 // Schedule & Pengaturan Suntik logic/UI is intentionally preserved.
@@ -330,11 +341,10 @@ export const InventoryScreen: React.FC = () => {
     setInjectionTime(
       item.injectionTime || '08:00',
     );
-    setFrequencyKey(
-      item.frequency || 'weekly',
-    );
+    const key = item.frequency || 'weekly';
+    setFrequencyKey(key);
     setFrequencyLabel(
-      item.frequencyLabel || 'Mingguan (Weekly)',
+      getFrequencyDisplayLabel(key, item.frequencyLabel, language),
     );
     setIsCycleActive(
       Boolean(item.isCycleActive),
@@ -350,7 +360,7 @@ export const InventoryScreen: React.FC = () => {
 
     updateInventoryItem(scheduleItem.id, {
       frequency: frequencyKey,
-      frequencyLabel,
+      frequencyLabel: getFrequencyDisplayLabel(frequencyKey, frequencyLabel, language),
       activeDays,
       injectionTime,
       isCycleActive,
@@ -1617,10 +1627,10 @@ export const InventoryScreen: React.FC = () => {
                 <View style={styles.scheduleSection}>
                   <View style={styles.scheduleSectionHeader}>
                     <Text style={styles.scheduleSectionTitle}>{language === 'en' ? 'FREQUENCY' : 'FREKUENSI'}</Text>
-                    <Text style={styles.scheduleSectionHint}>{frequencyLabel}</Text>
+                    <Text style={styles.scheduleSectionHint}>{getFrequencyDisplayLabel(frequencyKey, frequencyLabel, language)}</Text>
                   </View>
                   <View style={styles.presetGridCompact}>
-                    {FREQUENCY_PRESETS.map((p) => (
+                    {getFrequencyPresets(language).map((p) => (
                       <TouchableOpacity
                         key={p.id}
                         onPress={() => {
@@ -1654,7 +1664,11 @@ export const InventoryScreen: React.FC = () => {
                 <View style={styles.scheduleSection}>
                   <View style={styles.scheduleSectionHeader}>
                     <Text style={styles.scheduleSectionTitle}>{language === 'en' ? 'ACTIVE DAYS' : 'HARI AKTIF'}</Text>
-                    <Text style={styles.scheduleSectionHint}>{activeDays.length} {language === 'en' ? 'days selected' : 'hari dipilih'}</Text>
+                    <Text style={styles.scheduleSectionHint}>
+                      {activeDays.length === 1
+                        ? (language === 'en' ? '1 day selected' : '1 hari dipilih')
+                        : `${activeDays.length} ${language === 'en' ? 'days selected' : 'hari dipilih'}`}
+                    </Text>
                   </View>
                   <View style={styles.daysSelectorModern}>
                     {DAYS_OF_WEEK.map((d) => {

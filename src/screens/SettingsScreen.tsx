@@ -123,8 +123,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
 
       if (permission.status !== 'granted') {
         Alert.alert(
-          'Notifikasi belum aktif',
-          'iOS belum memberikan izin notifikasi. Aktifkan izin dari Settings iOS lalu coba lagi.',
+          language === 'en' ? 'Notifications Disabled' : 'Notifikasi belum aktif',
+          language === 'en'
+            ? 'Permission was not granted. Please enable notifications in device settings and try again.'
+            : 'iOS belum memberikan izin notifikasi. Aktifkan izin dari Settings iOS lalu coba lagi.',
         );
         return;
       }
@@ -139,8 +141,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
       await refreshNotifications();
 
       Alert.alert(
-        'Notifikasi aktif',
-        `Pengingat lokal dijadwalkan untuk ${idsByInventory.size} vial aktif.`,
+        language === 'en' ? 'Notifications Active' : 'Notifikasi aktif',
+        language === 'en'
+          ? `Local reminders scheduled for ${idsByInventory.size} active vial(s).`
+          : `Pengingat lokal dijadwalkan untuk ${idsByInventory.size} vial aktif.`,
       );
     });
 
@@ -152,8 +156,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
 
       if (permission.status !== 'granted') {
         Alert.alert(
-          'Izin diperlukan',
-          'Izinkan notifikasi di iOS sebelum menjalankan test.',
+          language === 'en' ? 'Permission Required' : 'Izin diperlukan',
+          language === 'en'
+            ? 'Please grant notification permissions in device settings before running the test.'
+            : 'Izinkan notifikasi di iOS sebelum menjalankan test.',
         );
         return;
       }
@@ -163,8 +169,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
       await refreshNotifications();
 
       Alert.alert(
-        'Test dijadwalkan',
-        'BioStack akan mencoba menampilkan notifikasi lokal sekitar 10 detik dari sekarang.',
+        language === 'en' ? 'Test Scheduled' : 'Test dijadwalkan',
+        language === 'en'
+          ? 'BioStack will attempt to show a local notification in about 10 seconds from now.'
+          : 'BioStack akan mencoba menampilkan notifikasi lokal sekitar 10 detik dari sekarang.',
       );
     });
 
@@ -176,8 +184,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
 
       if (permission.status !== 'granted') {
         Alert.alert(
-          'Izin diperlukan',
-          'Aktifkan izin notifikasi terlebih dahulu.',
+          language === 'en' ? 'Permission Required' : 'Izin diperlukan',
+          language === 'en'
+            ? 'Please enable notification permissions first.'
+            : 'Aktifkan izin notifikasi terlebih dahulu.',
         );
         return;
       }
@@ -192,8 +202,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
       await refreshNotifications();
 
       Alert.alert(
-        'Reminder diperbarui',
-        'Semua local reminder BioStack dibangun ulang untuk 30 hari ke depan.',
+        language === 'en' ? 'Reminders Updated' : 'Reminder diperbarui',
+        language === 'en'
+          ? 'All BioStack local reminders have been rebuilt for the next 30 days.'
+          : 'Semua local reminder BioStack dibangun ulang untuk 30 hari ke depan.',
       );
     });
 
@@ -218,8 +230,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
       await exportBackupFile(payload);
 
       Alert.alert(
-        'Backup siap',
-        'File backup BioStack telah dibuat. Simpan di lokasi yang aman.',
+        language === 'en' ? 'Backup Ready' : 'Backup siap',
+        language === 'en'
+          ? 'BioStack backup file has been created. Store it in a safe place.'
+          : 'File backup BioStack telah dibuat. Simpan di lokasi yang aman.',
       );
     });
 
@@ -233,7 +247,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
 
     const validation = await readBackupFile(file);
     if (!validation.valid || !validation.payload) {
-      Alert.alert('Backup tidak valid', validation.error || 'File bukan backup BioStack yang valid.');
+      Alert.alert(
+        language === 'en' ? 'Invalid Backup' : 'Backup tidak valid',
+        validation.error || (language === 'en' ? 'File is not a valid BioStack backup.' : 'File bukan backup BioStack yang valid.'),
+      );
       return;
     }
     setPendingWebFile(file);
@@ -279,9 +296,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
 
       if (!validation.valid || !validation.payload) {
         Alert.alert(
-          'Backup tidak valid',
+          language === 'en' ? 'Invalid Backup' : 'Backup tidak valid',
           validation.error ||
-            'File bukan backup BioStack yang valid.',
+            (language === 'en' ? 'File is not a valid BioStack backup.' : 'File bukan backup BioStack yang valid.'),
         );
         return;
       }
@@ -306,8 +323,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
 
       if (!validation.valid || !validation.payload) {
         Alert.alert(
-          'Import dibatalkan',
-          validation.error || 'Backup tidak valid.',
+          language === 'en' ? 'Import Cancelled' : 'Import dibatalkan',
+          validation.error || (language === 'en' ? 'Invalid backup.' : 'Backup tidak valid.'),
         );
         return;
       }
@@ -319,8 +336,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
       setConfirmImportVisible(false);
 
       Alert.alert(
-        'Restore selesai',
-        'Data dari backup sudah dimuat. Aplikasi sekarang menggunakan isi backup tersebut.',
+        language === 'en' ? 'Restore Complete' : 'Restore selesai',
+        language === 'en'
+          ? 'Data from backup has been loaded. The app is now using the backup contents.'
+          : 'Data dari backup sudah dimuat. Aplikasi sekarang menggunakan isi backup tersebut.',
       );
     });
   };
@@ -337,15 +356,17 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
     if (busy) return;
 
     Alert.alert(
-      'Reset data lokal?',
-      'Ini akan menghapus inventory, freezer, dan history dari perangkat ini. Backup yang sudah diekspor tidak akan terhapus.',
+      language === 'en' ? 'Reset local data?' : 'Reset data lokal?',
+      language === 'en'
+        ? 'This will delete inventory, freezer, and history from this device. Exported backups will not be deleted.'
+        : 'Ini akan menghapus inventory, freezer, dan history dari perangkat ini. Backup yang sudah diekspor tidak akan terhapus.',
       [
         {
-          text: 'Batal',
+          text: language === 'en' ? 'Cancel' : 'Batal',
           style: 'cancel',
         },
         {
-          text: 'Reset',
+          text: language === 'en' ? 'Reset' : 'Reset',
           style: 'destructive',
           onPress: () => {
             void run(async () => {
@@ -361,8 +382,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
               });
 
               Alert.alert(
-                'Selesai',
-                'Data lokal BioStack sudah di-reset.',
+                language === 'en' ? 'Done' : 'Selesai',
+                language === 'en' ? 'BioStack local data has been reset.' : 'Data lokal BioStack sudah di-reset.',
               );
             });
           },
@@ -832,10 +853,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
 
               <TouchableOpacity
                 onPress={confirmImport}
-                disabled={busy || !pendingImportUri}
+                disabled={busy || (!pendingImportUri && !pendingWebFile)}
                 style={[
                   styles.primaryBtn,
-                  (busy || !pendingImportUri) &&
+                  (busy || (!pendingImportUri && !pendingWebFile)) &&
                     styles.disabledControl,
                 ]}
               >
