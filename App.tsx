@@ -38,14 +38,16 @@ import { useBioStackStore } from './src/store/useBioStackStore';
 import { getNotificationPermission, rebuildScheduleReminders } from './src/utils/notificationUtils';
 import { LanguageProvider, useLanguage } from './src/i18n/LanguageContext';
 
-// Konfigurasi handler notifikasi lokal internal
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-});
+// Konfigurasi handler notifikasi lokal internal — hanya pada native (iOS/Android)
+if (Platform.OS !== 'web') {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+    }),
+  });
+}
 
 function BioStackApp() {
   const { language, t } = useLanguage();
@@ -64,6 +66,7 @@ function BioStackApp() {
 
   // Mendaftarkan Izin Notifikasi ke Sistem iOS secara otomatis saat startup
   useEffect(() => {
+    if (Platform.OS === 'web') return; // Notifikasi tidak tersedia di web
     async function initializeLocalNotifications() {
       try {
         const { status: existingStatus } = await Notifications.getPermissionsAsync();
@@ -99,6 +102,7 @@ function BioStackApp() {
   }, []);
 
   useEffect(() => {
+    if (Platform.OS === 'web') return; // Notifikasi tidak tersedia di web
     const handleResponse = (response: Notifications.NotificationResponse) => {
       const data = response.notification.request.content.data as
         | { kind?: string; inventoryId?: string; date?: string }

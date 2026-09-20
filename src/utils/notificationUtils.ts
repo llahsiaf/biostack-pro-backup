@@ -1,6 +1,12 @@
-import * as Notifications from 'expo-notifications';
+import { Platform } from 'react-native';
 import type { InjectionLog, InventoryItem } from '../types';
 import { getScheduledOccurrences } from './scheduleUtils';
+
+// ---------------------------------------------------------------------------
+// Web stubs — expo-notifications is unavailable in the browser.
+// All functions return safe no-op values so the app never crashes on web.
+// ---------------------------------------------------------------------------
+const WEB_PERM_RESULT = { status: 'unavailable' as string, canAskAgain: false };
 
 export const BIOSTACK_NOTIFICATION_PREFIX = 'biostack-schedule';
 export type NotificationPermissionState = string;
@@ -11,16 +17,30 @@ export interface NotificationDiagnostics {
   scheduledCount: number;
 }
 
+// ---------------------------------------------------------------------------
+// Lazy-import expo-notifications only on native to avoid bundler errors
+// when building for web.
+// ---------------------------------------------------------------------------
+const getNative = async () => {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+  const mod = await import('expo-notifications');
+  return mod;
+};
+
 export const getNotificationPermission = async () => {
+  if (Platform.OS === 'web') return WEB_PERM_RESULT;
+  const Notifications = await getNative();
   const settings = await Notifications.getPermissionsAsync();
   return { status: settings.status, canAskAgain: settings.canAskAgain };
 };
 
 export const requestNotificationPermission = async () => {
+  if (Platform.OS === 'web') return WEB_PERM_RESULT;
   const current = await getNotificationPermission();
   if (current.status === 'granted') return current;
   if (current.status === 'denied' && !current.canAskAgain) return current;
 
+  const Notifications = await getNative();
   const requested = await Notifications.requestPermissionsAsync({
     ios: {
       allowAlert: true,
@@ -34,6 +54,8 @@ export const requestNotificationPermission = async () => {
 };
 
 export const sendTestNotification = async (seconds = 60) => {
+  if (Platform.OS === 'web') return null;
+  const Notifications = await getNative();
   const triggerDate = new Date(Date.now() + Math.max(5, seconds) * 1000);
 
   return Notifications.scheduleNotificationAsync({
@@ -43,11 +65,13 @@ export const sendTestNotification = async (seconds = 60) => {
       sound: 'default',
       data: { kind: 'diagnostic' },
     },
-    trigger: { type: 'date', date: triggerDate } as unknown as Notifications.NotificationTriggerInput,
+    trigger: { type: 'date', date: triggerDate } as unknown as import('expo-notifications').NotificationTriggerInput,
   });
 };
 
 export const cancelNotificationIds = async (ids: string[]) => {
+  if (Platform.OS === 'web') return;
+  const Notifications = await getNative();
   await Promise.all(
     ids.filter(Boolean).map((id) =>
       Notifications.cancelScheduledNotificationAsync(id),
@@ -56,6 +80,8 @@ export const cancelNotificationIds = async (ids: string[]) => {
 };
 
 export const cancelAllScheduledNotifications = async () => {
+  if (Platform.OS === 'web') return;
+  const Notifications = await getNative();
   await Notifications.cancelAllScheduledNotificationsAsync();
 };
 
@@ -84,6 +110,10 @@ export const scheduleInventoryReminders = async (
   daysAhead = 30,
   logs: InjectionLog[] = [],
 ) => {
+  const idsByInventory = new Map<string, string[]>();
+  if (Platform.OS === 'web') return idsByInventory;
+
+  const Notifications = await getNative();
   const now = new Date();
   const occurrences = getScheduledOccurrences(
     inventory,
@@ -91,8 +121,6 @@ export const scheduleInventoryReminders = async (
     Math.max(1, daysAhead),
     logs,
   );
-
-  const idsByInventory = new Map<string, string[]>();
 
   for (const occurrence of occurrences) {
     // A completed occurrence must never receive a reminder.
@@ -137,7 +165,7 @@ export const scheduleInventoryReminders = async (
         trigger: {
           type: 'date',
           date: reminderDate,
-        } as unknown as Notifications.NotificationTriggerInput,
+        } as unknown as import('expo-notifications').NotificationTriggerInput,
       });
 
     existingIds.push(notificationId);
@@ -152,6 +180,8 @@ export const rebuildScheduleReminders = async (
   daysAhead = 30,
   logs: InjectionLog[] = [],
 ) => {
+  if (Platform.OS === 'web') return new Map<string, string[]>();
+
   await cancelAllScheduledNotifications();
 
   const permission = await getNotificationPermission();
@@ -168,6 +198,8 @@ export const rebuildScheduleReminders = async (
 };
 
 export const getScheduledNotificationCount = async () => {
+  if (Platform.OS === 'web') return 0;
+  const Notifications = await getNative();
   const scheduled =
     await Notifications.getAllScheduledNotificationsAsync();
 

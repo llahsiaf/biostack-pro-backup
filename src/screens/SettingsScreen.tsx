@@ -1,14 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Modal,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import * as DocumentPicker from 'expo-document-picker';
+
 import {
   ArchiveRestore,
   Bell,
@@ -25,6 +26,7 @@ import {
 } from 'lucide-react-native';
 
 import { useBioStackStore } from '../store/useBioStackStore';
+import type { BioStackBackupPayload } from '../store/useBioStackStore';
 import { useLanguage } from '../i18n/LanguageContext';
 import {
   buildBackupPayload,
@@ -58,9 +60,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
   const [busy, setBusy] = useState(false);
   const [confirmImportVisible, setConfirmImportVisible] = useState(false);
   const [pendingImportUri, setPendingImportUri] = useState<string | null>(null);
+  // Web only: hold selected File object for later confirmation
+  const [pendingWebFile, setPendingWebFile] = useState<File | null>(null);
+  // Web only: hidden <input type="file"> ref
+  const webFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [notificationStatus, setNotificationStatus] =
-    useState<string>('checking');
+    useState<string>(Platform.OS === 'web' ? 'unavailable' : 'checking');
 
   const [scheduledNotificationCount, setScheduledNotificationCount] =
     useState(0);
@@ -217,8 +223,41 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
       );
     });
 
+  // Web only: called when the hidden <input type="file"> fires a change event
+  const handleWebFileInputChange = async (e: Event) => {
+    const input = e.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    // Reset value so the same file can be re-selected later
+    input.value = '';
+
+    const validation = await readBackupFile(file);
+    if (!validation.valid || !validation.payload) {
+      Alert.alert('Backup tidak valid', validation.error || 'File bukan backup BioStack yang valid.');
+      return;
+    }
+    setPendingWebFile(file);
+    setConfirmImportVisible(true);
+  };
+
   const handlePickImport = () =>
     run(async () => {
+      if (Platform.OS === 'web') {
+        // Create (or reuse) a hidden file input and click it
+        if (!webFileInputRef.current) {
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.accept = '.json,application/json';
+          input.style.display = 'none';
+          input.addEventListener('change', (e) => { void handleWebFileInputChange(e); });
+          document.body.appendChild(input);
+          webFileInputRef.current = input;
+        }
+        webFileInputRef.current.click();
+        return;
+      }
+
+      const DocumentPicker = await import('expo-document-picker');
       const result = await DocumentPicker.getDocumentAsync({
         type: 'application/json',
         copyToCacheDirectory: true,
@@ -252,10 +291,18 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
     });
 
   const confirmImport = () => {
-    if (!pendingImportUri || busy) return;
+    const hasNative = !!pendingImportUri;
+    const hasWeb = !!pendingWebFile;
+    if ((!hasNative && !hasWeb) || busy) return;
 
     void run(async () => {
-      const validation = await readBackupFile(pendingImportUri);
+      let validation: { valid: boolean; payload?: BioStackBackupPayload; error?: string };
+
+      if (Platform.OS === 'web' && pendingWebFile) {
+        validation = await readBackupFile(pendingWebFile);
+      } else {
+        validation = await readBackupFile(pendingImportUri!);
+      }
 
       if (!validation.valid || !validation.payload) {
         Alert.alert(
@@ -268,6 +315,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
       replaceData(validation.payload.data);
 
       setPendingImportUri(null);
+      setPendingWebFile(null);
       setConfirmImportVisible(false);
 
       Alert.alert(
@@ -282,6 +330,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
 
     setConfirmImportVisible(false);
     setPendingImportUri(null);
+    setPendingWebFile(null);
   };
 
   const handleReset = () => {
@@ -490,108 +539,121 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
         />
 
         <View style={styles.card}>
-          <View style={styles.notificationStatusRow}>
-            <View style={styles.statusCopy}>
-              <Text style={styles.rowTitle}>
-                Status
-              </Text>
-
-              <Text style={styles.rowDesc}>
-                {notificationStatus === 'granted'
-                  ? (language === 'en' ? `Authorized • ${scheduledNotificationCount} reminder(s) scheduled` : `Authorized • ${scheduledNotificationCount} reminder terjadwal`)
-                  : notificationStatus === 'denied'
-                    ? (language === 'en' ? 'Denied / blocked by iOS' : 'Denied / blocked oleh iOS')
-                    : notificationStatus === 'checking'
-                      ? (language === 'en' ? 'Checking permission…' : 'Memeriksa izin…')
-                      : notificationStatus === 'unavailable'
-                        ? (language === 'en' ? 'Notification API is unavailable' : 'Notification API tidak tersedia')
-                        : (language === 'en' ? 'Not enabled' : 'Belum diaktifkan')}
+          {Platform.OS === 'web' ? (
+            <View style={styles.warningBox}>
+              <Bell size={15} color="#f59e0b" />
+              <Text style={styles.warningText}>
+                {language === 'en'
+                  ? 'Push notifications are only available on the iOS / Android app. Install BioStack on your mobile device to receive injection reminders.'
+                  : 'Notifikasi hanya tersedia di aplikasi iOS / Android. Install BioStack di perangkat mobile untuk menerima pengingat injeksi.'}
               </Text>
             </View>
+          ) : (
+            <>
+              <View style={styles.notificationStatusRow}>
+                <View style={styles.statusCopy}>
+                  <Text style={styles.rowTitle}>
+                    Status
+                  </Text>
 
-            <View
-              style={[
-                styles.statusPill,
-                notificationStatus === 'granted' &&
-                  styles.statusPillOk,
-              ]}
-            >
-              <Text
+                  <Text style={styles.rowDesc}>
+                    {notificationStatus === 'granted'
+                      ? (language === 'en' ? `Authorized • ${scheduledNotificationCount} reminder(s) scheduled` : `Authorized • ${scheduledNotificationCount} reminder terjadwal`)
+                      : notificationStatus === 'denied'
+                        ? (language === 'en' ? 'Denied / blocked by iOS' : 'Denied / blocked oleh iOS')
+                        : notificationStatus === 'checking'
+                          ? (language === 'en' ? 'Checking permission…' : 'Memeriksa izin…')
+                          : notificationStatus === 'unavailable'
+                            ? (language === 'en' ? 'Notification API is unavailable' : 'Notification API tidak tersedia')
+                            : (language === 'en' ? 'Not enabled' : 'Belum diaktifkan')}
+                  </Text>
+                </View>
+
+                <View
+                  style={[
+                    styles.statusPill,
+                    notificationStatus === 'granted' &&
+                      styles.statusPillOk,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.statusPillText,
+                      notificationStatus === 'granted' &&
+                        styles.statusPillTextOk,
+                    ]}
+                  >
+                    {notificationStatus === 'granted'
+                      ? 'READY'
+                      : 'OFF'}
+                  </Text>
+                </View>
+              </View>
+
+              <Text style={styles.notificationHint}>{t('settings.notificationHint') || (language === 'en' ? 'BioStack uses local notifications. No server or push notifications needed; reminders are generated from schedules stored on your device.' : 'BioStack memakai local notifications. Tidak membutuhkan server atau push notification; reminder dibuat dari schedule yang tersimpan di perangkat.')}</Text>
+
+              <View style={styles.notificationActions}>
+                <TouchableOpacity
+                  onPress={handleEnableNotifications}
+                  disabled={busy}
+                  style={[
+                    styles.notificationActionPrimary,
+                    busy && styles.disabledControl,
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel={language === 'en' ? 'Enable notifications' : 'Aktifkan notifikasi'}
+                >
+                  <Bell
+                    size={14}
+                    color="#052e16"
+                  />
+
+                  <Text
+                    style={styles.notificationActionPrimaryText}
+                  >
+                    {language === 'en' ? 'Enable & Schedule' : 'Aktifkan & Jadwalkan'}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={handleTestNotification}
+                  disabled={busy}
+                  style={[
+                    styles.notificationActionSecondary,
+                    busy && styles.disabledControl,
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel={language === 'en' ? 'Test notification' : 'Test notifikasi'}
+                >
+                  <Text
+                    style={styles.notificationActionSecondaryText}
+                  >
+                    {language === 'en' ? 'Test 10s' : 'Test 10 dtk' /* Test 10 dtk */}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity
+                onPress={handleRebuildNotifications}
+                disabled={busy}
                 style={[
-                  styles.statusPillText,
-                  notificationStatus === 'granted' &&
-                    styles.statusPillTextOk,
+                  styles.rebuildBtn,
+                  busy && styles.disabledControl,
                 ]}
+                accessibilityRole="button"
+                accessibilityLabel={language === 'en' ? 'Rebuild reminders' : 'Bangun ulang reminder'}
               >
-                {notificationStatus === 'granted'
-                  ? 'READY'
-                  : 'OFF'}
-              </Text>
-            </View>
-          </View>
+                <RotateCcw
+                  size={14}
+                  color="#f59e0b"
+                />
 
-          <Text style={styles.notificationHint}>{t('settings.notificationHint') || (language === 'en' ? 'BioStack uses local notifications. No server or push notifications needed; reminders are generated from schedules stored on your device.' : 'BioStack memakai local notifications. Tidak membutuhkan server atau push notification; reminder dibuat dari schedule yang tersimpan di perangkat.')}</Text>
-
-          <View style={styles.notificationActions}>
-            <TouchableOpacity
-              onPress={handleEnableNotifications}
-              disabled={busy}
-              style={[
-                styles.notificationActionPrimary,
-                busy && styles.disabledControl,
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel={language === 'en' ? 'Enable notifications' : 'Aktifkan notifikasi'}
-            >
-              <Bell
-                size={14}
-                color="#052e16"
-              />
-
-              <Text
-                style={styles.notificationActionPrimaryText}
-              >
-                {language === 'en' ? 'Enable & Schedule' : 'Aktifkan & Jadwalkan'}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={handleTestNotification}
-              disabled={busy}
-              style={[
-                styles.notificationActionSecondary,
-                busy && styles.disabledControl,
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel={language === 'en' ? 'Test notification' : 'Test notifikasi'}
-            >
-              <Text
-                style={styles.notificationActionSecondaryText}
-              >
-                {language === 'en' ? 'Test 10s' : 'Test 10 dtk' /* Test 10 dtk */}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <TouchableOpacity
-            onPress={handleRebuildNotifications}
-            disabled={busy}
-            style={[
-              styles.rebuildBtn,
-              busy && styles.disabledControl,
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel={language === 'en' ? 'Rebuild reminders' : 'Bangun ulang reminder'}
-          >
-            <RotateCcw
-              size={14}
-              color="#f59e0b"
-            />
-
-            <Text style={styles.rebuildText}>
-              {language === 'en' ? 'Rebuild 30-Day Reminders' : 'Rebuild Reminder 30 Hari' /* Rebuild Reminder 30 Hari */}
-            </Text>
-          </TouchableOpacity>
+                <Text style={styles.rebuildText}>
+                  {language === 'en' ? 'Rebuild 30-Day Reminders' : 'Rebuild Reminder 30 Hari' /* Rebuild Reminder 30 Hari */}
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
 
         {/* PRIVACY */}

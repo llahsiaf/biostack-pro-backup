@@ -1,5 +1,3 @@
-import * as FileSystem from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 import type { BioStackBackupPayload } from '../store/useBioStackStore';
 
@@ -58,12 +56,53 @@ export function validateBackupPayload(value: unknown): {
   return { valid: true, payload: value as unknown as BioStackBackupPayload };
 }
 
+// ---------------------------------------------------------------------------
+// Web helper: trigger a file download in the browser via a Blob + anchor tag.
+// ---------------------------------------------------------------------------
+function downloadBlobWeb(content: string, filename: string, mimeType: string) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(url);
+}
+
+// ---------------------------------------------------------------------------
+// Web helper: read a File object as text (used after <input type="file">).
+// ---------------------------------------------------------------------------
+function readFileAsText(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve((e.target?.result as string) ?? '');
+    reader.onerror = () => reject(new Error('Gagal membaca file.'));
+    reader.readAsText(file, 'utf-8');
+  });
+}
+
 export async function exportBackupFile(payload: BioStackBackupPayload): Promise<string> {
+  const jsonStr = JSON.stringify(payload, null, 2);
+  const stamp = payload.exportedAt.replace(/[:.]/g, '-');
+  const filename = `BioStack_PRO_Backup_${stamp}.json`;
+
+  if (Platform.OS === 'web') {
+    downloadBlobWeb(jsonStr, filename, 'application/json');
+    return filename;
+  }
+
+  // Native path — lazy import expo-file-system & expo-sharing
+  const [FileSystem, Sharing] = await Promise.all([
+    import('expo-file-system'),
+    import('expo-sharing'),
+  ]);
+
   if (!FileSystem.documentDirectory) throw new Error('Direktori dokumen tidak tersedia.');
 
-  const stamp = payload.exportedAt.replace(/[:.]/g, '-');
-  const uri = `${FileSystem.documentDirectory}BioStack_PRO_Backup_${stamp}.json`;
-  await FileSystem.writeAsStringAsync(uri, JSON.stringify(payload, null, 2), {
+  const uri = `${FileSystem.documentDirectory}${filename}`;
+  await FileSystem.writeAsStringAsync(uri, jsonStr, {
     encoding: FileSystem.EncodingType.UTF8,
   });
 
@@ -79,15 +118,30 @@ export async function exportBackupFile(payload: BioStackBackupPayload): Promise<
   return uri;
 }
 
-export async function readBackupFile(uri: string): Promise<{
+/**
+ * On web: pass a File object from <input type="file">.
+ * On native: pass a uri string from expo-document-picker.
+ */
+export async function readBackupFile(uriOrFile: string | File): Promise<{
   valid: boolean;
   payload?: BioStackBackupPayload;
   error?: string;
 }> {
   try {
-    const raw = await FileSystem.readAsStringAsync(uri, {
-      encoding: FileSystem.EncodingType.UTF8,
-    });
+    let raw: string;
+
+    if (Platform.OS === 'web') {
+      if (typeof uriOrFile === 'string') {
+        return { valid: false, error: 'Pada web, gunakan objek File dari input file.' };
+      }
+      raw = await readFileAsText(uriOrFile as File);
+    } else {
+      const FileSystem = await import('expo-file-system');
+      raw = await FileSystem.readAsStringAsync(uriOrFile as string, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+    }
+
     return validateBackupPayload(JSON.parse(raw));
   } catch {
     return { valid: false, error: 'File backup tidak dapat dibaca atau JSON rusak.' };
