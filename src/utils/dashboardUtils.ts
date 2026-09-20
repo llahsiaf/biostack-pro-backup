@@ -80,12 +80,13 @@ export const getDashboardAnalytics = (
   };
 };
 
-export const getOccurrenceStatusLabel = (occurrence: ScheduledOccurrence): string => {
+export const getOccurrenceStatusLabel = (occurrence: ScheduledOccurrence, lang?: string): string => {
+  const isEn = lang === 'en';
   switch (occurrence.status) {
-    case 'completed': return 'Selesai';
-    case 'missed': return 'Terlewat';
-    case 'due': return 'Jatuh tempo';
-    case 'upcoming': return 'Mendatang';
-    default: return 'Tidak aktif';
+    case 'completed': return isEn ? 'Completed' : 'Selesai';
+    case 'missed': return isEn ? 'Missed' : 'Terlewat';
+    case 'due': return isEn ? 'Due' : 'Jatuh tempo';
+    case 'upcoming': return isEn ? 'Upcoming' : 'Mendatang';
+    default: return isEn ? 'Inactive' : 'Tidak aktif';
   }
 };

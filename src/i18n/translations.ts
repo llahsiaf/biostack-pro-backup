@@ -511,9 +511,11 @@ export const ID_TRANSLATIONS = {
   // ----------------------------------------------------------
 
   settings: {
-
     title:
-      'Pengaturan',
+      'Pengaturan BioStack',
+
+    subtitle:
+      'Backup, privacy, dan kontrol data lokal.',
 
     language:
       'Bahasa',
@@ -529,6 +531,30 @@ export const ID_TRANSLATIONS = {
 
     notifications:
       'Notifikasi',
+
+    exportAllData:
+      'Ekspor seluruh data',
+
+    exportAllDataDesc:
+      'Membuat satu file JSON berisi inventory, freezer, history, rotasi, dan pengaturan tracker.',
+
+    exportBackup:
+      'Ekspor Backup',
+
+    restoreFromBackup:
+      'Restore dari backup',
+
+    restoreFromBackupDesc:
+      'Pilih file BioStack JSON untuk mengganti data lokal dengan checkpoint yang kamu simpan.',
+
+    pickFile:
+      'Pilih File',
+
+    restoreWarning:
+      'Restore akan mengganti data lokal saat ini. Ekspor backup terbaru sebelum melakukan restore.',
+
+    notificationHint:
+      'BioStack memakai local notifications. Tidak membutuhkan server atau push notification; reminder dibuat dari schedule yang tersimpan di perangkat.',
 
     appearance:
       'Tampilan',
@@ -1177,7 +1203,10 @@ export const EN_TRANSLATIONS = {
   settings: {
 
     title:
-      'Settings',
+      'BioStack Settings',
+
+    subtitle:
+      'Backup, privacy, and local data control.',
 
     language:
       'Language',
@@ -1193,6 +1222,30 @@ export const EN_TRANSLATIONS = {
 
     notifications:
       'Notifications',
+
+    exportAllData:
+      'Export all data',
+
+    exportAllDataDesc:
+      'Creates a single JSON file containing inventory, freezer, history, rotation, and tracker settings.',
+
+    exportBackup:
+      'Export Backup',
+
+    restoreFromBackup:
+      'Restore from backup',
+
+    restoreFromBackupDesc:
+      'Select a BioStack JSON file to replace local data with your saved checkpoint.',
+
+    pickFile:
+      'Choose File',
+
+    restoreWarning:
+      'Restoring will replace current local data. Export a recent backup before proceeding.',
+
+    notificationHint:
+      'BioStack uses local notifications. No server or push notifications needed; reminders are generated from schedules stored on your device.',
 
     appearance:
       'Appearance',

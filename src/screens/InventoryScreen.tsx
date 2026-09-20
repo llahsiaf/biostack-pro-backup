@@ -58,6 +58,17 @@ import { useLanguage } from '../i18n/LanguageContext';
 
 const DAYS_OF_WEEK = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 
+const DAY_TRANSLATIONS: Record<string, string> = {
+  Sen: 'Mon',
+  Sel: 'Tue',
+  Rab: 'Wed',
+  Kam: 'Thu',
+  Jum: 'Fri',
+  Sab: 'Sat',
+  Min: 'Sun',
+};
+const formatDayChip = (d: string, lang?: string) => lang === 'en' ? (DAY_TRANSLATIONS[d] || d) : d;
+
 const FREQUENCY_PRESETS = [
   {
     id: 'daily',
@@ -88,7 +99,7 @@ const FREQUENCY_PRESETS = [
 // V5 INVENTORY FINAL: compact card hierarchy + slim dose metrics.
 // Schedule & Pengaturan Suntik logic/UI is intentionally preserved.
 export const InventoryScreen: React.FC = () => {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const {
     inventory,
     freezerStock,
@@ -351,19 +362,15 @@ export const InventoryScreen: React.FC = () => {
           />
 
           <View>
-            <Text style={styles.statLabel}>
-              Aktif di Kulkas
-            </Text>
+            <Text style={styles.statLabel}>{language === 'en' ? 'Active in Fridge' : 'Aktif di Kulkas'}</Text>
 
             <Text style={styles.statValue}>
               {activeInventoryCount}{' '}
-              <Text style={styles.statSub}>
-                Vial Aktif
-              </Text>
+              <Text style={styles.statSub}>{language === 'en' ? 'Active Vials' : 'Vial Aktif'}</Text>
             </Text>
 
             <Text style={styles.statMini}>
-              {emptyInventoryCount} kosong
+              {emptyInventoryCount} {language === 'en' ? 'empty' : 'kosong'}
             </Text>
           </View>
         </View>
@@ -375,15 +382,11 @@ export const InventoryScreen: React.FC = () => {
           />
 
           <View>
-            <Text style={styles.statLabel}>
-              Stok Freezer
-            </Text>
+            <Text style={styles.statLabel}>{language === 'en' ? 'Freezer Stock' : 'Stok Freezer'}</Text>
 
             <Text style={styles.statValue}>
               {totalFreezerVials}{' '}
-              <Text style={styles.statSub}>
-                Vial Beku
-              </Text>
+              <Text style={styles.statSub}>{language === 'en' ? 'Frozen Vials' : 'Vial Beku'}</Text>
             </Text>
           </View>
         </View>
@@ -395,9 +398,7 @@ export const InventoryScreen: React.FC = () => {
           />
 
           <View style={styles.scheduleStatContent}>
-            <Text style={styles.statLabel}>
-              Jadwal Hari Ini
-            </Text>
+            <Text style={styles.statLabel}>{language === 'en' ? "Today's Schedule" : 'Jadwal Hari Ini'}</Text>
 
             <Text style={styles.statValue}>
               {scheduleSummary.completed}/
@@ -408,8 +409,9 @@ export const InventoryScreen: React.FC = () => {
               style={styles.statMini}
               numberOfLines={2}
             >
-              {scheduleSummary.missed} terlewat •{' '}
-              {scheduleSummary.due} perlu dicatat
+              {language === 'en'
+                ? `${scheduleSummary.missed} missed • ${scheduleSummary.due} due to record`
+                : `${scheduleSummary.missed} terlewat • ${scheduleSummary.due} perlu dicatat`}
             </Text>
           </View>
         </View>
@@ -421,8 +423,8 @@ export const InventoryScreen: React.FC = () => {
           (filter) => {
             const label =
               filter === 'active'
-                ? `Aktif (${activeInventoryCount})`
-                : `Kosong (${emptyInventoryCount})`;
+                ? (language === 'en' ? `Active (${activeInventoryCount})` : `Aktif (${activeInventoryCount})`)
+                : (language === 'en' ? `Empty (${emptyInventoryCount})` : `Kosong (${emptyInventoryCount})`);
 
             return (
               <TouchableOpacity
@@ -460,14 +462,10 @@ export const InventoryScreen: React.FC = () => {
               color="#10b981"
             />
 
-            <Text style={styles.sectionTitle}>
-              Inventory Kulkas Aktif
-            </Text>
+            <Text style={styles.sectionTitle}>{language === 'en' ? 'Active Fridge Inventory' : 'Inventory Kulkas Aktif'}</Text>
           </View>
 
-          <Text style={styles.sectionSub}>
-            Peptida aktif yang tersimpan di kulkas
-          </Text>
+          <Text style={styles.sectionSub}>{language === 'en' ? 'Active peptides stored in the fridge' : 'Peptida aktif yang tersimpan di kulkas'}</Text>
         </View>
 
         <TouchableOpacity
@@ -482,9 +480,7 @@ export const InventoryScreen: React.FC = () => {
             color="#022c22"
           />
 
-          <Text style={styles.takeFreezerBtnText}>
-            Ambil Vial
-          </Text>
+          <Text style={styles.takeFreezerBtnText}>{language === 'en' ? '+ Take Vial' : '+ Ambil Vial'}</Text>
         </TouchableOpacity>
       </View>
 
@@ -503,14 +499,14 @@ export const InventoryScreen: React.FC = () => {
 
             <Text style={styles.emptyTitle}>
               {lifecycleFilter === 'empty'
-                ? 'Belum Ada Vial Kosong'
-                : 'Belum Ada Vial Aktif'}
+                ? (language === 'en' ? 'No Empty Vials Yet' : 'Belum Ada Vial Kosong')
+                : (language === 'en' ? 'No Active Vials Yet' : 'Belum Ada Vial Aktif')}
             </Text>
 
             <Text style={styles.emptySub}>
               {lifecycleFilter === 'empty'
-                ? 'Semua vial di kulkas masih memiliki cairan.'
-                : 'Tekan tombol Ambil Vial di atas untuk menambahkan vial.'}
+                ? (language === 'en' ? 'All vials in fridge still have liquid.' : 'Semua vial di kulkas masih memiliki cairan.')
+                : (language === 'en' ? 'Tap Take Vial above to add vials.' : 'Tekan tombol Ambil Vial di atas untuk menambahkan vial.')}
             </Text>
           </View>
         }
@@ -552,8 +548,8 @@ export const InventoryScreen: React.FC = () => {
 
           const lifecycleLabel =
             lifecycleStatus === 'empty'
-              ? 'Vial Kosong'
-              : 'Vial Aktif';
+              ? (language === 'en' ? 'Empty Vial' : 'Vial Kosong')
+              : (language === 'en' ? 'Active Vial' : 'Vial Aktif');
 
           return (
             <View style={styles.peptideCard}>
@@ -765,7 +761,7 @@ export const InventoryScreen: React.FC = () => {
                         styles.badgeTodayText
                       }
                     >
-                      Injeksi Hari Ini
+                      {language === 'en' ? 'Injection Today' : 'Injeksi Hari Ini'}
                     </Text>
                   </View>
                 ) : (
@@ -777,7 +773,7 @@ export const InventoryScreen: React.FC = () => {
                         styles.badgeRestText
                       }
                     >
-                      Hari Rest
+                      {language === 'en' ? 'Rest Day' : 'Hari Rest'}
                     </Text>
                   </View>
                 )}
@@ -795,7 +791,7 @@ export const InventoryScreen: React.FC = () => {
                           styles.badgePausedText
                         }
                       >
-                        Jadwal Dijeda
+                        {language === 'en' ? 'Schedule Paused' : 'Jadwal Dijeda'}
                       </Text>
                     </View>
                   )}
@@ -854,7 +850,7 @@ export const InventoryScreen: React.FC = () => {
                       }
                       numberOfLines={1}
                     >
-                      Dial: {metrics.dialClicks} Klik
+                      Dial: {metrics.dialClicks} {language === 'en' ? 'Clicks' : 'Klik'}
                     </Text>
                   </View>
                 </View>
@@ -867,7 +863,7 @@ export const InventoryScreen: React.FC = () => {
                   <Text
                     style={styles.daysRowLabel}
                   >
-                    Hari:
+                    {language === 'en' ? 'Days:' : 'Hari:'}
                   </Text>
 
                   <View
@@ -898,7 +894,7 @@ export const InventoryScreen: React.FC = () => {
                                   styles.dayDotTextActive,
                               ]}
                             >
-                              {day}
+                              {formatDayChip(day, language)}
                             </Text>
                           </View>
                         );
@@ -952,13 +948,11 @@ export const InventoryScreen: React.FC = () => {
                           styles.scheduleStatusMissed,
                       ]}
                     >
-                      {occurrence.status ===
-                      'completed'
-                        ? `Hari ini selesai • ${occurrence.time}`
-                        : occurrence.status ===
-                          'missed'
-                        ? `Terlewat • jadwal ${occurrence.time}`
-                        : `Jadwal berikutnya • ${occurrence.date} ${occurrence.time}`}
+                      {occurrence.status === 'completed'
+                        ? (language === 'en' ? `Completed today • ${occurrence.time}` : `Hari ini selesai • ${occurrence.time}`)
+                        : occurrence.status === 'missed'
+                        ? (language === 'en' ? `Missed • scheduled ${occurrence.time}` : `Terlewat • jadwal ${occurrence.time}`)
+                        : (language === 'en' ? `Next schedule • ${occurrence.date} ${occurrence.time}` : `Jadwal berikutnya • ${occurrence.date} ${occurrence.time}`)}
                     </Text>
                   </View>
                 )}
@@ -988,9 +982,9 @@ export const InventoryScreen: React.FC = () => {
                           styles.progressTitle
                         }
                       >
-                        Sisa Cairan (~
-                        {liquid.daysLeft} Hari
-                        Lagi)
+                        {language === 'en'
+                          ? `Remaining Liquid (~${liquid.daysLeft} Days Left)`
+                          : `Sisa Cairan (~${liquid.daysLeft} Hari Lagi)`}
                       </Text>
                     </View>
 
@@ -999,7 +993,7 @@ export const InventoryScreen: React.FC = () => {
                         styles.progressPercentText
                       }
                     >
-                      Kapasitas Aman (
+                      {language === 'en' ? 'Safe Capacity' : 'Kapasitas Aman'} (
                       {Math.round(
                         liquid.progressPercent,
                       )}
@@ -1032,7 +1026,7 @@ export const InventoryScreen: React.FC = () => {
                         styles.progressFooterText
                       }
                     >
-                      Dilarutkan:{' '}
+                      {language === 'en' ? 'Reconstituted: ' : 'Dilarutkan: '}
                       {item.reconstitutedDate ||
                         '-'}
                     </Text>
@@ -1042,10 +1036,10 @@ export const InventoryScreen: React.FC = () => {
                         styles.progressFooterText
                       }
                     >
-                      Exp Kulkas:{' '}
+                      {language === 'en' ? 'Fridge Exp: ' : 'Exp Kulkas: '}
                       {item.maxFridgeDays ||
                         28}{' '}
-                      Hari
+                      {language === 'en' ? 'Days' : 'Hari'}
                     </Text>
                   </View>
                 </View>
@@ -1091,12 +1085,11 @@ export const InventoryScreen: React.FC = () => {
                       styles.injectMainBtnTextDisabled,
                   ]}
                 >
-                  {lifecycleStatus ===
-                  'empty'
-                    ? 'Vial Kosong'
+                  {lifecycleStatus === 'empty'
+                    ? (language === 'en' ? 'Empty Vial' : 'Vial Kosong')
                     : item.schedulePaused
-                    ? 'Jadwal Dijeda'
-                    : `Suntik Sekarang (${currentSite})`}
+                    ? (language === 'en' ? 'Schedule Paused' : 'Jadwal Dijeda')
+                    : (language === 'en' ? `Inject Now (${currentSite})` : `Suntik Sekarang (${currentSite})`)}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -1200,7 +1193,7 @@ export const InventoryScreen: React.FC = () => {
                         styles.sectionHeadingMini
                       }
                     >
-                      PRESET DOSIS CEPAT
+                      {language === 'en' ? 'QUICK DOSE PRESETS' : 'PRESET DOSIS CEPAT'}
                     </Text>
 
                     <View
@@ -1373,8 +1366,7 @@ export const InventoryScreen: React.FC = () => {
                               styles.fancyInputTitle
                             }
                           >
-                            Volume Pelarut
-                            (BAC Water)
+                            {language === 'en' ? 'Diluent Volume (BAC Water)' : 'Volume Pelarut (BAC Water)'}
                           </Text>
 
                           <Text
@@ -1414,7 +1406,7 @@ export const InventoryScreen: React.FC = () => {
                             styles.svgCardTitle
                           }
                         >
-                          SIMULASI SPUIT U-100
+                          {language === 'en' ? 'U-100 SYRINGE SIMULATION' : 'SIMULASI SPUIT U-100'}
                         </Text>
 
                         <Text
@@ -1436,7 +1428,7 @@ export const InventoryScreen: React.FC = () => {
                         <Svg
                           height="80"
                           width={svgWidth}
-                          viewBox="0 0 280 80"
+                          viewBox={`0 0 ${svgWidth} 80`}
                         >
                           <Defs>
                             <LinearGradient
@@ -1448,21 +1440,22 @@ export const InventoryScreen: React.FC = () => {
                             >
                               <Stop
                                 offset="0"
-                                stopColor="#06b6d4"
-                                stopOpacity="1"
+                                stopColor="#10b981"
+                                stopOpacity="0.4"
                               />
+
                               <Stop
                                 offset="1"
                                 stopColor="#10b981"
-                                stopOpacity="1"
+                                stopOpacity="0.85"
                               />
                             </LinearGradient>
                           </Defs>
 
                           <Rect
-                            x="40"
+                            x="30"
                             y="20"
-                            width="180"
+                            width="190"
                             height="40"
                             fill="#0f172a"
                             stroke="#334155"
@@ -1568,8 +1561,7 @@ export const InventoryScreen: React.FC = () => {
                                 }
                                 y2="65"
                                 stroke="#10b981"
-                                strokeWidth="2"
-                                strokeDasharray="3,3"
+                                strokeWidth="2.5"
                               />
 
                               <SvgText
@@ -1583,7 +1575,7 @@ export const InventoryScreen: React.FC = () => {
                                 fontWeight="bold"
                                 textAnchor="middle"
                               >
-                                Garis{' '}
+                                {language === 'en' ? 'Mark' : 'Garis'}{' '}
                                 {
                                   liveMetrics.iu
                                 }{' '}
@@ -1615,8 +1607,7 @@ export const InventoryScreen: React.FC = () => {
                             styles.calcHeaderTitle
                           }
                         >
-                          HASIL KALKULASI
-                          PRESISI
+                          {language === 'en' ? 'PRECISION CALCULATION' : 'HASIL KALKULASI PRESISI'}
                         </Text>
                       </View>
 
@@ -1715,7 +1706,7 @@ export const InventoryScreen: React.FC = () => {
                               styles.calcBoxSub
                             }
                           >
-                            Klik
+                            {language === 'en' ? 'Clicks' : 'Klik'}
                           </Text>
                         </View>
                       </View>
@@ -1739,8 +1730,7 @@ export const InventoryScreen: React.FC = () => {
                           styles.applyBtnText
                         }
                       >
-                        Terapkan & Simpan
-                        Dosis
+                        {language === 'en' ? 'Apply & Save Dose' : 'Terapkan & Simpan Dosis'}
                       </Text>
                     </TouchableOpacity>
                   </ScrollView>
@@ -1770,14 +1760,14 @@ export const InventoryScreen: React.FC = () => {
                   <Clock size={17} color="#10b981" />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.scheduleModalTitle}>Jadwal & Pengaturan</Text>
-                  <Text style={styles.scheduleModalSubtitle}>Atur hari, waktu, siklus, dan pengingat</Text>
+                  <Text style={styles.scheduleModalTitle}>{language === 'en' ? 'Schedule & Settings' : 'Jadwal & Pengaturan'}</Text>
+                  <Text style={styles.scheduleModalSubtitle}>{language === 'en' ? 'Configure days, time, cycle, and reminders' : 'Atur hari, waktu, siklus, dan pengingat'}</Text>
                 </View>
               </View>
               <TouchableOpacity
                 onPress={() => setIsScheduleModalOpen(false)}
                 style={styles.scheduleCloseButton}
-                accessibilityLabel="Tutup pengaturan jadwal"
+                accessibilityLabel={language === 'en' ? 'Close schedule settings' : 'Tutup pengaturan jadwal'}
               >
                 <X size={18} color="#94a3b8" />
               </TouchableOpacity>
@@ -1797,13 +1787,13 @@ export const InventoryScreen: React.FC = () => {
                     </Text>
                   </View>
                   <Text style={styles.scheduleHeroMeta}>
-                    {scheduleItem.vialSize} {scheduleItem.unit} Vial • {scheduleItem.targetDose} {scheduleItem.doseUnit} per tindakan
+                    {scheduleItem.vialSize} {scheduleItem.unit} Vial • {scheduleItem.targetDose} {scheduleItem.doseUnit} {language === 'en' ? 'per action' : 'per tindakan'}
                   </Text>
                 </View>
 
                 <View style={styles.scheduleSection}>
                   <View style={styles.scheduleSectionHeader}>
-                    <Text style={styles.scheduleSectionTitle}>FREKUENSI</Text>
+                    <Text style={styles.scheduleSectionTitle}>{language === 'en' ? 'FREQUENCY' : 'FREKUENSI'}</Text>
                     <Text style={styles.scheduleSectionHint}>{frequencyLabel}</Text>
                   </View>
                   <View style={styles.presetGridCompact}>
@@ -1840,8 +1830,8 @@ export const InventoryScreen: React.FC = () => {
 
                 <View style={styles.scheduleSection}>
                   <View style={styles.scheduleSectionHeader}>
-                    <Text style={styles.scheduleSectionTitle}>HARI AKTIF</Text>
-                    <Text style={styles.scheduleSectionHint}>{activeDays.length} hari dipilih</Text>
+                    <Text style={styles.scheduleSectionTitle}>{language === 'en' ? 'ACTIVE DAYS' : 'HARI AKTIF'}</Text>
+                    <Text style={styles.scheduleSectionHint}>{activeDays.length} {language === 'en' ? 'days selected' : 'hari dipilih'}</Text>
                   </View>
                   <View style={styles.daysSelectorModern}>
                     {DAYS_OF_WEEK.map((d) => {
@@ -1859,7 +1849,7 @@ export const InventoryScreen: React.FC = () => {
                           style={[styles.dayToggleModern, isSel && styles.dayToggleModernActive]}
                         >
                           <Text style={[styles.dayToggleModernText, isSel && styles.dayToggleModernTextActive]}>
-                            {d}
+                            {formatDayChip(d, language)}
                           </Text>
                         </TouchableOpacity>
                       );
@@ -1869,16 +1859,16 @@ export const InventoryScreen: React.FC = () => {
 
                 <View style={styles.scheduleSection}>
                   <View style={styles.scheduleSectionHeader}>
-                    <Text style={styles.scheduleSectionTitle}>WAKTU PENYUNTIKAN</Text>
-                    <Text style={styles.scheduleSectionHint}>Format 24 jam</Text>
+                    <Text style={styles.scheduleSectionTitle}>{language === 'en' ? 'INJECTION TIME' : 'WAKTU PENYUNTIKAN'}</Text>
+                    <Text style={styles.scheduleSectionHint}>{language === 'en' ? '24-hour format' : 'Format 24 jam'}</Text>
                   </View>
                   <View style={styles.timePickerCard}>
                     <View style={styles.timePickerIcon}>
                       <Clock size={17} color="#38bdf8" />
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.timePickerLabel}>Jam tindakan</Text>
-                      <Text style={styles.timePickerHint}>Pengingat mengikuti waktu ini</Text>
+                      <Text style={styles.timePickerLabel}>{language === 'en' ? 'Action time' : 'Jam tindakan'}</Text>
+                      <Text style={styles.timePickerHint}>{language === 'en' ? 'Reminder follows this time' : 'Pengingat mengikuti waktu ini'}</Text>
                     </View>
                     <TextInput
                       style={styles.timePickerInput}
@@ -1898,8 +1888,8 @@ export const InventoryScreen: React.FC = () => {
                       <Activity size={15} color="#10b981" />
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.scheduleOptionTitle}>Siklus / Periodisasi</Text>
-                      <Text style={styles.scheduleOptionSub}>Aktifkan pengaturan cycle untuk jadwal berkala</Text>
+                      <Text style={styles.scheduleOptionTitle}>{language === 'en' ? 'Cycle / Periodization' : 'Siklus / Periodisasi'}</Text>
+                      <Text style={styles.scheduleOptionSub}>{language === 'en' ? 'Enable cycle settings for periodic schedules' : 'Aktifkan pengaturan cycle untuk jadwal berkala'}</Text>
                     </View>
                     <Switch
                       value={isCycleActive}
@@ -1914,8 +1904,8 @@ export const InventoryScreen: React.FC = () => {
                       <Clock size={15} color="#38bdf8" />
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.scheduleOptionTitle}>Pengingat notifikasi</Text>
-                      <Text style={styles.scheduleOptionSub}>Beri pengingat ketika jadwal sudah tiba</Text>
+                      <Text style={styles.scheduleOptionTitle}>{language === 'en' ? 'Notification reminder' : 'Pengingat notifikasi'}</Text>
+                      <Text style={styles.scheduleOptionSub}>{language === 'en' ? 'Get reminded when schedule arrives' : 'Beri pengingat ketika jadwal sudah tiba'}</Text>
                     </View>
                     <Switch
                       value={isReminderActive}
@@ -1931,11 +1921,11 @@ export const InventoryScreen: React.FC = () => {
                     onPress={() => setIsScheduleModalOpen(false)}
                     style={styles.scheduleCancelModern}
                   >
-                    <Text style={styles.scheduleCancelModernText}>Batal</Text>
+                    <Text style={styles.scheduleCancelModernText}>{language === 'en' ? 'Cancel' : 'Batal'}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={handleSaveSchedule} style={styles.scheduleSaveModern}>
                     <CheckCircle2 size={16} color="#022c22" />
-                    <Text style={styles.scheduleSaveModernText}>Simpan Jadwal</Text>
+                    <Text style={styles.scheduleSaveModernText}>{language === 'en' ? 'Save Schedule' : 'Simpan Jadwal'}</Text>
                   </TouchableOpacity>
                 </View>
               </ScrollView>
@@ -1970,10 +1960,10 @@ export const InventoryScreen: React.FC = () => {
 
                 <View style={styles.freezerModalHeaderTextV1}>
                   <Text style={styles.freezerModalTitleV1} numberOfLines={1}>
-                    Ambil Stok dari Freezer
+                    {language === 'en' ? 'Take Stock from Freezer' : 'Ambil Stok dari Freezer'}
                   </Text>
                   <Text style={styles.freezerModalSubtitleV1} numberOfLines={1}>
-                    Pilih vial untuk dipindahkan ke kulkas
+                    {language === 'en' ? 'Select vial to move to fridge' : 'Pilih vial untuk dipindahkan ke kulkas'}
                   </Text>
                 </View>
               </View>
@@ -1984,7 +1974,7 @@ export const InventoryScreen: React.FC = () => {
                   setSelectedFreezerItem(null);
                 }}
                 style={styles.freezerModalCloseV1}
-                accessibilityLabel="Tutup ambil stok dari freezer"
+                accessibilityLabel={language === 'en' ? 'Close take stock from freezer' : 'Tutup ambil stok dari freezer'}
               >
                 <X size={17} color="#94a3b8" />
               </TouchableOpacity>
@@ -1998,7 +1988,7 @@ export const InventoryScreen: React.FC = () => {
               {!selectedFreezerItem ? (
                 <>
                   <Text style={styles.freezerModalInstructionV1}>
-                    Pilih peptida yang ingin dipindahkan ke kulkas
+                    {language === 'en' ? 'Select peptide to move to fridge' : 'Pilih peptida yang ingin dipindahkan ke kulkas'}
                   </Text>
 
                   <View style={styles.freezerItemsListV1}>
@@ -2095,17 +2085,16 @@ export const InventoryScreen: React.FC = () => {
                   </View>
 
                   <View style={styles.reconInfoV1}>
-                    <Text style={styles.reconInfoTitleV1}>Pelarutan</Text>
+                    <Text style={styles.reconInfoTitleV1}>{language === 'en' ? 'Reconstitution' : 'Pelarutan'}</Text>
                     <Text style={styles.reconInfoTextV1}>
-                      Masukkan volume BAC Water untuk melarutkan peptida ini ke
-                      kulkas aktif.
+                      {language === 'en' ? 'Enter BAC Water volume to reconstitute this peptide into active fridge.' : 'Masukkan volume BAC Water untuk melarutkan peptida ini ke kulkas aktif.'}
                     </Text>
                   </View>
 
                   <View style={styles.reconInputCardV1}>
                     <View style={styles.reconInputHeaderV1}>
                       <Text style={styles.reconInputLabelV1}>
-                        Volume BAC Water
+                        {language === 'en' ? 'BAC Water Volume' : 'Volume BAC Water'}
                       </Text>
                       <Text style={styles.reconInputUnitV1}>mL</Text>
                     </View>
@@ -2126,7 +2115,7 @@ export const InventoryScreen: React.FC = () => {
                       style={styles.reconBtnBackV1}
                     >
                       <Text style={styles.reconBtnBackTextV1}>
-                        Kembali
+                        {language === 'en' ? 'Back' : 'Kembali'}
                       </Text>
                     </TouchableOpacity>
 
@@ -2143,7 +2132,7 @@ export const InventoryScreen: React.FC = () => {
                     >
                       <FlaskConical size={15} color="#022c22" />
                       <Text style={styles.reconBtnSubmitTextV1}>
-                        Larutkan Sekarang
+                        {language === 'en' ? 'Reconstitute Now' : 'Larutkan Sekarang'}
                       </Text>
                     </TouchableOpacity>
                   </View>

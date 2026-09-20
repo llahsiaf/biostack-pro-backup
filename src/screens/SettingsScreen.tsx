@@ -339,13 +339,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
           <View style={styles.heroCopy}>
             <Text style={styles.eyebrow}>APP SETTINGS</Text>
 
-            <Text style={styles.title}>
-              Pengaturan BioStack
-            </Text>
+            <Text style={styles.title}>{t('settings.title') || 'Pengaturan BioStack'}</Text>
 
-            <Text style={styles.subtitle}>
-              Backup, privacy, dan kontrol data lokal.
-            </Text>
+            <Text style={styles.subtitle}>{t('settings.subtitle') || 'Backup, privacy, dan kontrol data lokal.'}</Text>
           </View>
 
           {onDone && (
@@ -445,10 +441,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
                 color="#38bdf8"
               />
             }
-            title="Ekspor seluruh data"
-            desc="Membuat satu file JSON berisi inventory, freezer, history, rotasi, dan pengaturan tracker."
+            title={t("settings.exportAllData") || "Ekspor seluruh data"}
+            desc={t("settings.exportAllDataDesc") || "Membuat satu file JSON berisi inventory, freezer, history, rotasi, dan pengaturan tracker."}
             buttonLabel={
-              busy ? 'Memproses…' : 'Ekspor Backup'
+              busy ? (language === 'en' ? 'Processing…' : 'Memproses…') : (t('settings.exportBackup') || 'Ekspor Backup')
             }
             onPress={handleExport}
             disabled={busy}
@@ -463,10 +459,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
                 color="#10b981"
               />
             }
-            title="Restore dari backup"
-            desc="Pilih file BioStack JSON untuk mengganti data lokal dengan checkpoint yang kamu simpan."
+            title={t("settings.restoreFromBackup") || "Restore dari backup"}
+            desc={t("settings.restoreFromBackupDesc") || "Pilih file BioStack JSON untuk mengganti data lokal dengan checkpoint yang kamu simpan."}
             buttonLabel={
-              busy ? 'Memproses…' : 'Pilih File'
+              busy ? (language === 'en' ? 'Processing…' : 'Memproses…') : (t('settings.pickFile') || 'Pilih File')
             }
             onPress={handlePickImport}
             disabled={busy}
@@ -478,10 +474,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
               color="#f59e0b"
             />
 
-            <Text style={styles.warningText}>
-              Restore akan mengganti data lokal saat ini.
-              Ekspor backup terbaru sebelum melakukan restore.
-            </Text>
+            <Text style={styles.warningText}>{t('settings.restoreWarning') || 'Restore akan mengganti data lokal saat ini. Ekspor backup terbaru sebelum melakukan restore.'}</Text>
           </View>
         </View>
 
@@ -505,14 +498,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
 
               <Text style={styles.rowDesc}>
                 {notificationStatus === 'granted'
-                  ? `Authorized • ${scheduledNotificationCount} reminder terjadwal`
+                  ? (language === 'en' ? `Authorized • ${scheduledNotificationCount} reminder(s) scheduled` : `Authorized • ${scheduledNotificationCount} reminder terjadwal`)
                   : notificationStatus === 'denied'
-                    ? 'Denied / blocked oleh iOS'
+                    ? (language === 'en' ? 'Denied / blocked by iOS' : 'Denied / blocked oleh iOS')
                     : notificationStatus === 'checking'
-                      ? 'Memeriksa izin…'
+                      ? (language === 'en' ? 'Checking permission…' : 'Memeriksa izin…')
                       : notificationStatus === 'unavailable'
-                        ? 'Notification API tidak tersedia'
-                        : 'Belum diaktifkan'}
+                        ? (language === 'en' ? 'Notification API is unavailable' : 'Notification API tidak tersedia')
+                        : (language === 'en' ? 'Not enabled' : 'Belum diaktifkan')}
               </Text>
             </View>
 
@@ -537,11 +530,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
             </View>
           </View>
 
-          <Text style={styles.notificationHint}>
-            BioStack memakai local notifications. Tidak membutuhkan
-            server atau push notification; reminder dibuat dari
-            schedule yang tersimpan di perangkat.
-          </Text>
+          <Text style={styles.notificationHint}>{t('settings.notificationHint') || (language === 'en' ? 'BioStack uses local notifications. No server or push notifications needed; reminders are generated from schedules stored on your device.' : 'BioStack memakai local notifications. Tidak membutuhkan server atau push notification; reminder dibuat dari schedule yang tersimpan di perangkat.')}</Text>
 
           <View style={styles.notificationActions}>
             <TouchableOpacity
@@ -552,7 +541,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
                 busy && styles.disabledControl,
               ]}
               accessibilityRole="button"
-              accessibilityLabel="Aktifkan notifikasi"
+              accessibilityLabel={language === 'en' ? 'Enable notifications' : 'Aktifkan notifikasi'}
             >
               <Bell
                 size={14}
@@ -562,7 +551,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
               <Text
                 style={styles.notificationActionPrimaryText}
               >
-                Aktifkan & Jadwalkan
+                {language === 'en' ? 'Enable & Schedule' : 'Aktifkan & Jadwalkan'}
               </Text>
             </TouchableOpacity>
 
@@ -574,12 +563,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
                 busy && styles.disabledControl,
               ]}
               accessibilityRole="button"
-              accessibilityLabel="Test notifikasi"
+              accessibilityLabel={language === 'en' ? 'Test notification' : 'Test notifikasi'}
             >
               <Text
                 style={styles.notificationActionSecondaryText}
               >
-                Test 10 dtk
+                {language === 'en' ? 'Test 10s' : 'Test 10 dtk' /* Test 10 dtk */}
               </Text>
             </TouchableOpacity>
           </View>
@@ -592,7 +581,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
               busy && styles.disabledControl,
             ]}
             accessibilityRole="button"
-            accessibilityLabel="Bangun ulang reminder"
+            accessibilityLabel={language === 'en' ? 'Rebuild reminders' : 'Bangun ulang reminder'}
           >
             <RotateCcw
               size={14}
@@ -600,7 +589,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
             />
 
             <Text style={styles.rebuildText}>
-              Rebuild Reminder 30 Hari
+              {language === 'en' ? 'Rebuild 30-Day Reminders' : 'Rebuild Reminder 30 Hari' /* Rebuild Reminder 30 Hari */}
             </Text>
           </TouchableOpacity>
         </View>
@@ -631,13 +620,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
 
             <View style={styles.privacyCopy}>
               <Text style={styles.rowTitle}>
-                Izinkan koneksi AI online
+                {language === 'en' ? 'Allow online AI connection' : 'Izinkan koneksi AI online'}
               </Text>
 
               <Text style={styles.rowDesc}>
-                Default OFF. Saat aktif, pesan yang kamu kirim
-                ke AI dapat dikirim ke provider yang dipilih di
-                pengaturan AI.
+                {language === 'en'
+                  ? 'Default OFF. When active, messages sent to AI can be routed to the selected provider in AI settings.'
+                  : 'Default OFF. Saat aktif, pesan yang kamu kirim ke AI dapat dikirim ke provider yang dipilih di pengaturan AI.'}
               </Text>
             </View>
 
@@ -646,7 +635,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
               accessibilityState={{
                 checked: aiNetworkAllowed,
               }}
-              accessibilityLabel="Izinkan koneksi AI online"
+              accessibilityLabel={language === 'en' ? 'Allow online AI connection' : 'Izinkan koneksi AI online'}
               onPress={() =>
                 updateSettings({
                   allowAiNetwork: !aiNetworkAllowed,
@@ -674,7 +663,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
             />
 
             <Text style={styles.secureNoteText}>
-              API key AI tidak ikut dimasukkan ke file backup BioStack.
+              {language === 'en' ? 'AI API keys are not included in BioStack backup files.' : 'API key AI tidak ikut dimasukkan ke file backup BioStack.' /* API key AI tidak ikut */}
             </Text>
           </View>
         </View>
@@ -687,13 +676,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
               color="#f59e0b"
             />
           }
-          title="Data lokal"
+          title={language === 'en' ? 'Local Data' : 'Data lokal'}
         />
 
         <View style={styles.card}>
           <View style={styles.statsGrid}>
             <Stat
-              label="Vial aktif/arsip"
+              label={language === 'en' ? 'Active/archive vials' : 'Vial aktif/arsip'}
               value={String(inventory.length)}
             />
 
@@ -708,7 +697,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
             />
 
             <Stat
-              label="Format backup"
+              label={language === 'en' ? 'Backup format' : 'Format backup'}
               value="v1"
             />
           </View>
@@ -721,7 +710,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
               busy && styles.disabledControl,
             ]}
             accessibilityRole="button"
-            accessibilityLabel="Reset data lokal"
+            accessibilityLabel={language === 'en' ? 'Reset local data' : 'Reset data lokal'}
           >
             <RotateCcw
               size={15}
@@ -729,13 +718,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
             />
 
             <Text style={styles.resetText}>
-              Reset Data Lokal
+              {language === 'en' ? 'Reset Local Data' : 'Reset Data Lokal'}
             </Text>
           </TouchableOpacity>
 
           <Text style={styles.versionText}>
-            BioStack backup schema v5 • Data tracker tetap berada
-            di perangkat kecuali fitur online AI diizinkan.
+            {language === 'en'
+              ? 'BioStack backup schema v5 • Tracker data stays on device unless online AI features are permitted.'
+              : 'BioStack backup schema v5 • Data tracker tetap berada di perangkat kecuali fitur online AI diizinkan.'}
           </Text>
         </View>
       </ScrollView>
@@ -755,12 +745,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
             />
 
             <Text style={styles.confirmTitle}>
-              Konfirmasi Restore
+              {language === 'en' ? 'Confirm Restore' : 'Konfirmasi Restore'}
             </Text>
 
             <Text style={styles.confirmText}>
-              Data lokal sekarang akan digantikan oleh isi backup.
-              Pastikan kamu sudah punya salinan data saat ini.
+              {language === 'en'
+                ? 'Current local data will be replaced by backup contents. Ensure you have a recent backup.'
+                : 'Data lokal sekarang akan digantikan oleh isi backup. Pastikan kamu sudah punya salinan data saat ini.'}
             </Text>
 
             <View style={styles.confirmActions}>
@@ -773,7 +764,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onDone }) => {
                 ]}
               >
                 <Text style={styles.secondaryText}>
-                  Batal
+                  {language === 'en' ? 'Cancel' : 'Batal'}
                 </Text>
               </TouchableOpacity>
 

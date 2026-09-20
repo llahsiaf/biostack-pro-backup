@@ -49,8 +49,10 @@ const addDays = (date: Date, amount: number) => {
   return next;
 };
 
-const formatDateLong = (date: Date) =>
-  new Intl.DateTimeFormat(getLanguage() === 'en' ? 'en-US' : 'id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
+const formatDateLong = (date: Date, lang: string = 'id') =>
+  new Intl.DateTimeFormat(lang === 'en' ? 'en-US' : 'id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
+
+const WEEKDAY_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const formatDayNumber = (date: Date) => String(date.getDate()).padStart(2, '0');
 
@@ -270,8 +272,8 @@ export const TodayScreen: React.FC<{
           <View style={styles.heroIconBox}><Activity size={19} color="#10b981" /></View>
           <View style={styles.heroCopy}>
             <Text style={styles.eyebrow}>PERSONAL TRACKER</Text>
-            <Text style={styles.heroTitle}>{isToday ? (t('today.title') || 'Ringkasan Hari Ini') : formatDateLong(selectedDate)}</Text>
-            <Text style={styles.heroSubtitle}>{formatDateLong(now)} • {t('rotation.suggestedSite') || 'Titik berikutnya'} {currentSite}</Text>
+            <Text style={styles.heroTitle}>{isToday ? (language === 'en' ? "Today's Summary" : (t('today.title') || 'Ringkasan Hari Ini')) : formatDateLong(selectedDate, language)}</Text>
+            <Text style={styles.heroSubtitle}>{formatDateLong(now, language)} • {language === 'en' ? 'Next site' : (t('rotation.suggestedSite') || 'Titik berikutnya')} {currentSite}</Text>
           </View>
           <TouchableOpacity style={styles.quickLogBtn} onPress={openQuickLog}>
             <Syringe size={15} color="#022c22" />
@@ -280,9 +282,9 @@ export const TodayScreen: React.FC<{
         </View>
 
         <View style={styles.metricRow}>
-          <MetricCard icon={<CalendarDays size={14} color="#38bdf8" />} label={t('inventory.todaySchedule') || "Jadwal"} value={String(selectedOccurrences.length)} />
-          <MetricCard icon={<CheckCircle2 size={14} color="#10b981" />} label={t('status.completed') || "Selesai"} value={String(selectedOccurrences.filter((item) => item.status === 'completed').length)} />
-          <MetricCard icon={<AlertTriangle size={14} color="#f59e0b" />} label={t('status.missed') || "Terlewat"} value={String(isToday ? selectedOccurrences.filter((item) => item.status === 'missed').length : 0)} />
+          <MetricCard icon={<CalendarDays size={14} color="#38bdf8" />} label={language === 'en' ? 'Schedule' : (t('inventory.todaySchedule') || 'Jadwal')} value={String(selectedOccurrences.length)} />
+          <MetricCard icon={<CheckCircle2 size={14} color="#10b981" />} label={language === 'en' ? 'Completed' : (t('status.completed') || 'Selesai')} value={String(selectedOccurrences.filter((item) => item.status === 'completed').length)} />
+          <MetricCard icon={<AlertTriangle size={14} color="#f59e0b" />} label={language === 'en' ? 'Missed' : (t('status.missed') || 'Terlewat')} value={String(isToday ? selectedOccurrences.filter((item) => item.status === 'missed').length : 0)} />
         </View>
       </View>
 
@@ -290,7 +292,7 @@ export const TodayScreen: React.FC<{
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleRow}>
             <CalendarDays size={16} color="#38bdf8" />
-            <Text style={styles.sectionTitle}>Kalender Mingguan</Text>
+            <Text style={styles.sectionTitle}>{language === 'en' ? 'Weekly Calendar' : 'Kalender Mingguan'}</Text>
           </View>
           <View style={styles.weekControls}>
             <TouchableOpacity style={styles.smallIconBtn} onPress={() => setWeekOffset((value) => value - 1)}><ChevronLeft size={15} color="#94a3b8" /></TouchableOpacity>
@@ -306,7 +308,7 @@ export const TodayScreen: React.FC<{
             const hasLog = getLogsForLocalDate(safeLogs, date).length > 0;
             return (
               <TouchableOpacity key={key} onPress={() => selectDate(date)} style={[styles.dayCell, isSelected && styles.dayCellActive]}>
-                <Text style={[styles.dayLabel, isSelected && styles.dayLabelActive]}>{WEEKDAY_LABELS[date.getDay()]}</Text>
+                <Text style={[styles.dayLabel, isSelected && styles.dayLabelActive]}>{language === 'en' ? WEEKDAY_EN[date.getDay()] : WEEKDAY_LABELS[date.getDay()]}</Text>
                 <Text style={[styles.dayNumber, isSelected && styles.dayNumberActive]}>{formatDayNumber(date)}</Text>
                 <View style={styles.dotRow}>
                   {hasSchedule && <View style={[styles.dot, styles.dotSchedule]} />}
@@ -318,26 +320,26 @@ export const TodayScreen: React.FC<{
           })}
         </ScrollView>
         <View style={styles.legendRow}>
-          <LegendDot label="Jadwal" style={styles.dotSchedule} />
+          <LegendDot label={language === 'en' ? 'Schedule' : 'Jadwal'} style={styles.dotSchedule} />
           <LegendDot label="Log" style={styles.dotLog} />
-          <Text style={styles.currentDateText}>{formatDateLong(selectedDate)}</Text>
+          <Text style={styles.currentDateText}>{formatDateLong(selectedDate, language)}</Text>
         </View>
       </View>
 
       <View style={styles.sectionCard}>
         <View style={styles.sectionHeader}>
-          <View style={styles.sectionTitleRow}><Clock3 size={16} color="#f59e0b" /><Text style={styles.sectionTitle}>Aktivitas</Text></View>
-          <Text style={styles.sectionMeta}>{selectedOccurrences.length + selectedLogs.length} item</Text>
+          <View style={styles.sectionTitleRow}><Clock3 size={16} color="#f59e0b" /><Text style={styles.sectionTitle}>{language === 'en' ? 'Activity' : 'Aktivitas'}</Text></View>
+          <Text style={styles.sectionMeta}>{selectedOccurrences.length + selectedLogs.length} {language === 'en' ? 'items' : 'item'}</Text>
         </View>
         {selectedOccurrences.length === 0 && selectedLogs.length === 0 ? (
-          <EmptyState text="Tidak ada jadwal atau log pada tanggal ini." />
+          <EmptyState text={language === 'en' ? 'No schedule or log on this date.' : 'Tidak ada jadwal atau log pada tanggal ini.'} />
         ) : (
           <View style={styles.activityList}>
             {selectedOccurrences.map((occurrence) => {
               const occurrenceLog = selectedLogs
                 .filter((log) => log.inventoryId === occurrence.inventoryId)
                 .sort((a, b) => String(a.timestamp).localeCompare(String(b.timestamp)))[0];
-              const statusLabel = getOccurrenceStatusLabel(occurrence);
+              const statusLabel = getOccurrenceStatusLabel(occurrence, language);
               const canLog = isToday && (occurrence.status === 'due' || occurrence.status === 'missed');
 
               return (
@@ -357,7 +359,7 @@ export const TodayScreen: React.FC<{
                       {occurrence.peptideName}
                     </Text>
                     <Text style={styles.activitySub}>
-                      {occurrenceLog ? `${occurrenceLog.timeStr || occurrence.time} • Dicatat` : `${occurrence.time} • ${statusLabel}`}
+                      {occurrenceLog ? `${occurrenceLog.timeStr || occurrence.time} • ${language === 'en' ? 'Logged' : 'Dicatat'}` : `${occurrence.time} • ${statusLabel}`}
                     </Text>
                   </View>
 
@@ -368,7 +370,7 @@ export const TodayScreen: React.FC<{
                     >
                       <Syringe size={12} color="#022c22" />
                       <Text style={styles.activityActionText}>
-                        {occurrence.status === 'missed' ? (t('today.quickLog') || 'Catat') : (t('today.injectNow') || 'Suntik Sekarang')}
+                        {occurrence.status === 'missed' ? (language === 'en' ? 'Log' : (t('today.quickLog') || 'Catat')) : (language === 'en' ? 'Inject Now' : (t('today.injectNow') || 'Suntik Sekarang'))}
                       </Text>
                     </TouchableOpacity>
                   ) : (
@@ -400,39 +402,39 @@ export const TodayScreen: React.FC<{
 
       <View style={styles.sectionCard}>
         <View style={styles.sectionHeader}>
-          <View style={styles.sectionTitleRow}><TrendingUp size={16} color="#10b981" /><Text style={styles.sectionTitle}>7 Hari ke Depan</Text></View>
-          <Text style={styles.sectionMeta}>{analytics.schedule7DayTotal} jadwal</Text>
+          <View style={styles.sectionTitleRow}><TrendingUp size={16} color="#10b981" /><Text style={styles.sectionTitle}>{language === 'en' ? 'Next 7 Days' : '7 Hari ke Depan'}</Text></View>
+          <Text style={styles.sectionMeta}>{analytics.schedule7DayTotal} {language === 'en' ? 'schedules' : 'jadwal'}</Text>
         </View>
-        {upcoming.length === 0 ? <EmptyState text="Belum ada jadwal mendatang." /> : upcoming.map((occurrence) => (
+        {upcoming.length === 0 ? <EmptyState text={language === 'en' ? 'No upcoming schedules.' : 'Belum ada jadwal mendatang.'} /> : upcoming.map((occurrence) => (
           <View key={`up-${occurrence.inventoryId}-${occurrence.date}`} style={styles.upcomingRow}>
             <View style={styles.dateBlock}><Text style={styles.dateBlockDay}>{occurrence.date.slice(-2)}</Text><Text style={styles.dateBlockMonth}>{occurrence.date.slice(5, 7)}</Text></View>
             <View style={styles.activityMain}><Text style={styles.activityTitle}>{occurrence.peptideName}</Text><Text style={styles.activitySub}>{occurrence.date} • {occurrence.time}</Text></View>
-            <Text style={[styles.upcomingStatus, occurrence.status === 'completed' && styles.upcomingDone]}>{getOccurrenceStatusLabel(occurrence)}</Text>
+            <Text style={[styles.upcomingStatus, occurrence.status === 'completed' && styles.upcomingDone]}>{getOccurrenceStatusLabel(occurrence, language)}</Text>
           </View>
         ))}
       </View>
 
       <View style={styles.gridRow}>
-        <SummaryTile icon={<FlaskConical size={16} color="#10b981" />} label="Vial aktif" value={String(analytics.activeVials)} />
-        <SummaryTile icon={<PackageCheck size={16} color="#64748b" />} label="Vial kosong" value={String(analytics.emptyVials)} />
-        <SummaryTile icon={<Snowflake size={16} color="#38bdf8" />} label="Freezer" value={String(analytics.freezerVials)} />
-        <SummaryTile icon={<Archive size={16} color="#64748b" />} label="Arsip" value={String(analytics.archivedVials)} />
+        <SummaryTile icon={<FlaskConical size={16} color="#10b981" />} label={language === 'en' ? 'Active Vials' : 'Vial aktif'} value={String(analytics.activeVials)} />
+        <SummaryTile icon={<PackageCheck size={16} color="#64748b" />} label={language === 'en' ? 'Empty Vials' : 'Vial kosong'} value={String(analytics.emptyVials)} />
+        <SummaryTile icon={<Snowflake size={16} color="#38bdf8" />} label={language === 'en' ? 'Freezer' : 'Freezer'} value={String(analytics.freezerVials)} />
+        <SummaryTile icon={<Archive size={16} color="#64748b" />} label={language === 'en' ? 'Archive' : 'Arsip'} value={String(analytics.archivedVials)} />
       </View>
 
       <View style={styles.sectionCard}>
         <View style={styles.sectionHeader}>
-          <View style={styles.sectionTitleRow}><TrendingUp size={16} color="#38bdf8" /><Text style={styles.sectionTitle}>Analytics Pribadi</Text></View>
-          <Text style={styles.sectionMeta}>30 hari</Text>
+          <View style={styles.sectionTitleRow}><TrendingUp size={16} color="#38bdf8" /><Text style={styles.sectionTitle}>{language === 'en' ? 'Personal Analytics' : 'Analytics Pribadi'}</Text></View>
+          <Text style={styles.sectionMeta}>{language === 'en' ? '30 days' : '30 hari'}</Text>
         </View>
         <View style={styles.analyticsGrid}>
-          <AnalyticsMetric label="Log tercatat" value={String(analytics.last30DaysLogs)} />
-          <AnalyticsMetric label="Jadwal terjadwal" value={String(analytics.scheduledLast30Days)} />
-          <AnalyticsMetric label="Jadwal selesai" value={String(analytics.completedScheduledLast30Days)} />
-          <AnalyticsMetric label="Completion hari ini" value={`${analytics.todayCompletionPercent}%`} />
+          <AnalyticsMetric label={language === 'en' ? 'Logged records' : 'Log tercatat'} value={String(analytics.last30DaysLogs)} />
+          <AnalyticsMetric label={language === 'en' ? 'Scheduled' : 'Jadwal terjadwal'} value={String(analytics.scheduledLast30Days)} />
+          <AnalyticsMetric label={language === 'en' ? 'Completed' : 'Jadwal selesai'} value={String(analytics.completedScheduledLast30Days)} />
+          <AnalyticsMetric label={language === 'en' ? 'Today completion' : 'Completion hari ini'} value={`${analytics.todayCompletionPercent}%`} />
         </View>
         <View style={styles.analyticsDivider} />
-        <Text style={styles.analyticsCaption}>Peptida paling sering tercatat</Text>
-        {analytics.topPeptides.length === 0 ? <Text style={styles.analyticsEmpty}>Belum ada data history.</Text> : analytics.topPeptides.map((item) => (
+        <Text style={styles.analyticsCaption}>{language === 'en' ? 'Most frequently logged peptides' : 'Peptida paling sering tercatat'}</Text>
+        {analytics.topPeptides.length === 0 ? <Text style={styles.analyticsEmpty}>{language === 'en' ? 'No history data yet.' : 'Belum ada data history.'}</Text> : analytics.topPeptides.map((item) => (
           <View key={item.name} style={styles.rankRow}>
             <Text style={styles.rankName}>{item.name}</Text>
             <Text style={styles.rankCount}>{item.count} log</Text>
@@ -529,7 +531,7 @@ export const TodayScreen: React.FC<{
                 <Text style={styles.saveBtnText}>{t('today.confirmLog') || 'Simpan Log'}</Text>
               </TouchableOpacity>
             </View>
-            <Text style={styles.disclaimerText}>Quick Log hanya mencatat data yang kamu masukkan dan menghitung volume dari parameter vial yang tersimpan.</Text>
+            <Text style={styles.disclaimerText}>{language === 'en' ? 'Quick Log only records entered data and calculates volume from stored vial parameters.' : 'Quick Log hanya mencatat data yang kamu masukkan dan menghitung volume dari parameter vial yang tersimpan.'}</Text>
           </View>
         </View>
       </Modal>
